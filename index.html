@@ -37,10 +37,6 @@
             transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .ml-22 {
-            margin-left: 5.5rem !important; /* Use !important to ensure it overrides Tailwind's ml-64 */
-        }
-
         #sidebar-title, .sidebar-text {
             transition: opacity 0.2s ease-out, width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
@@ -416,12 +412,10 @@
             // Change the icon and margin based on the sidebar's state
             if (sidebar.classList.contains('sidebar-collapsed')) {
                 sidebarToggleIcon.setAttribute('data-lucide', 'menu');
-                screenContainer.classList.remove('ml-64');
-                screenContainer.classList.add('ml-22');
+                screenContainer.style.marginLeft = '5.5rem';
             } else {
                 sidebarToggleIcon.setAttribute('data-lucide', 'x');
-                screenContainer.classList.remove('ml-22');
-                screenContainer.classList.add('ml-64');
+                screenContainer.style.marginLeft = '16rem';
             }
 
             // Re-render icons
@@ -440,17 +434,15 @@
 
             if (noSidebarScreens.includes(screenName)) {
                 sidebar.classList.add('hidden');
-                screenContainer.classList.remove('ml-64', 'ml-22'); // Remove margins
+                screenContainer.style.marginLeft = '0px'; // Remove margin
             } else {
                 sidebar.classList.remove('hidden');
                 // When showing a screen with a sidebar, we need to apply the correct margin
                 // based on whether the sidebar is currently collapsed or not.
                 if (sidebar.classList.contains('sidebar-collapsed')) {
-                    screenContainer.classList.add('ml-22');
-                    screenContainer.classList.remove('ml-64');
+                    screenContainer.style.marginLeft = '5.5rem';
                 } else {
-                    screenContainer.classList.add('ml-64');
-                    screenContainer.classList.remove('ml-22');
+                    screenContainer.style.marginLeft = '16rem';
                 }
             }
 
