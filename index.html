@@ -163,6 +163,93 @@
             </div>
         </div>
 
+        <!-- Dashboard Screen -->
+        <div id="dashboard-screen" class="screen flex-col h-full">
+            <header class="bg-white p-4 shadow-md flex justify-between items-center">
+                <div class="flex items-center">
+                    <button id="back-to-farm-list-btn" class="p-2 rounded-full hover:bg-gray-100 mr-2">
+                        <i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i>
+                    </button>
+                    <div>
+                        <h2 id="dashboard-farm-name" class="text-2xl font-bold">Farm Health Log</h2>
+                        <p id="dashboard-farm-variety" class="text-sm text-gray-600"></p>
+                    </div>
+                </div>
+                <button id="new-submission-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">New Report</button>
+            </header>
+            <main id="dashboard-main" class="flex-1 p-4 overflow-y-auto">
+                <div class="text-center text-gray-500 mt-20">
+                    <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto text-gray-400"></i>
+                    <p class="mt-4">Submission history, AI diagnoses, and expert consultations will appear here.</p>
+                    <p>This feature is under construction.</p>
+                </div>
+            </main>
+        </div>
+
+        <!-- New Submission Screen -->
+        <div id="new-submission-screen" class="screen flex-col h-full">
+            <header class="bg-white p-4 shadow-md flex items-center">
+                <button id="back-to-dashboard-btn" class="p-2 rounded-full hover:bg-gray-100 mr-2">
+                    <i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i>
+                </button>
+                <h2 class="text-2xl font-bold">New Scouting Report</h2>
+            </header>
+            <main class="flex-1 p-4 overflow-y-auto">
+                <!-- Image Capture -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Photo of Symptom</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                        <div class="space-y-1 text-center">
+                            <img id="submission-image-preview" src="" class="hidden mx-auto h-48 w-auto mb-4">
+                            <i id="image-placeholder-icon" data-lucide="image" class="mx-auto h-12 w-12 text-gray-400"></i>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none">
+                                    <span>Upload a file</span>
+                                    <input id="image-upload" name="image-upload" type="file" class="sr-only" accept="image/*" capture="environment">
+                                </label>
+                                <p class="pl-1">or use camera</p>
+                            </div>
+                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Observed Symptoms -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Observed Symptoms</label>
+                    <div class="space-y-2" id="symptoms-checklist">
+                        <label class="flex items-center"><input type="checkbox" class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2" value="Yellow Spots"> Yellow Spots</label>
+                        <label class="flex items-center"><input type="checkbox" class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2" value="Wilting"> Wilting</label>
+                        <label class="flex items-center"><input type="checkbox" class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2" value="Holes in Leaves"> Holes in Leaves</label>
+                        <label class="flex items-center"><input type="checkbox" class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2" value="Visible Insects"> Visible Insects</label>
+                    </div>
+                </div>
+
+                <!-- Distribution in Field -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Distribution in Field</label>
+                    <div class="space-y-2" id="distribution-radios">
+                        <label class="flex items-center"><input type="radio" name="distribution" class="h-4 w-4 text-green-600 border-gray-300 mr-2" value="Single Plant"> Single Plant</label>
+                        <label class="flex items-center"><input type="radio" name="distribution" class="h-4 w-4 text-green-600 border-gray-300 mr-2" value="Small Patch"> Small Patch</label>
+                        <label class="flex items-center"><input type="radio" name="distribution" class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2" value="Scattered"> Scattered Throughout</label>
+                        <label class="flex items-center"><input type="radio" name="distribution" class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2" value="Widespread"> Widespread</label>
+                    </div>
+                </div>
+
+                <!-- Perceived Severity -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Perceived Severity</label>
+                    <div class="space-y-2" id="severity-radios">
+                        <label class="flex items-center"><input type="radio" name="severity" class="h-4 w-4 text-green-600 border-gray-300 mr-2" value="Low"> Low</label>
+                        <label class="flex items-center"><input type="radio" name="severity" class="h-4 w-4 text-green-600 border-gray-300 mr-2" value="Medium"> Medium</label>
+                        <label class="flex items-center"><input type="radio" name="severity" class="h-4 w-4 text-green-600 border-gray-300 mr-2" value="High"> High</label>
+                    </div>
+                </div>
+
+                <button id="save-submission-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-8">Save Submission</button>
+            </main>
+        </div>
+
     </div>
 
     <!-- Firebase SDKs -->
@@ -211,11 +298,14 @@
 
         // --- 2. PWA & OFFLINE SETUP ---
         // Initialize IndexedDB
-        const dbPromise = openDB('agri-guard-db', 1, {
-            upgrade(db) {
-                // Create an object store for farm plots that need to be synced.
-                // We use auto-incrementing keys.
-                db.createObjectStore('outbox', { autoIncrement: true });
+        const dbPromise = openDB('agri-guard-db', 2, {
+            upgrade(db, oldVersion, newVersion, transaction) {
+                if (oldVersion < 1) {
+                    db.createObjectStore('outbox', { autoIncrement: true });
+                }
+                if (oldVersion < 2) {
+                    db.createObjectStore('submission_outbox', { autoIncrement: true });
+                }
             },
         });
         console.log('IndexedDB setup initiated.');
@@ -234,7 +324,9 @@
             loading: document.getElementById('loading-screen'),
             login: document.getElementById('login-screen'),
             profile: document.getElementById('profile-screen'),
-            farmList: document.getElementById('farm-list-screen')
+            farmList: document.getElementById('farm-list-screen'),
+            dashboard: document.getElementById('dashboard-screen'),
+            newSubmission: document.getElementById('new-submission-screen')
         };
 
         let currentUser = null;
@@ -409,7 +501,125 @@
         const farmModal = document.getElementById('farm-modal');
         document.getElementById('add-farm-btn').addEventListener('click', () => farmModal.style.display = 'flex');
         document.getElementById('close-farm-modal-btn').addEventListener('click', () => farmModal.style.display = 'none');
+        document.getElementById('back-to-farm-list-btn').addEventListener('click', () => showScreen('farmList'));
+        document.getElementById('back-to-dashboard-btn').addEventListener('click', () => showScreen('dashboard'));
         
+        // --- 8. NEW SUBMISSION LOGIC ---
+        const imageUploadInput = document.getElementById('image-upload');
+        const imagePreview = document.getElementById('submission-image-preview');
+        const imagePlaceholder = document.getElementById('image-placeholder-icon');
+
+        imageUploadInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    imagePreview.classList.remove('hidden');
+                    imagePlaceholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('save-submission-btn').addEventListener('click', async () => {
+            const imageSrc = document.getElementById('submission-image-preview').src;
+
+            const symptoms = Array.from(document.querySelectorAll('#symptoms-checklist input:checked')).map(cb => cb.value);
+            const distribution = document.querySelector('#distribution-radios input:checked')?.value;
+            const severity = document.querySelector('#severity-radios input:checked')?.value;
+
+            if (!imageSrc || symptoms.length === 0 || !distribution || !severity) {
+                showToast('Please fill out all fields and select an image.', 'error');
+                return;
+            }
+
+            // Simulate GPS data
+            const gps_coordinates = {
+                latitude: 17.5734,
+                longitude: 120.3856
+            };
+
+            if (!currentFarmId) {
+                showToast('Could not identify the current farm. Please go back to the farm list.', 'error');
+                return;
+            }
+
+            const submissionData = {
+                farmId: currentFarmId,
+                imageDataUrl: imageSrc,
+                symptoms,
+                distribution,
+                severity,
+                gps_coordinates,
+                timestamp: new Date()
+            };
+
+            try {
+                const db = await dbPromise;
+                await db.add('submission_outbox', submissionData);
+                showToast('Submission saved locally. It will be synced when online.', 'success');
+
+                // Reset form
+                document.getElementById('submission-image-preview').src = '';
+                document.getElementById('submission-image-preview').classList.add('hidden');
+                document.getElementById('image-placeholder-icon').classList.remove('hidden');
+                document.querySelectorAll('#symptoms-checklist input:checked').forEach(cb => cb.checked = false);
+                document.querySelectorAll('#distribution-radios input:checked').forEach(rb => rb.checked = false);
+                document.querySelectorAll('#severity-radios input:checked').forEach(rb => rb.checked = false);
+
+                showScreen('dashboard');
+            } catch (error) {
+                console.error('Failed to save submission locally:', error);
+                showToast('Could not save submission.', 'error');
+            }
+        });
+
+        let currentFarmId = null;
+
+        document.getElementById('new-submission-btn').addEventListener('click', () => {
+            showScreen('newSubmission');
+        });
+
+        async function loadSubmissions(farmId) {
+            const dashboardMain = document.getElementById('dashboard-main');
+            dashboardMain.innerHTML = ''; // Clear existing content
+
+            const db = await dbPromise;
+            const submissions = await db.getAll('submission_outbox');
+
+            if (submissions.length === 0) {
+                dashboardMain.innerHTML = `
+                <div class="text-center text-gray-500 mt-20">
+                    <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto text-gray-400"></i>
+                    <p class="mt-4">No submissions yet for this farm.</p>
+                </div>`;
+            } else {
+                submissions.forEach(submission => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
+
+                    const date = new Date(submission.timestamp);
+                    const dateString = date.toLocaleDateString();
+                    const timeString = date.toLocaleTimeString();
+
+                    card.innerHTML = `
+                        <div class="flex">
+                            <img src="${submission.imageDataUrl}" class="w-24 h-24 rounded-md mr-4">
+                            <div>
+                                <p class="font-bold">Submission from ${dateString} at ${timeString}</p>
+                                <p><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
+                                <p><strong>Distribution:</strong> ${submission.distribution}</p>
+                                <p><strong>Severity:</strong> ${submission.severity}</p>
+                            </div>
+                        </div>
+                    `;
+                    dashboardMain.appendChild(card);
+                });
+            }
+            lucide.createIcons();
+        }
+
         document.getElementById('save-farm-btn').addEventListener('click', async () => {
             const farmNameInput = document.getElementById('farmName');
             const tobaccoVarietyInput = document.getElementById('tobaccoVariety');
@@ -470,12 +680,23 @@
                 } else {
                     querySnapshot.forEach((doc) => {
                         const farm = doc.data();
+                        const farmId = doc.id;
                         const farmCard = document.createElement('div');
                         farmCard.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md';
+                        farmCard.setAttribute('data-id', farmId);
                         farmCard.innerHTML = `
                             <p class="text-xl font-bold text-gray-800">${farm.farmName}</p>
                             <p class="text-md text-gray-600">${farm.tobaccoVariety || 'N/A'}</p>
                         `;
+
+                        farmCard.addEventListener('click', () => {
+                            currentFarmId = farmId;
+                            document.getElementById('dashboard-farm-name').textContent = farm.farmName;
+                            document.getElementById('dashboard-farm-variety').textContent = farm.tobaccoVariety || 'N/A';
+                            loadSubmissions(currentFarmId);
+                            showScreen('dashboard');
+                        });
+
                         farmListContainer.appendChild(farmCard);
                     });
                 }
@@ -510,23 +731,58 @@
             }
         }
 
+        async function syncSubmissionOutbox() {
+            if (!navigator.onLine || !currentUser) return;
+
+            const db = await dbPromise;
+            const allSubmissions = await db.getAll('submission_outbox');
+            if (allSubmissions.length === 0) return;
+
+            const connectionStatusEl = document.getElementById('connection-status');
+            connectionStatusEl.textContent = `Syncing ${allSubmissions.length} submission(s)...`;
+            connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-yellow-100 text-yellow-800';
+
+            try {
+                for (const submission of allSubmissions) {
+                    const { id, farmId, ...dataToSync } = submission;
+                    if (!farmId) continue;
+
+                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farms', farmId, 'submissions');
+                    await addDoc(submissionsCollection, dataToSync);
+                }
+
+                await db.clear('submission_outbox');
+            } catch (error) {
+                console.error('Error syncing submission outbox:', error);
+                connectionStatusEl.textContent = 'Sync Failed';
+                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-red-100 text-red-800';
+            }
+        }
+
         // --- 7. CONNECTION STATUS UI ---
         const connectionStatusEl = document.getElementById('connection-status');
         async function updateOnlineStatus() {
             const db = await dbPromise;
-            const outboxCount = await db.count('outbox');
+            const farmOutboxCount = await db.count('outbox');
+            const submissionOutboxCount = await db.count('submission_outbox');
 
             if (navigator.onLine) {
-                if (outboxCount > 0) {
+                if (farmOutboxCount > 0) {
                     syncOutbox();
-                } else {
+                }
+                if (submissionOutboxCount > 0) {
+                    syncSubmissionOutbox();
+                }
+
+                if (farmOutboxCount === 0 && submissionOutboxCount === 0) {
                     connectionStatusEl.textContent = 'Online';
                     connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-blue-100 text-blue-800';
                 }
             } else {
                 let message = 'Offline Mode';
-                if (outboxCount > 0) {
-                    message += ` (${outboxCount} item(s) waiting to sync)`;
+                const totalOutboxCount = farmOutboxCount + submissionOutboxCount;
+                if (totalOutboxCount > 0) {
+                    message += ` (${totalOutboxCount} item(s) waiting to sync)`;
                 }
                 connectionStatusEl.textContent = message;
                 connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-gray-200 text-gray-800';
