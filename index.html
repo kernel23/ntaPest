@@ -391,7 +391,14 @@
 
             try {
                 await setDoc(doc(db, "users", currentUser.uid), profileData, { merge: true });
-                // Auth state listener will automatically navigate to farm list
+
+                showToast("Profile saved successfully!", "success");
+                userProfile = profileData; // Update local profile data
+                document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                loadFarms();
+                showScreen('farmList');
+                document.getElementById('add-farm-btn').style.display = 'flex';
+
             } catch (error) {
                 console.error("Error saving profile:", error);
                 showToast("Could not save profile. Please check connection.", 'error');
