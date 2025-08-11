@@ -125,6 +125,9 @@
 
     <!-- Firebase SDKs -->
     <script type="module">
+        // Import the IDB library for offline storage
+        import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
+
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { 
@@ -165,6 +168,16 @@
         const db = getFirestore(app);
 
         // --- 2. PWA & OFFLINE SETUP ---
+        // Initialize IndexedDB
+        const dbPromise = openDB('agri-guard-db', 1, {
+            upgrade(db) {
+                // Create an object store for farm plots that need to be synced.
+                // We use auto-incrementing keys.
+                db.createObjectStore('outbox', { autoIncrement: true });
+            },
+        });
+        console.log('IndexedDB setup initiated.');
+
         // Register the service worker for offline capabilities
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -197,6 +210,12 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
+
+                // On startup, if online, try to sync any pending offline data
+                if (navigator.onLine) {
+                    syncOutbox();
+                }
+
                 const userDocRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(userDocRef);
 
@@ -280,27 +299,49 @@
         document.getElementById('close-farm-modal-btn').addEventListener('click', () => farmModal.style.display = 'none');
         
         document.getElementById('save-farm-btn').addEventListener('click', async () => {
-            const farmName = document.getElementById('farmName').value;
+            const farmNameInput = document.getElementById('farmName');
+            const farmName = farmNameInput.value;
             if (!farmName.trim()) {
                 alert('Please enter a farm name.');
                 return;
             }
+
+            // Immediately hide modal and clear input for better UX
+            farmModal.style.display = 'none';
+            farmNameInput.value = '';
             
             const farmData = {
                 farmName: farmName.trim(),
                 tobaccoVariety: 'Virginia', // Placeholder
-                createdAt: serverTimestamp()
+                // createdAt will be added below
             };
 
-            try {
-                const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
-                await addDoc(farmsCollection, farmData);
-                farmModal.style.display = 'none';
-                document.getElementById('farmName').value = '';
-            } catch (error) {
-                console.error("Error saving farm:", error);
-                // OFFLINE HANDLING: This is where you'd save to IndexedDB
-                alert("Could not save farm. Offline functionality to be added.");
+            if (navigator.onLine) {
+                console.log('Online: Saving to Firestore');
+                farmData.createdAt = serverTimestamp();
+                try {
+                    const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
+                    await addDoc(farmsCollection, farmData);
+                    console.log('Farm saved to Firestore.');
+                } catch (error) {
+                    console.error("Error saving farm to Firestore:", error);
+                    alert('Could not save farm. Please try again.');
+                    // TODO: Implement a fallback to save to IDB even when online but Firestore fails
+                }
+            } else {
+                console.log('Offline: Saving to IndexedDB outbox');
+                farmData.createdAt = new Date(); // Use client-side timestamp
+                try {
+                    const db = await dbPromise;
+                    await db.add('outbox', farmData);
+                    console.log('Farm saved to outbox for later sync.');
+                    // Give user feedback
+                    const connectionStatusEl = document.getElementById('connection-status');
+                    connectionStatusEl.textContent = 'Offline: Farm plot saved locally. It will sync when you're back online.';
+                } catch (error) {
+                    console.error("Error saving farm to outbox:", error);
+                    alert('Could not save farm locally. Please check storage permissions.');
+                }
             }
         });
 
@@ -333,13 +374,51 @@
             });
         }
         
+        async function syncOutbox() {
+            console.log('Checking for items to sync...');
+            if (!currentUser) {
+                console.log('User not logged in, skipping sync.');
+                return;
+            }
+
+            const db = await dbPromise;
+            const allItems = await db.getAll('outbox');
+
+            if (allItems.length === 0) {
+                console.log('Outbox is empty. Nothing to sync.');
+                return;
+            }
+
+            console.log(`Found ${allItems.length} items to sync.`);
+            const connectionStatusEl = document.getElementById('connection-status');
+            connectionStatusEl.textContent = `Syncing ${allItems.length} offline item(s)...`;
+
+            const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
+
+            try {
+                await Promise.all(allItems.map(item => addDoc(farmsCollection, item)));
+
+                // If all syncs are successful, clear the outbox
+                await db.clear('outbox');
+                console.log('Outbox synced and cleared successfully.');
+                connectionStatusEl.textContent = 'All items synced successfully!';
+                setTimeout(() => {
+                    updateOnlineStatus(); // Revert to normal status message
+                }, 3000);
+
+            } catch (error) {
+                console.error('Error syncing outbox:', error);
+                connectionStatusEl.textContent = 'Error during sync. Some items may not have been saved.';
+            }
+        }
+
         // --- 7. CONNECTION STATUS UI ---
         const connectionStatusEl = document.getElementById('connection-status');
         function updateOnlineStatus() {
             if (navigator.onLine) {
                 connectionStatusEl.textContent = 'Online';
                 connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-blue-100 text-blue-800';
-                // TODO: Trigger data sync from IndexedDB here
+                syncOutbox();
             } else {
                 connectionStatusEl.textContent = 'Offline Mode';
                 connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-yellow-100 text-yellow-800';
