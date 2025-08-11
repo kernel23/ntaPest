@@ -24,232 +24,235 @@
         body { font-family: 'Inter', sans-serif; } /* Using a common sans-serif font */
     </style>
 </head>
-<body class="bg-green-50 text-gray-800">
+<body class="bg-gray-100">
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-md opacity-0 transition-opacity duration-300">
+    <div id="toast" class="fixed top-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-md opacity-0 transition-opacity duration-300 z-50">
         <p id="toast-message"></p>
     </div>
 
-    <!-- This is the main container for our single-page application -->
-    <div id="app-container" class="h-screen w-screen">
-
-        <!-- Loading Screen -->
-        <div id="loading-screen" class="screen active flex-col justify-center items-center h-full">
-            <svg class="animate-spin h-10 w-10 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="mt-4 text-lg text-green-700">Loading Agri-Guard...</p>
-        </div>
-
-        <!-- Login Screen -->
-        <div id="login-screen" class="screen flex-col justify-center items-center h-full p-6">
-            <div class="text-center mb-10">
-                <i data-lucide="leaf" class="w-16 h-16 text-green-600 mx-auto"></i>
-                <h1 class="text-4xl font-bold text-green-900 mt-4">Agri-Guard</h1>
-                <p class="text-lg text-green-700">Tobacco Pest Monitoring</p>
-                <p class="text-sm text-gray-500 mt-1">Ilocos Region, Philippines</p>
+    <div id="app-container" class="h-screen w-screen flex">
+        <!-- Sidebar (hidden by default, shown after login) -->
+        <aside id="sidebar" class="w-64 bg-green-800 text-white p-4 flex-shrink-0 hidden flex-col">
+            <div class="mb-10 text-center">
+                <i data-lucide="leaf" class="w-12 h-12 mx-auto text-green-400"></i>
+                <h1 class="text-2xl font-bold mt-2">Agri-Guard</h1>
             </div>
-            <div class="w-full max-w-sm">
-                <button id="google-signin-btn" class="w-full bg-white text-gray-700 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm flex items-center justify-center mb-3">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" class="mr-3"> <!-- Placeholder for Google Icon -->
-                    Sign in with Google
+            <nav class="flex-1">
+                <a href="#" id="nav-farm-list" class="flex items-center p-2 rounded-lg hover:bg-green-700">
+                    <i data-lucide="layout-dashboard" class="w-6 h-6 mr-3"></i> My Farms
+                </a>
+                <a href="#" id="nav-profile" class="flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                    <i data-lucide="user" class="w-6 h-6 mr-3"></i> Profile
+                </a>
+                <a href="#" id="nav-reports" class="flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                    <i data-lucide="file-text" class="w-6 h-6 mr-3"></i> Reports
+                </a>
+                <a href="#" id="nav-diagnosis" class="flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                    <i data-lucide="stethoscope" class="w-6 h-6 mr-3"></i> Diagnosis
+                </a>
+                <a href="#" id="nav-treatment" class="flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                    <i data-lucide="syringe" class="w-6 h-6 mr-3"></i> Treatment
+                </a>
+                <a href="#" id="nav-clinic" class="flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                    <i data-lucide="message-square" class="w-6 h-6 mr-3"></i> Online Clinic
+                </a>
+            </nav>
+            <div class="mt-auto">
+                <button id="sidebar-logout-btn" class="w-full flex items-center p-2 rounded-lg hover:bg-red-700">
+                    <i data-lucide="log-out" class="w-6 h-6 mr-3"></i> Logout
                 </button>
-                <button id="facebook-signin-btn" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm flex items-center justify-center mb-4">
-                     <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" /></svg>
-                    Sign in with Facebook
-                </button>
-                <button id="guest-signin-btn" class="w-full text-gray-600 py-2">Continue as Guest</button>
             </div>
-        </div>
+        </aside>
 
-        <!-- Create Profile Screen -->
-        <div id="profile-screen" class="screen flex-col h-full">
-            <header class="bg-white p-4 shadow-md">
-                <h2 class="text-2xl font-bold">Complete Your Profile</h2>
-            </header>
-            <main class="flex-1 p-6 overflow-y-auto">
-                <div class="text-center mb-6">
-                    <img id="profile-pic" src="https://placehold.co/96x96/e2e8f0/334155?text=User" class="w-24 h-24 rounded-full mx-auto mb-4">
+        <!-- Main content area that holds all screens -->
+        <div id="screen-container" class="flex-grow h-screen overflow-y-auto">
+            <!-- Loading Screen -->
+            <div id="loading-screen" class="screen active flex-col justify-center items-center h-full bg-green-50 text-gray-800">
+                <svg class="animate-spin h-10 w-10 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="mt-4 text-lg text-green-700">Loading Agri-Guard...</p>
+            </div>
+
+            <!-- Login Screen -->
+            <div id="login-screen" class="screen flex-col justify-center items-center h-full p-6 bg-green-50 text-gray-800">
+                <div class="text-center mb-10">
+                    <i data-lucide="leaf" class="w-16 h-16 text-green-600 mx-auto"></i>
+                    <h1 class="text-4xl font-bold text-green-900 mt-4">Agri-Guard</h1>
+                    <p class="text-lg text-green-700">Tobacco Pest Monitoring</p>
+                    <p class="text-sm text-gray-500 mt-1">Ilocos Region, Philippines</p>
                 </div>
-                <label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
-                <input type="text" id="fullName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-
-                <label for="homeAddress" class="block text-sm font-medium text-gray-700 mt-4">Home Address</label>
-                <textarea id="homeAddress" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"></textarea>
-
-                <label for="birthdate" class="block text-sm font-medium text-gray-700 mt-4">Birthdate</label>
-                <input type="date" id="birthdate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-
-                <label for="civilStatus" class="block text-sm font-medium text-gray-700 mt-4">Civil Status</label>
-                <select id="civilStatus" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-                    <option>Single</option>
-                    <option>Married</option>
-                    <option>Widowed</option>
-                    <option>Divorced</option>
-                </select>
-
-                <label for="religion" class="block text-sm font-medium text-gray-700 mt-4">Religion</label>
-                <input type="text" id="religion" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-
-                <label for="yearsFarming" class="block text-sm font-medium text-gray-700 mt-4">Years in Tobacco Farming</label>
-                <input type="number" id="yearsFarming" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-
-                <label for="familyMembers" class="block text-sm font-medium text-gray-700 mt-4">Number of Family Members</label>
-                <input type="number" id="familyMembers" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-
-                <label for="education" class="block text-sm font-medium text-gray-700 mt-4">Highest Educational Attainment</label>
-                <select id="education" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-                    <option>No formal education</option>
-                    <option>Elementary</option>
-                    <option>High School</option>
-                    <option>Vocational</option>
-                    <option>College</option>
-                    <option>Post-graduate</option>
-                </select>
-                
-                <p class="mt-6 mb-2 font-medium text-gray-700">Select Your Role:</p>
-                <div class="flex gap-4">
-                    <button id="role-farmer-btn" class="role-btn flex-1 p-4 rounded-lg border-2 border-green-600 bg-green-600 text-white">Farmer</button>
-                    <button id="role-worker-btn" class="role-btn flex-1 p-4 rounded-lg border-2 border-gray-300">Extension Worker</button>
-                </div>
-
-                <button id="save-profile-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-8">Save and Continue</button>
-            </main>
-        </div>
-
-        <!-- Farm List Screen (Home) -->
-        <div id="farm-list-screen" class="screen flex-col h-full">
-            <header class="bg-white p-4 shadow-md flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-bold">My Farm Plots</h2>
-                    <p id="welcome-message" class="text-sm text-gray-600"></p>
-                </div>
-                <button id="logout-btn" class="p-2 rounded-full hover:bg-red-100">
-                    <i data-lucide="log-out" class="w-6 h-6 text-red-600"></i>
-                </button>
-            </header>
-            <div id="connection-status" class="text-center py-1 text-sm font-semibold"></div>
-            <main id="farm-list-container" class="flex-1 p-4 overflow-y-auto">
-                <!-- Farm cards will be inserted here by JavaScript -->
-                <div id="no-farms-message" class="text-center text-gray-500 mt-20">
-                    <i data-lucide="map-pin" class="w-12 h-12 mx-auto text-gray-400"></i>
-                    <p class="mt-4">No farm plots found.</p>
-                    <p>Add your first plot to start monitoring.</p>
-                </div>
-            </main>
-            <button id="add-farm-btn" class="absolute bottom-6 right-6 bg-green-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center">
-                <i data-lucide="plus" class="w-8 h-8"></i>
-            </button>
-        </div>
-        
-        <!-- Add/Edit Farm Modal -->
-        <div id="farm-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
-             <div class="bg-white rounded-lg shadow-xl w-full max-w-md m-4">
-                <div class="p-4 border-b flex justify-between items-center">
-                    <h3 class="text-xl font-bold">Add New Farm Plot</h3>
-                    <button id="close-farm-modal-btn" class="p-1"><i data-lucide="x"></i></button>
-                </div>
-                <div class="p-6">
-                    <label for="farmName" class="block text-sm font-medium text-gray-700">Plot Name</label>
-                    <input type="text" id="farmName" placeholder="e.g., North Field" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
-
-                    <label for="tobaccoVariety" class="block text-sm font-medium text-gray-700 mt-4">Tobacco Variety</label>
-                    <input type="text" id="tobaccoVariety" placeholder="e.g., Virginia" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
-
-                    <button id="save-farm-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Plot</button>
+                <div class="w-full max-w-sm">
+                    <button id="google-signin-btn" class="w-full bg-white text-gray-700 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm flex items-center justify-center mb-3">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" class="mr-3"> <!-- Placeholder for Google Icon -->
+                        Sign in with Google
+                    </button>
+                    <button id="facebook-signin-btn" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm flex items-center justify-center mb-4">
+                         <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" /></svg>
+                        Sign in with Facebook
+                    </button>
+                    <button id="guest-signin-btn" class="w-full text-gray-600 py-2">Continue as Guest</button>
                 </div>
             </div>
-        </div>
 
-        <!-- Dashboard Screen -->
-        <div id="dashboard-screen" class="screen flex-col h-full">
-            <header class="bg-white p-4 shadow-md flex justify-between items-center">
-                <div class="flex items-center">
-                    <button id="back-to-farm-list-btn" class="p-2 rounded-full hover:bg-gray-100 mr-2">
+            <!-- Create Profile Screen -->
+            <div id="profile-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md">
+                    <h2 class="text-2xl font-bold">Complete Your Profile</h2>
+                </header>
+                <main class="flex-1 p-6 overflow-y-auto">
+                    <div class="text-center mb-6">
+                        <img id="profile-pic" src="https://placehold.co/96x96/e2e8f0/334155?text=User" class="w-24 h-24 rounded-full mx-auto mb-4">
+                    </div>
+                    <label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
+                    <input type="text" id="fullName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <label for="homeAddress" class="block text-sm font-medium text-gray-700 mt-4">Home Address</label>
+                    <textarea id="homeAddress" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"></textarea>
+                    <label for="birthdate" class="block text-sm font-medium text-gray-700 mt-4">Birthdate</label>
+                    <input type="date" id="birthdate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <label for="civilStatus" class="block text-sm font-medium text-gray-700 mt-4">Civil Status</label>
+                    <select id="civilStatus" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        <option>Single</option>
+                        <option>Married</option>
+                        <option>Widowed</option>
+                        <option>Divorced</option>
+                    </select>
+                    <label for="religion" class="block text-sm font-medium text-gray-700 mt-4">Religion</label>
+                    <input type="text" id="religion" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <label for="yearsFarming" class="block text-sm font-medium text-gray-700 mt-4">Years in Tobacco Farming</label>
+                    <input type="number" id="yearsFarming" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <label for="familyMembers" class="block text-sm font-medium text-gray-700 mt-4">Number of Family Members</label>
+                    <input type="number" id="familyMembers" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <label for="education" class="block text-sm font-medium text-gray-700 mt-4">Highest Educational Attainment</label>
+                    <select id="education" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        <option>No formal education</option>
+                        <option>Elementary</option>
+                        <option>High School</option>
+                        <option>Vocational</option>
+                        <option>College</option>
+                        <option>Post-graduate</option>
+                    </select>
+                    <p class="mt-6 mb-2 font-medium text-gray-700">Select Your Role:</p>
+                    <div class="flex gap-4">
+                        <button id="role-farmer-btn" class="role-btn flex-1 p-4 rounded-lg border-2 border-green-600 bg-green-600 text-white">Farmer</button>
+                        <button id="role-worker-btn" class="role-btn flex-1 p-4 rounded-lg border-2 border-gray-300">Extension Worker</button>
+                    </div>
+                    <button id="save-profile-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-8">Save and Continue</button>
+                </main>
+            </div>
+
+            <!-- Farm List Screen (Home) -->
+            <div id="farm-list-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold">My Farm Plots</h2>
+                        <p id="welcome-message" class="text-sm text-gray-600"></p>
+                    </div>
+                    <div id="connection-status" class="text-center py-1 px-3 rounded-full text-sm font-semibold"></div>
+                </header>
+                <main id="farm-list-container" class="flex-1 p-4 overflow-y-auto">
+                    <!-- Farm cards will be inserted here by JavaScript -->
+                    <div id="no-farms-message" class="text-center text-gray-500 mt-20">
+                        <i data-lucide="map-pin" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">No farm plots found.</p>
+                        <p>Add your first plot to start monitoring.</p>
+                    </div>
+                </main>
+                <button id="add-farm-btn" class="absolute bottom-6 right-6 bg-green-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center">
+                    <i data-lucide="plus" class="w-8 h-8"></i>
+                </button>
+            </div>
+
+            <!-- Dashboard Screen -->
+            <div id="dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md flex justify-between items-center">
+                    <div class="flex items-center">
+                        <h2 id="dashboard-farm-name" class="text-2xl font-bold">Farm Health Log</h2>
+                        <p id="dashboard-farm-variety" class="text-sm text-gray-600 ml-4"></p>
+                    </div>
+                    <button id="new-submission-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">New Report</button>
+                </header>
+                <main id="dashboard-main" class="flex-1 p-4 overflow-y-auto">
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">Submission history will appear here.</p>
+                    </div>
+                </main>
+            </div>
+
+            <!-- New Submission Screen -->
+            <div id="new-submission-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md flex items-center">
+                    <button id="back-to-dashboard-btn" class="p-2 rounded-full hover:bg-gray-100 mr-2">
                         <i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i>
                     </button>
-                    <div>
-                        <h2 id="dashboard-farm-name" class="text-2xl font-bold">Farm Health Log</h2>
-                        <p id="dashboard-farm-variety" class="text-sm text-gray-600"></p>
-                    </div>
-                </div>
-                <button id="new-submission-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">New Report</button>
-            </header>
-            <main id="dashboard-main" class="flex-1 p-4 overflow-y-auto">
-                <div class="text-center text-gray-500 mt-20">
-                    <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto text-gray-400"></i>
-                    <p class="mt-4">Submission history, AI diagnoses, and expert consultations will appear here.</p>
-                    <p>This feature is under construction.</p>
-                </div>
-            </main>
+                    <h2 class="text-2xl font-bold">New Scouting Report</h2>
+                </header>
+                <main class="flex-1 p-4 overflow-y-auto">
+                    <!-- ... form content ... -->
+                </main>
+            </div>
+
+            <!-- Reports Screen -->
+            <div id="reports-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md">
+                    <h2 class="text-2xl font-bold">Reports</h2>
+                </header>
+                <main class="flex-1 p-4">
+                    <p>Reports will be displayed here.</p>
+                </main>
+            </div>
+
+            <!-- Diagnosis Screen -->
+            <div id="diagnosis-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md">
+                    <h2 class="text-2xl font-bold">Diagnosis</h2>
+                </header>
+                <main class="flex-1 p-4">
+                    <p>Diagnosis tools and information will be available here.</p>
+                </main>
+            </div>
+
+            <!-- Treatment Screen -->
+            <div id="treatment-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md">
+                    <h2 class="text-2xl font-bold">Treatment</h2>
+                </header>
+                <main class="flex-1 p-4">
+                    <p>Treatment recommendations will be available here.</p>
+                </main>
+            </div>
+
+            <!-- Online Clinic Screen -->
+            <div id="online-clinic-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md">
+                    <h2 class="text-2xl font-bold">Online Clinic</h2>
+                </header>
+                <main class="flex-1 p-4">
+                    <p>Expert consultation features will be available here.</p>
+                </main>
+            </div>
+
         </div>
+    </div>
 
-        <!-- New Submission Screen -->
-        <div id="new-submission-screen" class="screen flex-col h-full">
-            <header class="bg-white p-4 shadow-md flex items-center">
-                <button id="back-to-dashboard-btn" class="p-2 rounded-full hover:bg-gray-100 mr-2">
-                    <i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i>
-                </button>
-                <h2 class="text-2xl font-bold">New Scouting Report</h2>
-            </header>
-            <main class="flex-1 p-4 overflow-y-auto">
-                <!-- Image Capture -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Photo of Symptom</label>
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                        <div class="space-y-1 text-center">
-                            <img id="submission-image-preview" src="" class="hidden mx-auto h-48 w-auto mb-4">
-                            <i id="image-placeholder-icon" data-lucide="image" class="mx-auto h-12 w-12 text-gray-400"></i>
-                            <div class="flex text-sm text-gray-600">
-                                <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none">
-                                    <span>Upload a file</span>
-                                    <input id="image-upload" name="image-upload" type="file" class="sr-only" accept="image/*" capture="environment">
-                                </label>
-                                <p class="pl-1">or use camera</p>
-                            </div>
-                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Observed Symptoms -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Observed Symptoms</label>
-                    <div class="space-y-2" id="symptoms-checklist">
-                        <label class="flex items-center"><input type="checkbox" class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2" value="Yellow Spots"> Yellow Spots</label>
-                        <label class="flex items-center"><input type="checkbox" class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2" value="Wilting"> Wilting</label>
-                        <label class="flex items-center"><input type="checkbox" class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2" value="Holes in Leaves"> Holes in Leaves</label>
-                        <label class="flex items-center"><input type="checkbox" class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2" value="Visible Insects"> Visible Insects</label>
-                    </div>
-                </div>
-
-                <!-- Distribution in Field -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Distribution in Field</label>
-                    <div class="space-y-2" id="distribution-radios">
-                        <label class="flex items-center"><input type="radio" name="distribution" class="h-4 w-4 text-green-600 border-gray-300 mr-2" value="Single Plant"> Single Plant</label>
-                        <label class="flex items-center"><input type="radio" name="distribution" class="h-4 w-4 text-green-600 border-gray-300 mr-2" value="Small Patch"> Small Patch</label>
-                        <label class="flex items-center"><input type="radio" name="distribution" class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2" value="Scattered"> Scattered Throughout</label>
-                        <label class="flex items-center"><input type="radio" name="distribution" class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2" value="Widespread"> Widespread</label>
-                    </div>
-                </div>
-
-                <!-- Perceived Severity -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Perceived Severity</label>
-                    <div class="space-y-2" id="severity-radios">
-                        <label class="flex items-center"><input type="radio" name="severity" class="h-4 w-4 text-green-600 border-gray-300 mr-2" value="Low"> Low</label>
-                        <label class="flex items-center"><input type="radio" name="severity" class="h-4 w-4 text-green-600 border-gray-300 mr-2" value="Medium"> Medium</label>
-                        <label class="flex items-center"><input type="radio" name="severity" class="h-4 w-4 text-green-600 border-gray-300 mr-2" value="High"> High</label>
-                    </div>
-                </div>
-
-                <button id="save-submission-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-8">Save Submission</button>
-            </main>
+    <!-- Modals -->
+    <div id="farm-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-40">
+         <div class="bg-white rounded-lg shadow-xl w-full max-w-md m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Add New Farm Plot</h3>
+                <button id="close-farm-modal-btn" class="p-1"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6">
+                <label for="farmName" class="block text-sm font-medium text-gray-700">Plot Name</label>
+                <input type="text" id="farmName" placeholder="e.g., North Field" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                <label for="tobaccoVariety" class="block text-sm font-medium text-gray-700 mt-4">Tobacco Variety</label>
+                <input type="text" id="tobaccoVariety" placeholder="e.g., Virginia" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                <button id="save-farm-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Plot</button>
+            </div>
         </div>
-
     </div>
 
     <!-- Firebase SDKs -->
@@ -326,8 +329,21 @@
             profile: document.getElementById('profile-screen'),
             farmList: document.getElementById('farm-list-screen'),
             dashboard: document.getElementById('dashboard-screen'),
-            newSubmission: document.getElementById('new-submission-screen')
+            newSubmission: document.getElementById('new-submission-screen'),
+            reports: document.getElementById('reports-screen'),
+            diagnosis: document.getElementById('diagnosis-screen'),
+            treatment: document.getElementById('treatment-screen'),
+            onlineClinic: document.getElementById('online-clinic-screen')
         };
+
+        // --- Sidebar Navigation ---
+        document.getElementById('nav-farm-list').addEventListener('click', () => showScreen('farmList'));
+        document.getElementById('nav-profile').addEventListener('click', () => showScreen('profile'));
+        document.getElementById('nav-reports').addEventListener('click', () => showScreen('reports'));
+        document.getElementById('nav-diagnosis').addEventListener('click', () => showScreen('diagnosis'));
+        document.getElementById('nav-treatment').addEventListener('click', () => showScreen('treatment'));
+        document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic'));
+        document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
 
         let currentUser = null;
         let userProfile = null;
@@ -335,9 +351,20 @@
 
         // Function to switch between screens
         function showScreen(screenName) {
+            const sidebar = document.getElementById('sidebar');
+            const noSidebarScreens = ['loading', 'login'];
+
+            if (noSidebarScreens.includes(screenName)) {
+                sidebar.classList.add('hidden');
+            } else {
+                sidebar.classList.remove('hidden');
+            }
+
             Object.values(screens).forEach(screen => screen.classList.remove('active'));
-            screens[screenName].classList.add('active');
-            lucide.createIcons(); // Re-render icons on screen change
+            if (screens[screenName]) {
+                screens[screenName].classList.add('active');
+            }
+            lucide.createIcons();
         }
 
         let toastTimeout;
