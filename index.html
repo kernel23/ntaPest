@@ -121,7 +121,7 @@
         </aside>
 
         <!-- Main content area that holds all screens -->
-        <div id="screen-container" class="h-screen overflow-y-auto ml-64">
+        <div id="screen-container" class="h-screen overflow-y-auto">
             <!-- Loading Screen -->
             <div id="loading-screen" class="screen active flex-col justify-center items-center h-full bg-green-50 text-gray-800">
                 <svg class="animate-spin h-10 w-10 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -435,12 +435,23 @@
         // Function to switch between screens
         function showScreen(screenName) {
             const sidebar = document.getElementById('sidebar');
+            const screenContainer = document.getElementById('screen-container');
             const noSidebarScreens = ['loading', 'login'];
 
             if (noSidebarScreens.includes(screenName)) {
                 sidebar.classList.add('hidden');
+                screenContainer.classList.remove('ml-64', 'ml-22'); // Remove margins
             } else {
                 sidebar.classList.remove('hidden');
+                // When showing a screen with a sidebar, we need to apply the correct margin
+                // based on whether the sidebar is currently collapsed or not.
+                if (sidebar.classList.contains('sidebar-collapsed')) {
+                    screenContainer.classList.add('ml-22');
+                    screenContainer.classList.remove('ml-64');
+                } else {
+                    screenContainer.classList.add('ml-64');
+                    screenContainer.classList.remove('ml-22');
+                }
             }
 
             Object.values(screens).forEach(screen => screen.classList.remove('active'));
