@@ -37,10 +37,6 @@
             transition: margin-left 0.5s ease-in-out;
         }
 
-        .ml-16 {
-            margin-left: 4rem !important; /* Use !important to ensure it overrides Tailwind's ml-64 */
-        }
-
         #sidebar-title, .sidebar-text {
             transition: opacity 0.2s ease-out, width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
@@ -357,7 +353,8 @@
     </div>
 
     <!-- Firebase SDKs -->
-    <script type="module">
+    // PASTE THIS AS YOUR NEW SCRIPT MODULE BLOCK
+<script type="module">
         // Import the IDB library for offline storage
         import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
 
@@ -384,7 +381,6 @@
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // --- 1. FIREBASE CONFIGURATION ---
-        // IMPORTANT: Replace with your project's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyB3yPx1dWJQwqn-SglOjGzrQ6BAZFngMDc",
             authDomain: "pest-monitoring-app-ph.firebaseapp.com",
@@ -394,16 +390,13 @@
             appId: "1:948653534237:web:dc195109343b4d5a12eaf4",
             measurementId: "G-YRFNHDN5VV"
         };
-
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
         // --- 2. PWA & OFFLINE SETUP ---
-        // Initialize IndexedDB
         const dbPromise = openDB('agri-guard-db', 2, {
-            upgrade(db, oldVersion, newVersion, transaction) {
+            upgrade(db, oldVersion) {
                 if (oldVersion < 1) {
                     db.createObjectStore('outbox', { autoIncrement: true });
                 }
@@ -412,13 +405,10 @@
                 }
             },
         });
-        console.log('IndexedDB setup initiated.');
-
-        // Register the service worker for offline capabilities
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
-                    .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
+                    .then(reg => console.log('ServiceWorker registered.', reg))
                     .catch(err => console.log('ServiceWorker registration failed: ', err));
             });
         }
@@ -449,35 +439,33 @@
         // --- Sidebar Toggle Logic ---
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebar-toggle');
-        const sidebarToggleIcon = sidebarToggle.querySelector('i'); // Get the icon element
+        const sidebarToggleIcon = sidebarToggle.querySelector('i');
         const screenContainer = document.getElementById('screen-container');
 
+        // ** CORRECTED TOGGLE LOGIC **
         sidebarToggle.addEventListener('click', () => {
             sidebar.classList.toggle('sidebar-collapsed');
 
-            // Change the icon and margin based on the sidebar's state
+            // Toggle Tailwind's margin classes directly on the content container
+            screenContainer.classList.toggle('ml-64'); // For expanded state
+            screenContainer.classList.toggle('ml-16'); // For collapsed state
+
+            // Change the icon based on the sidebar's new state
             if (sidebar.classList.contains('sidebar-collapsed')) {
                 sidebarToggleIcon.setAttribute('data-lucide', 'menu');
-                screenContainer.classList.remove('ml-64');
-                screenContainer.classList.add('ml-16');
             } else {
                 sidebarToggleIcon.setAttribute('data-lucide', 'x');
-                screenContainer.classList.remove('ml-16');
-                screenContainer.classList.add('ml-64');
             }
-
-            // Re-render icons
             lucide.createIcons();
         });
 
         let currentUser = null;
         let userProfile = null;
         let selectedRole = 'Farmer';
+        let currentFarmId = null; 
 
-        // Function to switch between screens
+        // ** CORRECTED SHOWSCREEN FUNCTION **
         function showScreen(screenName) {
-            const sidebar = document.getElementById('sidebar');
-            const screenContainer = document.getElementById('screen-container');
             const noSidebarScreens = ['loading', 'login'];
 
             if (noSidebarScreens.includes(screenName)) {
@@ -485,13 +473,12 @@
                 screenContainer.classList.remove('ml-64', 'ml-16'); // Remove margins
             } else {
                 sidebar.classList.remove('hidden');
-                // When showing a screen with a sidebar, we need to apply the correct margin
-                // based on whether the sidebar is currently collapsed or not.
+                // When showing a screen, apply the correct margin based on the sidebar's state
                 if (sidebar.classList.contains('sidebar-collapsed')) {
-                    screenContainer.classList.add('ml-16');
+                    screenContainer.classList.add('ml-16'); // Use Tailwind's class
                     screenContainer.classList.remove('ml-64');
                 } else {
-                    screenContainer.classList.add('ml-64');
+                    screenContainer.classList.add('ml-64'); // Use Tailwind's class
                     screenContainer.classList.remove('ml-16');
                 }
             }
@@ -502,6 +489,8 @@
             }
             lucide.createIcons();
         }
+
+
 
         let toastTimeout;
         function showToast(message, type = 'success') {
