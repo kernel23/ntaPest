@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agri-Guard</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Theme Color for PWA -->
+    <meta name="theme-color" content="#22c55e">
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Simple transition for showing/hiding screens */
+        .screen { display: none; }
+        .screen.active { display: flex; }
+        body { font-family: 'Inter', sans-serif; } /* Using a common sans-serif font */
+    </style>
+</head>
+<body class="bg-green-50 text-gray-800">
+
+    <!-- This is the main container for our single-page application -->
+    <div id="app-container" class="h-screen w-screen">
+
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="screen active flex-col justify-center items-center h-full">
+            <svg class="animate-spin h-10 w-10 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-4 text-lg text-green-700">Loading Agri-Guard...</p>
+        </div>
+
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen flex-col justify-center items-center h-full p-6">
+            <div class="text-center mb-10">
+                <i data-lucide="leaf" class="w-16 h-16 text-green-600 mx-auto"></i>
+                <h1 class="text-4xl font-bold text-green-900 mt-4">Agri-Guard</h1>
+                <p class="text-lg text-green-700">Tobacco Pest Monitoring</p>
+                <p class="text-sm text-gray-500 mt-1">Ilocos Region, Philippines</p>
+            </div>
+            <div class="w-full max-w-sm">
+                <button id="google-signin-btn" class="w-full bg-white text-gray-700 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm flex items-center justify-center mb-3">
+                    <img src="https://placehold.co/24x24/FFFFFF/000000?text=G" alt="Google" class="mr-3"> <!-- Placeholder for Google Icon -->
+                    Sign in with Google
+                </button>
+                <button id="facebook-signin-btn" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm flex items-center justify-center mb-4">
+                     <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" /></svg>
+                    Sign in with Facebook
+                </button>
+                <button id="guest-signin-btn" class="w-full text-gray-600 py-2">Continue as Guest</button>
+            </div>
+        </div>
+
+        <!-- Create Profile Screen -->
+        <div id="profile-screen" class="screen flex-col h-full">
+            <header class="bg-white p-4 shadow-md">
+                <h2 class="text-2xl font-bold">Complete Your Profile</h2>
+            </header>
+            <main class="flex-1 p-6 overflow-y-auto">
+                <div class="text-center mb-6">
+                    <img id="profile-pic" src="https://placehold.co/96x96/e2e8f0/334155?text=User" class="w-24 h-24 rounded-full mx-auto mb-4">
+                </div>
+                <label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
+                <input type="text" id="fullName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                
+                <p class="mt-6 mb-2 font-medium text-gray-700">Select Your Role:</p>
+                <div class="flex gap-4">
+                    <button id="role-farmer-btn" class="role-btn flex-1 p-4 rounded-lg border-2 border-green-600 bg-green-600 text-white">Farmer</button>
+                    <button id="role-worker-btn" class="role-btn flex-1 p-4 rounded-lg border-2 border-gray-300">Extension Worker</button>
+                </div>
+
+                <button id="save-profile-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-8">Save and Continue</button>
+            </main>
+        </div>
+
+        <!-- Farm List Screen (Home) -->
+        <div id="farm-list-screen" class="screen flex-col h-full">
+            <header class="bg-white p-4 shadow-md flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold">My Farm Plots</h2>
+                    <p id="welcome-message" class="text-sm text-gray-600"></p>
+                </div>
+                <button id="logout-btn" class="p-2 rounded-full hover:bg-red-100">
+                    <i data-lucide="log-out" class="w-6 h-6 text-red-600"></i>
+                </button>
+            </header>
+            <div id="connection-status" class="text-center py-1 text-sm font-semibold"></div>
+            <main id="farm-list-container" class="flex-1 p-4 overflow-y-auto">
+                <!-- Farm cards will be inserted here by JavaScript -->
+                <div id="no-farms-message" class="text-center text-gray-500 mt-20">
+                    <i data-lucide="map-pin" class="w-12 h-12 mx-auto text-gray-400"></i>
+                    <p class="mt-4">No farm plots found.</p>
+                    <p>Add your first plot to start monitoring.</p>
+                </div>
+            </main>
+            <button id="add-farm-btn" class="absolute bottom-6 right-6 bg-green-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center">
+                <i data-lucide="plus" class="w-8 h-8"></i>
+            </button>
+        </div>
+        
+        <!-- Add/Edit Farm Modal -->
+        <div id="farm-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+             <div class="bg-white rounded-lg shadow-xl w-full max-w-md m-4">
+                <div class="p-4 border-b flex justify-between items-center">
+                    <h3 class="text-xl font-bold">Add New Farm Plot</h3>
+                    <button id="close-farm-modal-btn" class="p-1"><i data-lucide="x"></i></button>
+                </div>
+                <div class="p-6">
+                    <label for="farmName" class="block text-sm font-medium text-gray-700">Plot Name</label>
+                    <input type="text" id="farmName" placeholder="e.g., North Field" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                    <button id="save-farm-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Plot</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            GoogleAuthProvider, 
+            FacebookAuthProvider,
+            signInWithPopup,
+            signInAnonymously,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { 
+            getFirestore,
+            doc,
+            getDoc,
+            setDoc,
+            collection,
+            addDoc,
+            onSnapshot,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // --- 1. FIREBASE CONFIGURATION ---
+        // IMPORTANT: Replace with your project's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB3yPx1dWJQwqn-SglOjGzrQ6BAZFngMDc",
+            authDomain: "pest-monitoring-app-ph.firebaseapp.com",
+            projectId: "pest-monitoring-app-ph",
+            storageBucket: "pest-monitoring-app-ph.appspot.com",
+            messagingSenderId: "948653534237",
+            appId: "1:948653534237:web:dc195109343b4d5a12eaf4",
+            measurementId: "G-YRFNHDN5VV"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- 2. PWA & OFFLINE SETUP ---
+        // Register the service worker for offline capabilities
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
+                    .catch(err => console.log('ServiceWorker registration failed: ', err));
+            });
+        }
+        
+        // --- 3. UI & STATE MANAGEMENT ---
+        const screens = {
+            loading: document.getElementById('loading-screen'),
+            login: document.getElementById('login-screen'),
+            profile: document.getElementById('profile-screen'),
+            farmList: document.getElementById('farm-list-screen')
+        };
+
+        let currentUser = null;
+        let userProfile = null;
+        let selectedRole = 'Farmer';
+
+        // Function to switch between screens
+        function showScreen(screenName) {
+            Object.values(screens).forEach(screen => screen.classList.remove('active'));
+            screens[screenName].classList.add('active');
+            lucide.createIcons(); // Re-render icons on screen change
+        }
+
+        // --- 4. AUTHENTICATION LOGIC ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                const userDocRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(userDocRef);
+
+                if (docSnap.exists()) {
+                    userProfile = docSnap.data();
+                    document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                    loadFarms();
+                    showScreen('farmList');
+                } else {
+                    // Pre-fill profile creation form
+                    document.getElementById('profile-pic').src = user.photoURL || 'https://placehold.co/96x96/e2e8f0/334155?text=User';
+                    document.getElementById('fullName').value = user.displayName || '';
+                    showScreen('profile');
+                }
+            } else {
+                currentUser = null;
+                userProfile = null;
+                showScreen('login');
+            }
+        });
+
+        // Event Listeners for Sign-in buttons
+        document.getElementById('google-signin-btn').addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch(error => console.error("Google Sign-in Error", error));
+        });
+
+        document.getElementById('facebook-signin-btn').addEventListener('click', () => {
+            const provider = new FacebookAuthProvider();
+            signInWithPopup(auth, provider).catch(error => console.error("Facebook Sign-in Error", error));
+        });
+        
+        document.getElementById('guest-signin-btn').addEventListener('click', () => {
+            signInAnonymously(auth).catch(error => console.error("Anonymous Sign-in Error", error));
+        });
+        
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        // --- 5. PROFILE MANAGEMENT ---
+        document.querySelectorAll('.role-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.role-btn').forEach(b => {
+                    b.classList.remove('bg-green-600', 'text-white');
+                    b.classList.add('border-gray-300');
+                });
+                btn.classList.add('bg-green-600', 'text-white');
+                btn.classList.remove('border-gray-300');
+                selectedRole = btn.id === 'role-farmer-btn' ? 'Farmer' : 'Extension Worker';
+            });
+        });
+
+        document.getElementById('save-profile-btn').addEventListener('click', async () => {
+            const fullName = document.getElementById('fullName').value;
+            if (!fullName.trim()) {
+                alert('Please enter your full name.');
+                return;
+            }
+            
+            const profileData = {
+                fullName: fullName.trim(),
+                role: selectedRole,
+                email: currentUser.email || '',
+                photoURL: currentUser.photoURL || '',
+                createdAt: serverTimestamp()
+            };
+
+            try {
+                await setDoc(doc(db, "users", currentUser.uid), profileData);
+                // Auth state listener will automatically navigate to farm list
+            } catch (error) {
+                console.error("Error saving profile:", error);
+                alert("Could not save profile. Please check connection.");
+            }
+        });
+
+        // --- 6. FARM MANAGEMENT ---
+        const farmModal = document.getElementById('farm-modal');
+        document.getElementById('add-farm-btn').addEventListener('click', () => farmModal.style.display = 'flex');
+        document.getElementById('close-farm-modal-btn').addEventListener('click', () => farmModal.style.display = 'none');
+        
+        document.getElementById('save-farm-btn').addEventListener('click', async () => {
+            const farmName = document.getElementById('farmName').value;
+            if (!farmName.trim()) {
+                alert('Please enter a farm name.');
+                return;
+            }
+            
+            const farmData = {
+                farmName: farmName.trim(),
+                tobaccoVariety: 'Virginia', // Placeholder
+                createdAt: serverTimestamp()
+            };
+
+            try {
+                const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
+                await addDoc(farmsCollection, farmData);
+                farmModal.style.display = 'none';
+                document.getElementById('farmName').value = '';
+            } catch (error) {
+                console.error("Error saving farm:", error);
+                // OFFLINE HANDLING: This is where you'd save to IndexedDB
+                alert("Could not save farm. Offline functionality to be added.");
+            }
+        });
+
+        function loadFarms() {
+            const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
+            onSnapshot(farmsCollection, (querySnapshot) => {
+                const farmListContainer = document.getElementById('farm-list-container');
+                farmListContainer.innerHTML = ''; // Clear existing list
+                
+                if (querySnapshot.empty) {
+                    farmListContainer.innerHTML = `
+                        <div class="text-center text-gray-500 mt-20">
+                            <i data-lucide="map-pin" class="w-12 h-12 mx-auto text-gray-400"></i>
+                            <p class="mt-4">No farm plots found.</p>
+                            <p>Add your first plot to start monitoring.</p>
+                        </div>`;
+                } else {
+                    querySnapshot.forEach((doc) => {
+                        const farm = doc.data();
+                        const farmCard = document.createElement('div');
+                        farmCard.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md';
+                        farmCard.innerHTML = `
+                            <p class="text-xl font-bold text-gray-800">${farm.farmName}</p>
+                            <p class="text-md text-gray-600">${farm.tobaccoVariety || 'N/A'}</p>
+                        `;
+                        farmListContainer.appendChild(farmCard);
+                    });
+                }
+                lucide.createIcons();
+            });
+        }
+        
+        // --- 7. CONNECTION STATUS UI ---
+        const connectionStatusEl = document.getElementById('connection-status');
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                connectionStatusEl.textContent = 'Online';
+                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-blue-100 text-blue-800';
+                // TODO: Trigger data sync from IndexedDB here
+            } else {
+                connectionStatusEl.textContent = 'Offline Mode';
+                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-yellow-100 text-yellow-800';
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
+    </script>
+</body>
+</html>
