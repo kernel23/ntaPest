@@ -47,9 +47,7 @@
             overflow: hidden;
         }
 
-        .sidebar-collapsed {
-            width: 4rem; /* w-16 */
-        }
+        
 
         .sidebar-collapsed #sidebar-title {
             opacity: 0;
@@ -446,24 +444,25 @@
         document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic'));
         document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
 
+
         // --- Sidebar Toggle Logic ---
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebar-toggle');
-        const sidebarToggleIcon = sidebarToggle.querySelector('i'); // Get the icon element
+        const sidebarToggleIcon = sidebarToggle.querySelector('i');
         const screenContainer = document.getElementById('screen-container');
 
         sidebarToggle.addEventListener('click', () => {
             sidebar.classList.toggle('sidebar-collapsed');
 
-            // Change the icon and margin based on the sidebar's state
+            // Toggle Tailwind's margin classes directly
+            screenContainer.classList.toggle('ml-64'); // For 16rem width
+            screenContainer.classList.toggle('ml-16'); // For 4rem width
+
+            // Change the icon based on the sidebar's state
             if (sidebar.classList.contains('sidebar-collapsed')) {
                 sidebarToggleIcon.setAttribute('data-lucide', 'menu');
-                screenContainer.classList.remove('ml-64');
-                screenContainer.classList.add('ml-16');
             } else {
                 sidebarToggleIcon.setAttribute('data-lucide', 'x');
-                screenContainer.classList.remove('ml-16');
-                screenContainer.classList.add('ml-64');
             }
 
             // Re-render icons
@@ -482,11 +481,11 @@
 
             if (noSidebarScreens.includes(screenName)) {
                 sidebar.classList.add('hidden');
-                screenContainer.classList.remove('ml-64', 'ml-16'); // Remove margins
+                screenContainer.classList.remove('ml-64', 'ml-16'); // Remove all margins
             } else {
                 sidebar.classList.remove('hidden');
-                // When showing a screen with a sidebar, we need to apply the correct margin
-                // based on whether the sidebar is currently collapsed or not.
+                // When showing a screen with a sidebar, apply the correct margin
+                // based on the sidebar's current state.
                 if (sidebar.classList.contains('sidebar-collapsed')) {
                     screenContainer.classList.add('ml-16');
                     screenContainer.classList.remove('ml-64');
