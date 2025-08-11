@@ -249,8 +249,50 @@
                     </button>
                     <h2 class="text-2xl font-bold">New Scouting Report</h2>
                 </header>
-                <main class="flex-1 p-4 overflow-y-auto">
-                    <!-- ... form content ... -->
+                <main class="flex-1 p-6 overflow-y-auto">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Upload Image of Affected Plant</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                        <div class="space-y-1 text-center">
+                            <i id="image-placeholder-icon" data-lucide="image" class="mx-auto h-12 w-12 text-gray-400"></i>
+                            <img id="submission-image-preview" src="" class="hidden mx-auto max-h-48 rounded-md">
+                            <div class="flex text-sm text-gray-600">
+                                <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none">
+                                    <span>Upload a file</span>
+                                    <input id="image-upload" name="image-upload" type="file" class="sr-only" accept="image/*">
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                        </div>
+                    </div>
+
+                    <fieldset id="symptoms-checklist" class="mt-6">
+                        <legend class="text-base font-medium text-gray-900">Observed Symptoms</legend>
+                        <div class="mt-4 grid grid-cols-2 gap-4">
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-spots" value="spots" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-spots" class="font-medium text-gray-700">Leaf Spots</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-wilting" value="wilting" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-wilting" class="font-medium text-gray-700">Wilting</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-yellowing" value="yellowing" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-yellowing" class="font-medium text-gray-700">Yellowing</label></div></div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset id="distribution-radios" class="mt-6">
+                        <legend class="text-base font-medium text-gray-900">Pest/Disease Distribution</legend>
+                        <div class="mt-4 space-y-4">
+                            <div class="flex items-center"><input id="dist-isolated" name="distribution" value="isolated" type="radio" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300"><label for="dist-isolated" class="ml-3 block text-sm font-medium text-gray-700">Isolated Plants</label></div>
+                            <div class="flex items-center"><input id="dist-patches" name="distribution" value="patches" type="radio" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300"><label for="dist-patches" class="ml-3 block text-sm font-medium text-gray-700">In Patches</label></div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset id="severity-radios" class="mt-6">
+                        <legend class="text-base font-medium text-gray-900">Severity</legend>
+                        <div class="mt-4 space-y-4">
+                            <div class="flex items-center"><input id="sev-low" name="severity" value="low" type="radio" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300"><label for="sev-low" class="ml-3 block text-sm font-medium text-gray-700">Low</label></div>
+                            <div class="flex items-center"><input id="sev-medium" name="severity" value="medium" type="radio" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300"><label for="sev-medium" class="ml-3 block text-sm font-medium text-gray-700">Medium</label></div>
+                            <div class="flex items-center"><input id="sev-high" name="severity" value="high" type="radio" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300"><label for="sev-high" class="ml-3 block text-sm font-medium text-gray-700">High</label></div>
+                        </div>
+                    </fieldset>
+                    
+                    <button id="save-submission-btn" class="mt-8 w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md">Save Submission</button>
                 </main>
             </div>
 
@@ -705,7 +747,7 @@
         const farmModal = document.getElementById('farm-modal');
         document.getElementById('add-farm-btn').addEventListener('click', () => farmModal.style.display = 'flex');
         document.getElementById('close-farm-modal-btn').addEventListener('click', () => farmModal.style.display = 'none');
-        document.getElementById('back-to-farm-list-btn').addEventListener('click', () => showScreen('farmList'));
+        //--document.getElementById('back-to-farm-list-btn').addEventListener('click', () => showScreen('farmList'));--
         document.getElementById('back-to-dashboard-btn').addEventListener('click', () => showScreen('dashboard'));
         
         // --- 8. NEW SUBMISSION LOGIC ---
