@@ -211,10 +211,8 @@
             if (user) {
                 currentUser = user;
 
-                // On startup, if online, try to sync any pending offline data
-                if (navigator.onLine) {
-                    syncOutbox();
-                }
+                // On startup, trigger an online status check, which will also sync if needed.
+                updateOnlineStatus();
 
                 const userDocRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(userDocRef);
@@ -300,49 +298,42 @@
         
         document.getElementById('save-farm-btn').addEventListener('click', async () => {
             const farmNameInput = document.getElementById('farmName');
-            const farmName = farmNameInput.value;
-            if (!farmName.trim()) {
+            const farmName = farmNameInput.value.trim();
+            if (!farmName) {
                 alert('Please enter a farm name.');
                 return;
             }
 
-            // Immediately hide modal and clear input for better UX
             farmModal.style.display = 'none';
             farmNameInput.value = '';
             
             const farmData = {
-                farmName: farmName.trim(),
+                farmName: farmName,
                 tobaccoVariety: 'Virginia', // Placeholder
-                // createdAt will be added below
             };
 
             if (navigator.onLine) {
-                console.log('Online: Saving to Firestore');
                 farmData.createdAt = serverTimestamp();
                 try {
                     const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
                     await addDoc(farmsCollection, farmData);
-                    console.log('Farm saved to Firestore.');
                 } catch (error) {
-                    console.error("Error saving farm to Firestore:", error);
-                    alert('Could not save farm. Please try again.');
-                    // TODO: Implement a fallback to save to IDB even when online but Firestore fails
+                    console.error("Firestore save failed, saving to outbox:", error);
+                    farmData.createdAt = new Date();
+                    const idb = await dbPromise;
+                    await idb.add('outbox', farmData);
                 }
             } else {
-                console.log('Offline: Saving to IndexedDB outbox');
-                farmData.createdAt = new Date(); // Use client-side timestamp
+                farmData.createdAt = new Date();
                 try {
-                    const db = await dbPromise;
-                    await db.add('outbox', farmData);
-                    console.log('Farm saved to outbox for later sync.');
-                    // Give user feedback
-                    const connectionStatusEl = document.getElementById('connection-status');
-                    connectionStatusEl.textContent = 'Offline: Farm plot saved locally. It will sync when you're back online.';
+                    const idb = await dbPromise;
+                    await idb.add('outbox', farmData);
                 } catch (error) {
-                    console.error("Error saving farm to outbox:", error);
-                    alert('Could not save farm locally. Please check storage permissions.');
+                    console.error("Outbox save failed:", error);
+                    alert('Could not save farm locally.');
                 }
             }
+            updateOnlineStatus();
         });
 
         function loadFarms() {
@@ -375,53 +366,52 @@
         }
         
         async function syncOutbox() {
-            console.log('Checking for items to sync...');
-            if (!currentUser) {
-                console.log('User not logged in, skipping sync.');
-                return;
-            }
+            if (!navigator.onLine || !currentUser) return;
 
             const db = await dbPromise;
             const allItems = await db.getAll('outbox');
+            if (allItems.length === 0) return;
 
-            if (allItems.length === 0) {
-                console.log('Outbox is empty. Nothing to sync.');
-                return;
-            }
-
-            console.log(`Found ${allItems.length} items to sync.`);
             const connectionStatusEl = document.getElementById('connection-status');
-            connectionStatusEl.textContent = `Syncing ${allItems.length} offline item(s)...`;
+            connectionStatusEl.textContent = `Syncing ${allItems.length} item(s)...`;
+            connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-yellow-100 text-yellow-800';
 
             const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
 
             try {
                 await Promise.all(allItems.map(item => addDoc(farmsCollection, item)));
-
-                // If all syncs are successful, clear the outbox
                 await db.clear('outbox');
-                console.log('Outbox synced and cleared successfully.');
-                connectionStatusEl.textContent = 'All items synced successfully!';
-                setTimeout(() => {
-                    updateOnlineStatus(); // Revert to normal status message
-                }, 3000);
-
+                connectionStatusEl.textContent = 'Sync Complete';
+                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-green-100 text-green-800';
             } catch (error) {
                 console.error('Error syncing outbox:', error);
-                connectionStatusEl.textContent = 'Error during sync. Some items may not have been saved.';
+                connectionStatusEl.textContent = 'Sync Failed';
+                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-red-100 text-red-800';
+            } finally {
+                setTimeout(updateOnlineStatus, 2000);
             }
         }
 
         // --- 7. CONNECTION STATUS UI ---
         const connectionStatusEl = document.getElementById('connection-status');
-        function updateOnlineStatus() {
+        async function updateOnlineStatus() {
+            const db = await dbPromise;
+            const outboxCount = await db.count('outbox');
+
             if (navigator.onLine) {
-                connectionStatusEl.textContent = 'Online';
-                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-blue-100 text-blue-800';
-                syncOutbox();
+                if (outboxCount > 0) {
+                    syncOutbox();
+                } else {
+                    connectionStatusEl.textContent = 'Online';
+                    connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-blue-100 text-blue-800';
+                }
             } else {
-                connectionStatusEl.textContent = 'Offline Mode';
-                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-yellow-100 text-yellow-800';
+                let message = 'Offline Mode';
+                if (outboxCount > 0) {
+                    message += ` (${outboxCount} item(s) waiting to sync)`;
+                }
+                connectionStatusEl.textContent = message;
+                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-gray-200 text-gray-800';
             }
         }
         window.addEventListener('online', updateOnlineStatus);
