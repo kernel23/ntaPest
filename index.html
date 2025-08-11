@@ -213,7 +213,7 @@
 
                 // On startup, trigger an online status check, which will also sync if needed.
                 updateOnlineStatus();
-
+                
                 const userDocRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(userDocRef);
 
@@ -377,7 +377,7 @@
             connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-yellow-100 text-yellow-800';
 
             const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
-
+            
             try {
                 await Promise.all(allItems.map(item => addDoc(farmsCollection, item)));
                 await db.clear('outbox');
