@@ -23,50 +23,68 @@
         .screen.active { display: flex; }
         body { font-family: 'Inter', sans-serif; } /* Using a common sans-serif font */
 
-        /* Sidebar Transitions */
-        #sidebar {
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: absolute;
+        /* The sidebar menu */
+        #mySidebar {
+            height: 100%; /* 100% Full-height */
+            width: 0; /* 0 width - change this with JavaScript */
+            position: fixed; /* Stay in place */
+            z-index: 10; /* Stay on top */
             top: 0;
             left: 0;
-            height: 100%;
-            z-index: 10;
+            background-color: #111; /* Black*/
+            overflow-x: hidden; /* Disable horizontal scroll */
+            padding-top: 60px; /* Place content 60px from the top */
+            transition: 0.5s; /* 0.5 second transition effect to slide in the sidebar */
         }
 
-        #screen-container {
-            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        /* The sidebar links */
+        #mySidebar a {
+            padding: 8px 8px 8px 32px;
+            text-decoration: none;
+            font-size: 25px;
+            color: #818181;
+            display: block;
+            transition: 0.3s;
         }
 
-        .ml-22 {
-            margin-left: 5.5rem !important; /* Use !important to ensure it overrides Tailwind's ml-64 */
+        /* When you mouse over the navigation links, change their color */
+        #mySidebar a:hover {
+            color: #f1f1f1;
         }
 
-        #sidebar-title, .sidebar-text {
-            transition: opacity 0.2s ease-out, width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            white-space: nowrap;
-            overflow: hidden;
+        /* Position and style the close button (top right corner) */
+        #mySidebar .closebtn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            margin-left: 50px;
         }
 
-        .sidebar-collapsed {
-            width: 5.5rem; /* w-22 */
+        /* The button used to open the sidebar */
+        .openbtn {
+            font-size: 20px;
+            cursor: pointer;
+            background-color: #111;
+            color: white;
+            padding: 10px 15px;
+            border: none;
         }
 
-        .sidebar-collapsed #sidebar-title {
-            opacity: 0;
-            width: 0;
+        .openbtn:hover {
+            background-color: #444;
         }
 
-        .sidebar-collapsed .sidebar-text {
-            opacity: 0;
-            width: 0;
+        /* Style page content - use this if you want to push the page content to the right when you open the side navigation */
+        #main {
+            transition: margin-left .5s; /* If you want a transition effect */
+            padding: 20px;
         }
 
-        .sidebar-collapsed .nav-item {
-            justify-content: center;
-        }
-
-        .sidebar-collapsed .nav-item .sidebar-text {
-            margin-left: 0;
+        /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+        @media screen and (max-height: 450px) {
+            #mySidebar {padding-top: 15px;}
+            #mySidebar a {font-size: 18px;}
         }
     </style>
 </head>
@@ -79,12 +97,10 @@
 
     <div id="app-container" class="h-screen w-screen relative">
         <!-- Sidebar (hidden by default, shown after login) -->
-        <aside id="sidebar" class="w-64 bg-green-800 text-white p-4 hidden flex-col">
+        <aside id="mySidebar" class="w-64 bg-green-800 text-white p-4 hidden flex-col">
+            <a href="javascript:void(0)" id="close-nav-btn" class="closebtn">&times;</a>
             <div class="flex justify-between items-center mb-10">
                 <h1 id="sidebar-title" class="text-2xl font-bold text-white transition-opacity duration-300">Agri-Guard</h1>
-                <button id="sidebar-toggle" class="p-2 rounded-lg hover:bg-green-700">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
             </div>
             <nav class="flex-1">
                 <a href="#" id="nav-farm-list" class="nav-item flex items-center p-2 rounded-lg hover:bg-green-700">
@@ -121,7 +137,7 @@
         </aside>
 
         <!-- Main content area that holds all screens -->
-        <div id="screen-container" class="h-screen overflow-y-auto">
+        <div id="main" class="h-screen overflow-y-auto">
             <!-- Loading Screen -->
             <div id="loading-screen" class="screen active flex-col justify-center items-center h-full bg-green-50 text-gray-800">
                 <svg class="animate-spin h-10 w-10 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -205,6 +221,7 @@
             <!-- Farm List Screen (Home) -->
             <div id="farm-list-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
                 <header class="bg-white p-4 shadow-md flex justify-between items-center">
+                    <button id="open-nav-btn" class="openbtn">&#9776; Open Sidebar</button>
                     <div>
                         <h2 class="text-2xl font-bold">My Farm Plots</h2>
                         <p id="welcome-message" class="text-sm text-gray-600"></p>
@@ -405,28 +422,18 @@
         document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
 
         // --- Sidebar Toggle Logic ---
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebar-toggle');
-        const sidebarToggleIcon = sidebarToggle.querySelector('i'); // Get the icon element
-        const screenContainer = document.getElementById('screen-container');
+        function openNav() {
+            document.getElementById("mySidebar").style.width = "250px";
+            document.getElementById("main").style.marginLeft = "250px";
+        }
 
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('sidebar-collapsed');
+        function closeNav() {
+            document.getElementById("mySidebar").style.width = "0";
+            document.getElementById("main").style.marginLeft = "0";
+        }
 
-            // Change the icon and margin based on the sidebar's state
-            if (sidebar.classList.contains('sidebar-collapsed')) {
-                sidebarToggleIcon.setAttribute('data-lucide', 'menu');
-                screenContainer.classList.remove('ml-64');
-                screenContainer.classList.add('ml-22');
-            } else {
-                sidebarToggleIcon.setAttribute('data-lucide', 'x');
-                screenContainer.classList.remove('ml-22');
-                screenContainer.classList.add('ml-64');
-            }
-
-            // Re-render icons
-            lucide.createIcons();
-        });
+        document.getElementById('open-nav-btn').addEventListener('click', openNav);
+        document.getElementById('close-nav-btn').addEventListener('click', closeNav);
 
         let currentUser = null;
         let userProfile = null;
@@ -434,24 +441,16 @@
 
         // Function to switch between screens
         function showScreen(screenName) {
-            const sidebar = document.getElementById('sidebar');
-            const screenContainer = document.getElementById('screen-container');
+            const sidebar = document.getElementById('mySidebar');
+            const main = document.getElementById('main');
             const noSidebarScreens = ['loading', 'login'];
 
             if (noSidebarScreens.includes(screenName)) {
                 sidebar.classList.add('hidden');
-                screenContainer.classList.remove('ml-64', 'ml-22'); // Remove margins
+                main.classList.remove('ml-64'); // Remove margins
             } else {
                 sidebar.classList.remove('hidden');
-                // When showing a screen with a sidebar, we need to apply the correct margin
-                // based on whether the sidebar is currently collapsed or not.
-                if (sidebar.classList.contains('sidebar-collapsed')) {
-                    screenContainer.classList.add('ml-22');
-                    screenContainer.classList.remove('ml-64');
-                } else {
-                    screenContainer.classList.add('ml-64');
-                    screenContainer.classList.remove('ml-22');
-                }
+                main.classList.add('ml-64');
             }
 
             Object.values(screens).forEach(screen => screen.classList.remove('active'));
