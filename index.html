@@ -600,10 +600,6 @@
         document.getElementById('guest-signin-btn').addEventListener('click', () => {
             signInAnonymously(auth).catch(error => console.error("Anonymous Sign-in Error", error));
         });
-        
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            signOut(auth);
-        });
 
         // --- 5. PROFILE MANAGEMENT ---
         editProfileBtn.addEventListener('click', () => {
@@ -655,19 +651,41 @@
                 role: selectedRole,
                 email: currentUser.email || '',
                 photoURL: currentUser.photoURL || '',
-                createdAt: serverTimestamp()
             };
 
             try {
-                await setDoc(doc(db, "users", currentUser.uid), profileData, { merge: true });
+                const userDocRef = doc(db, "users", currentUser.uid);
+                const docSnap = await getDoc(userDocRef);
+
+                if (docSnap.exists()) {
+                    // For existing profiles, set updatedAt
+                    profileData.updatedAt = serverTimestamp();
+                } else {
+                    // For new profiles, set createdAt
+                    profileData.createdAt = serverTimestamp();
+                }
+
+                await setDoc(userDocRef, profileData, { merge: true });
 
                 showToast("Profile saved successfully!", "success");
-                userProfile = profileData;
+
+                // Re-fetch the profile to ensure local data is consistent and clean
+                const updatedDocSnap = await getDoc(userDocRef);
+                if (updatedDocSnap.exists()) {
+                    userProfile = updatedDocSnap.data();
+                } else {
+                    // This case should ideally not happen if setDoc was successful.
+                    // We'll optimistically use the data we sent, but remove the server-only fields.
+                    if(profileData.updatedAt) delete profileData.updatedAt;
+                    if(profileData.createdAt) delete profileData.createdAt;
+                    userProfile = profileData;
+                }
 
                 const requiredFields = ['fullName', 'homeAddress', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
-                const isProfileComplete = requiredFields.every(field => profileData[field]);
+                const isProfileComplete = requiredFields.every(field => userProfile[field]);
 
                 if (isProfileComplete) {
+                    populateProfileFields(userProfile); // Repopulate with the latest saved data
                     setProfileMode('view');
                     document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
                     loadFarms();
