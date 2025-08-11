@@ -35,11 +35,10 @@
 
         #screen-container {
             transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-left: 16rem; /* Default margin for expanded sidebar (w-64) */
         }
 
-        #sidebar.sidebar-collapsed ~ #screen-container {
-            margin-left: 5.5rem; /* Margin for collapsed sidebar */
+        .ml-22 {
+            margin-left: 5.5rem !important; /* Use !important to ensure it overrides Tailwind's ml-64 */
         }
 
         #sidebar-title, .sidebar-text {
@@ -122,7 +121,7 @@
         </aside>
 
         <!-- Main content area that holds all screens -->
-        <div id="screen-container" class="h-screen overflow-y-auto">
+        <div id="screen-container" class="h-screen overflow-y-auto ml-64">
             <!-- Loading Screen -->
             <div id="loading-screen" class="screen active flex-col justify-center items-center h-full bg-green-50 text-gray-800">
                 <svg class="animate-spin h-10 w-10 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -409,15 +408,20 @@
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebar-toggle');
         const sidebarToggleIcon = sidebarToggle.querySelector('i'); // Get the icon element
+        const screenContainer = document.getElementById('screen-container');
 
         sidebarToggle.addEventListener('click', () => {
             sidebar.classList.toggle('sidebar-collapsed');
 
-            // Change the icon based on the sidebar's state
+            // Change the icon and margin based on the sidebar's state
             if (sidebar.classList.contains('sidebar-collapsed')) {
                 sidebarToggleIcon.setAttribute('data-lucide', 'menu');
+                screenContainer.classList.remove('ml-64');
+                screenContainer.classList.add('ml-22');
             } else {
                 sidebarToggleIcon.setAttribute('data-lucide', 'x');
+                screenContainer.classList.remove('ml-22');
+                screenContainer.classList.add('ml-64');
             }
 
             // Re-render icons
