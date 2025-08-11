@@ -25,7 +25,7 @@
 
         /* Sidebar Transitions */
         #sidebar {
-            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: width 0.5s ease-in-out;
             position: absolute;
             top: 0;
             left: 0;
@@ -34,11 +34,11 @@
         }
 
         #screen-container {
-            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: margin-left 0.5s ease-in-out;
         }
 
-        .ml-22 {
-            margin-left: 5.5rem !important; /* Use !important to ensure it overrides Tailwind's ml-64 */
+        .ml-16 {
+            margin-left: 4rem !important; /* Use !important to ensure it overrides Tailwind's ml-64 */
         }
 
         #sidebar-title, .sidebar-text {
@@ -48,7 +48,7 @@
         }
 
         .sidebar-collapsed {
-            width: 5.5rem; /* w-22 */
+            width: 4rem; /* w-16 */
         }
 
         .sidebar-collapsed #sidebar-title {
@@ -417,10 +417,10 @@
             if (sidebar.classList.contains('sidebar-collapsed')) {
                 sidebarToggleIcon.setAttribute('data-lucide', 'menu');
                 screenContainer.classList.remove('ml-64');
-                screenContainer.classList.add('ml-22');
+                screenContainer.classList.add('ml-16');
             } else {
                 sidebarToggleIcon.setAttribute('data-lucide', 'x');
-                screenContainer.classList.remove('ml-22');
+                screenContainer.classList.remove('ml-16');
                 screenContainer.classList.add('ml-64');
             }
 
@@ -440,17 +440,17 @@
 
             if (noSidebarScreens.includes(screenName)) {
                 sidebar.classList.add('hidden');
-                screenContainer.classList.remove('ml-64', 'ml-22'); // Remove margins
+                screenContainer.classList.remove('ml-64', 'ml-16'); // Remove margins
             } else {
                 sidebar.classList.remove('hidden');
                 // When showing a screen with a sidebar, we need to apply the correct margin
                 // based on whether the sidebar is currently collapsed or not.
                 if (sidebar.classList.contains('sidebar-collapsed')) {
-                    screenContainer.classList.add('ml-22');
+                    screenContainer.classList.add('ml-16');
                     screenContainer.classList.remove('ml-64');
                 } else {
                     screenContainer.classList.add('ml-64');
-                    screenContainer.classList.remove('ml-22');
+                    screenContainer.classList.remove('ml-16');
                 }
             }
 
