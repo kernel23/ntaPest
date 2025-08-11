@@ -26,6 +26,11 @@
 </head>
 <body class="bg-green-50 text-gray-800">
 
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-md opacity-0 transition-opacity duration-300">
+        <p id="toast-message"></p>
+    </div>
+
     <!-- This is the main container for our single-page application -->
     <div id="app-container" class="h-screen w-screen">
 
@@ -48,7 +53,7 @@
             </div>
             <div class="w-full max-w-sm">
                 <button id="google-signin-btn" class="w-full bg-white text-gray-700 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm flex items-center justify-center mb-3">
-                    <img src="https://placehold.co/24x24/FFFFFF/000000?text=G" alt="Google" class="mr-3"> <!-- Placeholder for Google Icon -->
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" class="mr-3"> <!-- Placeholder for Google Icon -->
                     Sign in with Google
                 </button>
                 <button id="facebook-signin-btn" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm flex items-center justify-center mb-4">
@@ -70,6 +75,39 @@
                 </div>
                 <label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
                 <input type="text" id="fullName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+
+                <label for="homeAddress" class="block text-sm font-medium text-gray-700 mt-4">Home Address</label>
+                <textarea id="homeAddress" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"></textarea>
+
+                <label for="birthdate" class="block text-sm font-medium text-gray-700 mt-4">Birthdate</label>
+                <input type="date" id="birthdate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+
+                <label for="civilStatus" class="block text-sm font-medium text-gray-700 mt-4">Civil Status</label>
+                <select id="civilStatus" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Widowed</option>
+                    <option>Divorced</option>
+                </select>
+
+                <label for="religion" class="block text-sm font-medium text-gray-700 mt-4">Religion</label>
+                <input type="text" id="religion" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+
+                <label for="yearsFarming" class="block text-sm font-medium text-gray-700 mt-4">Years in Tobacco Farming</label>
+                <input type="number" id="yearsFarming" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+
+                <label for="familyMembers" class="block text-sm font-medium text-gray-700 mt-4">Number of Family Members</label>
+                <input type="number" id="familyMembers" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+
+                <label for="education" class="block text-sm font-medium text-gray-700 mt-4">Highest Educational Attainment</label>
+                <select id="education" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <option>No formal education</option>
+                    <option>Elementary</option>
+                    <option>High School</option>
+                    <option>Vocational</option>
+                    <option>College</option>
+                    <option>Post-graduate</option>
+                </select>
                 
                 <p class="mt-6 mb-2 font-medium text-gray-700">Select Your Role:</p>
                 <div class="flex gap-4">
@@ -116,6 +154,10 @@
                 <div class="p-6">
                     <label for="farmName" class="block text-sm font-medium text-gray-700">Plot Name</label>
                     <input type="text" id="farmName" placeholder="e.g., North Field" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+
+                    <label for="tobaccoVariety" class="block text-sm font-medium text-gray-700 mt-4">Tobacco Variety</label>
+                    <input type="text" id="tobaccoVariety" placeholder="e.g., Virginia" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+
                     <button id="save-farm-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Plot</button>
                 </div>
             </div>
@@ -206,6 +248,32 @@
             lucide.createIcons(); // Re-render icons on screen change
         }
 
+        let toastTimeout;
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+
+            toastMessage.textContent = message;
+
+            // Reset classes
+            toast.className = 'fixed top-5 right-5 text-white py-2 px-4 rounded-lg shadow-md transition-opacity duration-300';
+
+            if (type === 'success') {
+                toast.classList.add('bg-green-600');
+            } else if (type === 'error') {
+                toast.classList.add('bg-red-600');
+            } else {
+                toast.classList.add('bg-gray-800');
+            }
+
+            toast.classList.remove('opacity-0');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+
         // --- 4. AUTHENTICATION LOGIC ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -219,14 +287,38 @@
 
                 if (docSnap.exists()) {
                     userProfile = docSnap.data();
-                    document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
-                    loadFarms();
-                    showScreen('farmList');
+
+                    // Check for profile completion
+                    const requiredFields = ['fullName', 'homeAddress', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
+                    const isProfileComplete = requiredFields.every(field => userProfile[field]);
+
+                    if (isProfileComplete) {
+                        document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                        loadFarms();
+                        showScreen('farmList');
+                        document.getElementById('add-farm-btn').style.display = 'flex';
+                    } else {
+                        // Pre-fill profile screen
+                        document.getElementById('profile-pic').src = user.photoURL || 'https://placehold.co/96x96/e2e8f0/334155?text=User';
+                        document.getElementById('fullName').value = userProfile.fullName || user.displayName || '';
+                        document.getElementById('homeAddress').value = userProfile.homeAddress || '';
+                        document.getElementById('birthdate').value = userProfile.birthdate || '';
+                        document.getElementById('civilStatus').value = userProfile.civilStatus || 'Single';
+                        document.getElementById('religion').value = userProfile.religion || '';
+                        document.getElementById('yearsFarming').value = userProfile.yearsFarming || '';
+                        document.getElementById('familyMembers').value = userProfile.familyMembers || '';
+                        document.getElementById('education').value = userProfile.education || 'No formal education';
+
+                        showToast('Please complete your profile to continue.', 'error');
+                        showScreen('profile');
+                        document.getElementById('add-farm-btn').style.display = 'none';
+                    }
                 } else {
-                    // Pre-fill profile creation form
+                    // New user, show profile screen
                     document.getElementById('profile-pic').src = user.photoURL || 'https://placehold.co/96x96/e2e8f0/334155?text=User';
                     document.getElementById('fullName').value = user.displayName || '';
                     showScreen('profile');
+                    document.getElementById('add-farm-btn').style.display = 'none';
                 }
             } else {
                 currentUser = null;
@@ -269,13 +361,28 @@
 
         document.getElementById('save-profile-btn').addEventListener('click', async () => {
             const fullName = document.getElementById('fullName').value;
-            if (!fullName.trim()) {
-                alert('Please enter your full name.');
+            const homeAddress = document.getElementById('homeAddress').value;
+            const birthdate = document.getElementById('birthdate').value;
+            const civilStatus = document.getElementById('civilStatus').value;
+            const religion = document.getElementById('religion').value;
+            const yearsFarming = document.getElementById('yearsFarming').value;
+            const familyMembers = document.getElementById('familyMembers').value;
+            const education = document.getElementById('education').value;
+
+            if (!fullName.trim() || !homeAddress.trim() || !birthdate.trim() || !civilStatus.trim() || !religion.trim() || !yearsFarming.trim() || !familyMembers.trim() || !education.trim()) {
+                showToast('Please fill out all fields.', 'error');
                 return;
             }
             
             const profileData = {
                 fullName: fullName.trim(),
+                homeAddress: homeAddress.trim(),
+                birthdate: birthdate,
+                civilStatus: civilStatus,
+                religion: religion.trim(),
+                yearsFarming: parseInt(yearsFarming),
+                familyMembers: parseInt(familyMembers),
+                education: education,
                 role: selectedRole,
                 email: currentUser.email || '',
                 photoURL: currentUser.photoURL || '',
@@ -283,11 +390,11 @@
             };
 
             try {
-                await setDoc(doc(db, "users", currentUser.uid), profileData);
+                await setDoc(doc(db, "users", currentUser.uid), profileData, { merge: true });
                 // Auth state listener will automatically navigate to farm list
             } catch (error) {
                 console.error("Error saving profile:", error);
-                alert("Could not save profile. Please check connection.");
+                showToast("Could not save profile. Please check connection.", 'error');
             }
         });
 
@@ -298,18 +405,22 @@
         
         document.getElementById('save-farm-btn').addEventListener('click', async () => {
             const farmNameInput = document.getElementById('farmName');
+            const tobaccoVarietyInput = document.getElementById('tobaccoVariety');
             const farmName = farmNameInput.value.trim();
-            if (!farmName) {
-                alert('Please enter a farm name.');
+            const tobaccoVariety = tobaccoVarietyInput.value.trim();
+
+            if (!farmName || !tobaccoVariety) {
+                showToast('Please fill out all fields.', 'error');
                 return;
             }
 
             farmModal.style.display = 'none';
             farmNameInput.value = '';
+            tobaccoVarietyInput.value = '';
             
             const farmData = {
                 farmName: farmName,
-                tobaccoVariety: 'Virginia', // Placeholder
+                tobaccoVariety: tobaccoVariety,
             };
 
             if (navigator.onLine) {
@@ -330,7 +441,7 @@
                     await idb.add('outbox', farmData);
                 } catch (error) {
                     console.error("Outbox save failed:", error);
-                    alert('Could not save farm locally.');
+                    showToast('Could not save farm locally.', 'error');
                 }
             }
             updateOnlineStatus();
