@@ -37,10 +37,6 @@
             transition: margin-left 0.5s ease-in-out;
         }
 
-        .ml-16 {
-            margin-left: 4rem !important; /* Use !important to ensure it overrides Tailwind's ml-64 */
-        }
-
         #sidebar-title, .sidebar-text {
             transition: opacity 0.2s ease-out, width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
@@ -357,151 +353,144 @@
     </div>
 
     <!-- Firebase SDKs -->
+    // PASTE THIS AS YOUR NEW SCRIPT MODULE BLOCK
     <script type="module">
-        // Import the IDB library for offline storage
-        import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
+            // Import the IDB library for offline storage
+            import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
 
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { 
-            getAuth, 
-            onAuthStateChanged, 
-            GoogleAuthProvider, 
-            FacebookAuthProvider,
-            signInWithPopup,
-            signInAnonymously,
-            signOut
-        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { 
-            getFirestore,
-            doc,
-            getDoc,
-            setDoc,
-            collection,
-            addDoc,
-            onSnapshot,
-            serverTimestamp
-        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+            // Import the functions you need from the SDKs you need
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+            import { 
+                getAuth, 
+                onAuthStateChanged, 
+                GoogleAuthProvider, 
+                FacebookAuthProvider,
+                signInWithPopup,
+                signInAnonymously,
+                signOut
+            } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+            import { 
+                getFirestore,
+                doc,
+                getDoc,
+                setDoc,
+                collection,
+                addDoc,
+                onSnapshot,
+                serverTimestamp
+            } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // --- 1. FIREBASE CONFIGURATION ---
-        // IMPORTANT: Replace with your project's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyB3yPx1dWJQwqn-SglOjGzrQ6BAZFngMDc",
-            authDomain: "pest-monitoring-app-ph.firebaseapp.com",
-            projectId: "pest-monitoring-app-ph",
-            storageBucket: "pest-monitoring-app-ph.appspot.com",
-            messagingSenderId: "948653534237",
-            appId: "1:948653534237:web:dc195109343b4d5a12eaf4",
-            measurementId: "G-YRFNHDN5VV"
-        };
+            // --- 1. FIREBASE CONFIGURATION ---
+            const firebaseConfig = {
+                apiKey: "AIzaSyB3yPx1dWJQwqn-SglOjGzrQ6BAZFngMDc",
+                authDomain: "pest-monitoring-app-ph.firebaseapp.com",
+                projectId: "pest-monitoring-app-ph",
+                storageBucket: "pest-monitoring-app-ph.appspot.com",
+                messagingSenderId: "948653534237",
+                appId: "1:948653534237:web:dc195109343b4d5a12eaf4",
+                measurementId: "G-YRFNHDN5VV"
+            };
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // --- 2. PWA & OFFLINE SETUP ---
-        // Initialize IndexedDB
-        const dbPromise = openDB('agri-guard-db', 2, {
-            upgrade(db, oldVersion, newVersion, transaction) {
-                if (oldVersion < 1) {
-                    db.createObjectStore('outbox', { autoIncrement: true });
-                }
-                if (oldVersion < 2) {
-                    db.createObjectStore('submission_outbox', { autoIncrement: true });
-                }
-            },
-        });
-        console.log('IndexedDB setup initiated.');
-
-        // Register the service worker for offline capabilities
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
-                    .catch(err => console.log('ServiceWorker registration failed: ', err));
+            // --- 2. PWA & OFFLINE SETUP ---
+            const dbPromise = openDB('agri-guard-db', 2, {
+                upgrade(db, oldVersion) {
+                    if (oldVersion < 1) {
+                        db.createObjectStore('outbox', { autoIncrement: true });
+                    }
+                    if (oldVersion < 2) {
+                        db.createObjectStore('submission_outbox', { autoIncrement: true });
+                    }
+                },
             });
-        }
-        
-        // --- 3. UI & STATE MANAGEMENT ---
-        const screens = {
-            loading: document.getElementById('loading-screen'),
-            login: document.getElementById('login-screen'),
-            profile: document.getElementById('profile-screen'),
-            farmList: document.getElementById('farm-list-screen'),
-            dashboard: document.getElementById('dashboard-screen'),
-            newSubmission: document.getElementById('new-submission-screen'),
-            reports: document.getElementById('reports-screen'),
-            diagnosis: document.getElementById('diagnosis-screen'),
-            treatment: document.getElementById('treatment-screen'),
-            onlineClinic: document.getElementById('online-clinic-screen')
-        };
-
-        // --- Sidebar Navigation ---
-        document.getElementById('nav-farm-list').addEventListener('click', () => showScreen('farmList'));
-        document.getElementById('nav-profile').addEventListener('click', () => showScreen('profile'));
-        document.getElementById('nav-reports').addEventListener('click', () => showScreen('reports'));
-        document.getElementById('nav-diagnosis').addEventListener('click', () => showScreen('diagnosis'));
-        document.getElementById('nav-treatment').addEventListener('click', () => showScreen('treatment'));
-        document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic'));
-        document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
-
-        // --- Sidebar Toggle Logic ---
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebar-toggle');
-        const sidebarToggleIcon = sidebarToggle.querySelector('i'); // Get the icon element
-        const screenContainer = document.getElementById('screen-container');
-
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('sidebar-collapsed');
-
-            // Change the icon and margin based on the sidebar's state
-            if (sidebar.classList.contains('sidebar-collapsed')) {
-                sidebarToggleIcon.setAttribute('data-lucide', 'menu');
-                screenContainer.classList.remove('ml-64');
-                screenContainer.classList.add('ml-16');
-            } else {
-                sidebarToggleIcon.setAttribute('data-lucide', 'x');
-                screenContainer.classList.remove('ml-16');
-                screenContainer.classList.add('ml-64');
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(reg => console.log('ServiceWorker registered.', reg))
+                        .catch(err => console.log('ServiceWorker registration failed: ', err));
+                });
             }
+            
+            // --- 3. UI & STATE MANAGEMENT ---
+            const screens = {
+                loading: document.getElementById('loading-screen'),
+                login: document.getElementById('login-screen'),
+                profile: document.getElementById('profile-screen'),
+                farmList: document.getElementById('farm-list-screen'),
+                dashboard: document.getElementById('dashboard-screen'),
+                newSubmission: document.getElementById('new-submission-screen'),
+                reports: document.getElementById('reports-screen'),
+                diagnosis: document.getElementById('diagnosis-screen'),
+                treatment: document.getElementById('treatment-screen'),
+                onlineClinic: document.getElementById('online-clinic-screen')
+            };
 
-            // Re-render icons
-            lucide.createIcons();
-        });
+            // --- Sidebar Navigation ---
+            document.getElementById('nav-farm-list').addEventListener('click', () => showScreen('farmList'));
+            document.getElementById('nav-profile').addEventListener('click', () => showScreen('profile'));
+            document.getElementById('nav-reports').addEventListener('click', () => showScreen('reports'));
+            document.getElementById('nav-diagnosis').addEventListener('click', () => showScreen('diagnosis'));
+            document.getElementById('nav-treatment').addEventListener('click', () => showScreen('treatment'));
+            document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic'));
+            document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
 
-        let currentUser = null;
-        let userProfile = null;
-        let selectedRole = 'Farmer';
-
-        // Function to switch between screens
-        function showScreen(screenName) {
+            // --- Sidebar Toggle Logic ---
             const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebarToggleIcon = sidebarToggle.querySelector('i');
             const screenContainer = document.getElementById('screen-container');
-            const noSidebarScreens = ['loading', 'login'];
 
-            if (noSidebarScreens.includes(screenName)) {
-                sidebar.classList.add('hidden');
-                screenContainer.classList.remove('ml-64', 'ml-16'); // Remove margins
-            } else {
-                sidebar.classList.remove('hidden');
-                // When showing a screen with a sidebar, we need to apply the correct margin
-                // based on whether the sidebar is currently collapsed or not.
+            // ** CORRECTED TOGGLE LOGIC **
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('sidebar-collapsed');
+
+                // Toggle Tailwind's margin classes directly on the content container
+                screenContainer.classList.toggle('ml-64'); // For expanded state
+                screenContainer.classList.toggle('ml-16'); // For collapsed state
+
+                // Change the icon based on the sidebar's new state
                 if (sidebar.classList.contains('sidebar-collapsed')) {
-                    screenContainer.classList.add('ml-16');
-                    screenContainer.classList.remove('ml-64');
+                    sidebarToggleIcon.setAttribute('data-lucide', 'menu');
                 } else {
-                    screenContainer.classList.add('ml-64');
-                    screenContainer.classList.remove('ml-16');
+                    sidebarToggleIcon.setAttribute('data-lucide', 'x');
                 }
+                lucide.createIcons();
+            });
+
+            let currentUser = null;
+            let userProfile = null;
+            let selectedRole = 'Farmer';
+            let currentFarmId = null; 
+
+            // ** CORRECTED SHOWSCREEN FUNCTION **
+            function showScreen(screenName) {
+                const noSidebarScreens = ['loading', 'login'];
+
+                if (noSidebarScreens.includes(screenName)) {
+                    sidebar.classList.add('hidden');
+                    screenContainer.classList.remove('ml-64', 'ml-16'); // Remove margins
+                } else {
+                    sidebar.classList.remove('hidden');
+                    // When showing a screen, apply the correct margin based on the sidebar's state
+                    if (sidebar.classList.contains('sidebar-collapsed')) {
+                        screenContainer.classList.add('ml-16'); // Use Tailwind's class
+                        screenContainer.classList.remove('ml-64');
+                    } else {
+                        screenContainer.classList.add('ml-64'); // Use Tailwind's class
+                        screenContainer.classList.remove('ml-16');
+                    }
+                }
+
+                Object.values(screens).forEach(screen => screen.classList.remove('active'));
+                if (screens[screenName]) {
+                    screens[screenName].classList.add('active');
+                }
+                lucide.createIcons();
             }
 
-            Object.values(screens).forEach(screen => screen.classList.remove('active'));
-            if (screens[screenName]) {
-                screens[screenName].classList.add('active');
-            }
-            lucide.createIcons();
-        }
+
 
         let toastTimeout;
         function showToast(message, type = 'success') {
