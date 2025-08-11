@@ -26,6 +26,20 @@
         /* Sidebar Transitions */
         #sidebar {
             transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            z-index: 10;
+        }
+
+        #screen-container {
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-left: 16rem; /* Default margin for expanded sidebar (w-64) */
+        }
+
+        #sidebar.sidebar-collapsed ~ #screen-container {
+            margin-left: 5.5rem; /* Margin for collapsed sidebar */
         }
 
         #sidebar-title, .sidebar-text {
@@ -64,13 +78,13 @@
         <p id="toast-message"></p>
     </div>
 
-    <div id="app-container" class="h-screen w-screen flex">
+    <div id="app-container" class="h-screen w-screen relative">
         <!-- Sidebar (hidden by default, shown after login) -->
-        <aside id="sidebar" class="w-64 bg-green-800 text-white p-4 flex-shrink-0 hidden flex-col transition-all duration-300">
+        <aside id="sidebar" class="w-64 bg-green-800 text-white p-4 hidden flex-col">
             <div class="flex justify-between items-center mb-10">
                 <h1 id="sidebar-title" class="text-2xl font-bold text-white transition-opacity duration-300">Agri-Guard</h1>
                 <button id="sidebar-toggle" class="p-2 rounded-lg hover:bg-green-700">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
+                    <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
             <nav class="flex-1">
@@ -108,7 +122,7 @@
         </aside>
 
         <!-- Main content area that holds all screens -->
-        <div id="screen-container" class="flex-grow h-screen overflow-y-auto transition-all duration-300">
+        <div id="screen-container" class="h-screen overflow-y-auto">
             <!-- Loading Screen -->
             <div id="loading-screen" class="screen active flex-col justify-center items-center h-full bg-green-50 text-gray-800">
                 <svg class="animate-spin h-10 w-10 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -394,9 +408,20 @@
         // --- Sidebar Toggle Logic ---
         const sidebar = document.getElementById('sidebar');
         const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarToggleIcon = sidebarToggle.querySelector('i'); // Get the icon element
 
         sidebarToggle.addEventListener('click', () => {
             sidebar.classList.toggle('sidebar-collapsed');
+
+            // Change the icon based on the sidebar's state
+            if (sidebar.classList.contains('sidebar-collapsed')) {
+                sidebarToggleIcon.setAttribute('data-lucide', 'menu');
+            } else {
+                sidebarToggleIcon.setAttribute('data-lucide', 'x');
+            }
+
+            // Re-render icons
+            lucide.createIcons();
         });
 
         let currentUser = null;
