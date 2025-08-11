@@ -23,21 +23,35 @@
         .screen.active { display: flex; }
         body { font-family: 'Inter', sans-serif; } /* Using a common sans-serif font */
 
+        /* Sidebar Transitions */
+        #sidebar {
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #sidebar-title, .sidebar-text {
+            transition: opacity 0.2s ease-out, width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
         .sidebar-collapsed {
             width: 5.5rem; /* w-22 */
         }
+
         .sidebar-collapsed #sidebar-title {
             opacity: 0;
             width: 0;
         }
+
         .sidebar-collapsed .sidebar-text {
             opacity: 0;
             width: 0;
-            transition: opacity 0.1s, width 0.1s;
         }
+
         .sidebar-collapsed .nav-item {
             justify-content: center;
         }
+
         .sidebar-collapsed .nav-item .sidebar-text {
             margin-left: 0;
         }
@@ -128,7 +142,7 @@
             <!-- Create Profile Screen -->
             <div id="profile-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
                 <header class="bg-white p-4 shadow-md">
-                    <h2 class="text-2xl font-bold">Complete Your Profile</h2>
+                    <h2 id="profile-title" class="text-2xl font-bold">Your Profile</h2>
                 </header>
                 <main class="flex-1 p-6 overflow-y-auto">
                     <div class="text-center mb-6">
@@ -167,7 +181,11 @@
                         <button id="role-farmer-btn" class="role-btn flex-1 p-4 rounded-lg border-2 border-green-600 bg-green-600 text-white">Farmer</button>
                         <button id="role-worker-btn" class="role-btn flex-1 p-4 rounded-lg border-2 border-gray-300">Extension Worker</button>
                     </div>
-                    <button id="save-profile-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-8">Save and Continue</button>
+                    <div class="mt-8 space-y-4">
+                        <button id="edit-profile-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hidden">Edit Profile</button>
+                        <button id="save-profile-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md">Save and Continue</button>
+                        <button id="cancel-edit-btn" class="w-full bg-gray-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hidden">Cancel</button>
+                    </div>
                 </main>
             </div>
 
@@ -430,11 +448,62 @@
         }
 
         // --- 4. AUTHENTICATION LOGIC ---
+        const profileTitle = document.getElementById('profile-title');
+        const editProfileBtn = document.getElementById('edit-profile-btn');
+        const saveProfileBtn = document.getElementById('save-profile-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const profileFormElements = document.querySelectorAll('#profile-screen input, #profile-screen select, #profile-screen textarea, #profile-screen .role-btn');
+
+        function setProfileMode(mode) { // 'edit', 'view', 'new'
+            if (mode === 'view') {
+                profileTitle.textContent = 'Your Profile';
+                profileFormElements.forEach(el => el.disabled = true);
+                editProfileBtn.classList.remove('hidden');
+                saveProfileBtn.classList.add('hidden');
+                cancelEditBtn.classList.add('hidden');
+            } else if (mode === 'edit') {
+                profileTitle.textContent = 'Edit Profile';
+                profileFormElements.forEach(el => el.disabled = false);
+                saveProfileBtn.textContent = 'Save Changes';
+                editProfileBtn.classList.add('hidden');
+                saveProfileBtn.classList.remove('hidden');
+                cancelEditBtn.classList.remove('hidden');
+            } else { // new
+                profileTitle.textContent = 'Complete Your Profile';
+                profileFormElements.forEach(el => el.disabled = false);
+                saveProfileBtn.textContent = 'Save and Continue';
+                editProfileBtn.classList.add('hidden');
+                saveProfileBtn.classList.remove('hidden');
+                cancelEditBtn.classList.add('hidden');
+            }
+        }
+
+        function populateProfileFields(profile) {
+            document.getElementById('profile-pic').src = profile.photoURL || (currentUser && currentUser.photoURL) || 'https://placehold.co/96x96/e2e8f0/334155?text=User';
+            document.getElementById('fullName').value = profile.fullName || '';
+            document.getElementById('homeAddress').value = profile.homeAddress || '';
+            document.getElementById('birthdate').value = profile.birthdate || '';
+            document.getElementById('civilStatus').value = profile.civilStatus || 'Single';
+            document.getElementById('religion').value = profile.religion || '';
+            document.getElementById('yearsFarming').value = profile.yearsFarming || '';
+            document.getElementById('familyMembers').value = profile.familyMembers || '';
+            document.getElementById('education').value = profile.education || 'No formal education';
+
+            selectedRole = profile.role || 'Farmer';
+            document.querySelectorAll('.role-btn').forEach(btn => {
+                btn.classList.remove('bg-green-600', 'text-white');
+                btn.classList.add('border-gray-300');
+            });
+            if (selectedRole === 'Farmer') {
+                document.getElementById('role-farmer-btn').classList.add('bg-green-600', 'text-white');
+            } else {
+                document.getElementById('role-worker-btn').classList.add('bg-green-600', 'text-white');
+            }
+        }
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-
-                // On startup, trigger an online status check, which will also sync if needed.
                 updateOnlineStatus();
                 
                 const userDocRef = doc(db, "users", user.uid);
@@ -443,35 +512,30 @@
                 if (docSnap.exists()) {
                     userProfile = docSnap.data();
 
-                    // Check for profile completion
                     const requiredFields = ['fullName', 'homeAddress', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
-                    const isProfileComplete = requiredFields.every(field => userProfile[field]);
+                    const isProfileComplete = requiredFields.every(field => userProfile[field] !== undefined && userProfile[field] !== null && userProfile[field] !== '');
+
+                    populateProfileFields(userProfile);
 
                     if (isProfileComplete) {
+                        setProfileMode('view');
                         document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
                         loadFarms();
                         showScreen('farmList');
                         document.getElementById('add-farm-btn').style.display = 'flex';
                     } else {
-                        // Pre-fill profile screen
-                        document.getElementById('profile-pic').src = user.photoURL || 'https://placehold.co/96x96/e2e8f0/334155?text=User';
-                        document.getElementById('fullName').value = userProfile.fullName || user.displayName || '';
-                        document.getElementById('homeAddress').value = userProfile.homeAddress || '';
-                        document.getElementById('birthdate').value = userProfile.birthdate || '';
-                        document.getElementById('civilStatus').value = userProfile.civilStatus || 'Single';
-                        document.getElementById('religion').value = userProfile.religion || '';
-                        document.getElementById('yearsFarming').value = userProfile.yearsFarming || '';
-                        document.getElementById('familyMembers').value = userProfile.familyMembers || '';
-                        document.getElementById('education').value = userProfile.education || 'No formal education';
-
-                        showToast('Please complete your profile to continue.', 'error');
+                        setProfileMode('new');
+                        showToast('Please complete your profile to continue.', 'info');
                         showScreen('profile');
                         document.getElementById('add-farm-btn').style.display = 'none';
                     }
                 } else {
-                    // New user, show profile screen
-                    document.getElementById('profile-pic').src = user.photoURL || 'https://placehold.co/96x96/e2e8f0/334155?text=User';
-                    document.getElementById('fullName').value = user.displayName || '';
+                    userProfile = {};
+                    populateProfileFields({
+                        fullName: user.displayName,
+                        photoURL: user.photoURL
+                    });
+                    setProfileMode('new');
                     showScreen('profile');
                     document.getElementById('add-farm-btn').style.display = 'none';
                 }
@@ -502,8 +566,18 @@
         });
 
         // --- 5. PROFILE MANAGEMENT ---
+        editProfileBtn.addEventListener('click', () => {
+            setProfileMode('edit');
+        });
+
+        cancelEditBtn.addEventListener('click', () => {
+            populateProfileFields(userProfile); // Revert changes
+            setProfileMode('view');
+        });
+
         document.querySelectorAll('.role-btn').forEach(btn => {
             btn.addEventListener('click', () => {
+                if (btn.disabled) return;
                 document.querySelectorAll('.role-btn').forEach(b => {
                     b.classList.remove('bg-green-600', 'text-white');
                     b.classList.add('border-gray-300');
@@ -548,11 +622,20 @@
                 await setDoc(doc(db, "users", currentUser.uid), profileData, { merge: true });
 
                 showToast("Profile saved successfully!", "success");
-                userProfile = profileData; // Update local profile data
-                document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
-                loadFarms();
-                showScreen('farmList');
-                document.getElementById('add-farm-btn').style.display = 'flex';
+                userProfile = profileData;
+
+                const requiredFields = ['fullName', 'homeAddress', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
+                const isProfileComplete = requiredFields.every(field => profileData[field]);
+
+                if (isProfileComplete) {
+                    setProfileMode('view');
+                    document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                    loadFarms();
+                    showScreen('farmList');
+                    document.getElementById('add-farm-btn').style.display = 'flex';
+                } else {
+                    setProfileMode('new');
+                }
 
             } catch (error) {
                 console.error("Error saving profile:", error);
