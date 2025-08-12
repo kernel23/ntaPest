@@ -9,12 +9,12 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "https://placehold.co/192x192/22c55e/FFFFFF?text=AG",
+      "src": "/assets/icons/icon-192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "https://placehold.co/512x512/22c55e/FFFFFF?text=AG",
+      "src": "/assets/icons/icon-512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
