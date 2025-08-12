@@ -17,6 +17,10 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <!-- Leaflet CSS for mapping -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+
     <style>
         /* Simple transition for showing/hiding screens */
         .screen { display: none; }
@@ -68,6 +72,8 @@
         .sidebar-collapsed .nav-item .sidebar-text {
             margin-left: 0;
         }
+        #map { height: 400px; }
+        #report-map { height: 200px; margin-bottom: 1.5rem; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -150,6 +156,31 @@
                     </button>
                     <button id="guest-signin-btn" class="w-full text-gray-600 py-2">Continue as Guest</button>
                 </div>
+                <div class="mt-4 text-center text-xs text-gray-500">
+                    By signing in, you agree to our <a href="#" id="privacy-policy-link" class="underline hover:text-green-700">Privacy Policy</a>. All personal data is encrypted in transit.
+                </div>
+            </div>
+
+            <!-- Privacy Policy Screen -->
+            <div id="privacy-policy-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Privacy Policy</h2>
+                    <button id="close-privacy-policy-btn" class="p-2 rounded-full hover:bg-gray-100">
+                        <i data-lucide="x" class="w-6 h-6 text-gray-600"></i>
+                    </button>
+                </header>
+                <main class="flex-1 p-6 overflow-y-auto">
+                    <p class="mb-4"><strong>Last updated: August 11, 2025</strong></p>
+                    <p class="mb-4">This Privacy Policy describes Our policies and procedures on the collection, use and disclosure of Your information when You use the Service and tells You about Your privacy rights and how the law protects You.</p>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Interpretation and Definitions</h3>
+                    <p class="mb-4">The words of which the initial letter is capitalized have meanings defined under the following conditions. The following definitions shall have the same meaning regardless of whether they appear in singular or in plural.</p>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Collecting and Using Your Personal Data</h3>
+                    <p class="mb-4">While using Our Service, We may ask You to provide Us with certain personally identifiable information that can be used to contact or identify You. Personally identifiable information may include, but is not limited to: Email address, First name and last name, Phone number, Address, State, Province, ZIP/Postal code, City, Usage Data.</p>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Data Encryption</h3>
+                    <p class="mb-4">We are committed to ensuring that your information is secure. To prevent unauthorized access or disclosure, we have put in place suitable physical, electronic and managerial procedures to safeguard and secure the information we collect online. All personal data is encrypted in transit between your device and our servers using Secure Socket Layer (SSL) technology.</p>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Contact Us</h3>
+                    <p>If you have any questions about this Privacy Policy, You can contact us by email: privacy@agri-guard.com</p>
+                </main>
             </div>
 
             <!-- Create Profile Screen -->
@@ -163,8 +194,18 @@
                     </div>
                     <label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
                     <input type="text" id="fullName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-                    <label for="homeAddress" class="block text-sm font-medium text-gray-700 mt-4">Home Address</label>
-                    <textarea id="homeAddress" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"></textarea>
+
+                    <label for="province" class="block text-sm font-medium text-gray-700 mt-4">Province</label>
+                    <select id="province" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        <option>Loading provinces...</option>
+                    </select>
+
+                    <label for="municipality" class="block text-sm font-medium text-gray-700 mt-4">Municipality</label>
+                    <select id="municipality" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500" disabled></select>
+
+                    <label for="barangay" class="block text-sm font-medium text-gray-700 mt-4">Barangay</label>
+                    <select id="barangay" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500" disabled></select>
+
                     <label for="birthdate" class="block text-sm font-medium text-gray-700 mt-4">Birthdate</label>
                     <input type="date" id="birthdate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
                     <label for="civilStatus" class="block text-sm font-medium text-gray-700 mt-4">Civil Status</label>
@@ -189,6 +230,16 @@
                         <option>College</option>
                         <option>Post-graduate</option>
                     </select>
+                    <div class="mt-4">
+                        <label for="isFarmer" class="flex items-center">
+                            <input type="checkbox" id="isFarmer" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                            <span class="ml-2 text-sm font-medium text-gray-700">I am a farmer</span>
+                        </label>
+                    </div>
+                    <div id="rsbsa-container" class="hidden mt-4">
+                        <label for="rsbsaNumber" class="block text-sm font-medium text-gray-700">RSBSA Number (Optional)</label>
+                        <input type="text" id="rsbsaNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    </div>
                     <p class="mt-6 mb-2 font-medium text-gray-700">Select Your Role:</p>
                     <div class="flex gap-4">
                         <button id="role-farmer-btn" class="role-btn flex-1 p-4 rounded-lg border-2 border-green-600 bg-green-600 text-white">Farmer</button>
@@ -250,6 +301,9 @@
                     <h2 class="text-2xl font-bold">New Scouting Report</h2>
                 </header>
                 <main class="flex-1 p-6 overflow-y-auto">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Farm Location</label>
+                    <div id="report-map" class="w-full h-48 bg-gray-200 rounded-md shadow-inner"></div>
+
                     <label class="block text-sm font-medium text-gray-700 mb-2">Upload Image of Affected Plant</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                         <div class="space-y-1 text-center">
@@ -336,6 +390,21 @@
                 </main>
             </div>
 
+            <!-- Farm Setup Screen -->
+            <div id="farm-setup-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md">
+                    <h2 class="text-2xl font-bold">Map Your Farm Plot</h2>
+                </header>
+                <main class="flex-1 p-6">
+                    <p class="mb-4 text-gray-700">Please use the drawing tool on the map to outline the boundary of your farm plot. You can pan and zoom to find your location.</p>
+                    <div id="map" class="w-full h-96 bg-gray-200 rounded-md shadow-inner"></div>
+                    <div class="mt-6 text-right">
+                        <button id="cancel-farm-setup-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md mr-2">Cancel</button>
+                        <button id="save-farm-map-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md" disabled>Save Farm Area</button>
+                    </div>
+                </main>
+            </div>
+
         </div>
     </div>
 
@@ -351,10 +420,19 @@
                 <input type="text" id="farmName" placeholder="e.g., North Field" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
                 <label for="tobaccoVariety" class="block text-sm font-medium text-gray-700 mt-4">Tobacco Variety</label>
                 <input type="text" id="tobaccoVariety" placeholder="e.g., Virginia" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
-                <button id="save-farm-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Plot</button>
+                <label for="plantingDate" class="block text-sm font-medium text-gray-700 mt-4">Date of Planting</label>
+                <input type="date" id="plantingDate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                <button id="next-farm-map-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Next: Set Location</button>
             </div>
         </div>
     </div>
+
+    <!-- Address Data -->
+    <script src="address-provider.js"></script>
+
+    <!-- Leaflet JS for mapping -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
     <!-- Firebase SDKs -->
     <script type="module">
@@ -434,8 +512,22 @@
             reports: document.getElementById('reports-screen'),
             diagnosis: document.getElementById('diagnosis-screen'),
             treatment: document.getElementById('treatment-screen'),
-            onlineClinic: document.getElementById('online-clinic-screen')
+            onlineClinic: document.getElementById('online-clinic-screen'),
+            privacyPolicy: document.getElementById('privacy-policy-screen'),
+            farmSetup: document.getElementById('farm-setup-screen')
         };
+
+        // --- Privacy Policy Navigation ---
+        document.getElementById('privacy-policy-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            showScreen('privacyPolicy');
+        });
+
+        document.getElementById('close-privacy-policy-btn').addEventListener('click', () => {
+            // This should ideally return to the previous screen.
+            // For simplicity, we'll return to the login screen as the link is only there.
+            showScreen('login');
+        });
 
         // --- Sidebar Navigation ---
         document.getElementById('nav-farm-list').addEventListener('click', () => showScreen('farmList'));
@@ -529,6 +621,122 @@
             }, 3000);
         }
 
+        // --- MAP & FARM SETUP LOGIC ---
+        let map;
+        let reportMap;
+        let drawnItems;
+        let pendingFarmData = {};
+
+        async function initializeReportMap(farmId) {
+            if (!currentUser || !farmId) return;
+
+            try {
+                const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', farmId);
+                const farmDocSnap = await getDoc(farmDocRef);
+
+                if (farmDocSnap.exists()) {
+                    const farmData = farmDocSnap.data();
+                    const coordinates = farmData.polygonCoordinates;
+
+                    if (reportMap) {
+                        reportMap.remove();
+                    }
+
+                    reportMap = L.map('report-map', {
+                        scrollWheelZoom: false,
+                        dragging: false,
+                        zoomControl: false
+                    });
+
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Tiles &copy; Esri'
+                    }).addTo(reportMap);
+
+                    if (coordinates && coordinates.length > 0) {
+                        const latLngs = coordinates.map(c => [c.lat, c.lng]);
+                        const polygon = L.polygon(latLngs, {color: '#22c55e'}).addTo(reportMap);
+                        reportMap.fitBounds(polygon.getBounds());
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading farm data for report map:", error);
+            }
+        }
+
+        function initializeMap() {
+            // If map is already initialized, just reset its view
+            if (map) {
+                map.setView([12.8797, 121.7740], 5); // Reset to PH view
+                if(drawnItems) {
+                    drawnItems.clearLayers();
+                }
+                return;
+            }
+
+            // Initialize the map and set its view to the Philippines
+            map = L.map('map').setView([12.8797, 121.7740], 5);
+
+            // Add a satellite tile layer to the map
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            }).addTo(map);
+
+            // Initialize the FeatureGroup to store editable layers
+            drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+
+            // Initialize the draw control and pass it the FeatureGroup
+            const drawControl = new L.Control.Draw({
+                edit: {
+                    featureGroup: drawnItems,
+                    remove: true
+                },
+                draw: {
+                    polygon: {
+                        allowIntersection: false,
+                        drawError: {
+                            color: '#e1e100',
+                            message: '<strong>Oh snap!</strong> you can\'t draw that!'
+                        },
+                        shapeOptions: {
+                            color: '#22c55e'
+                        }
+                    },
+                    polyline: false,
+                    rectangle: false,
+                    circle: false,
+                    marker: false,
+                    circlemarker: false
+                }
+            });
+            map.addControl(drawControl);
+
+            map.on(L.Draw.Event.CREATED, function (event) {
+                const layer = event.layer;
+                drawnItems.clearLayers(); // Clear previous drawings
+                drawnItems.addLayer(layer);
+                document.getElementById('save-farm-map-btn').disabled = false;
+            });
+
+            map.on(L.Draw.Event.DELETED, function() {
+                if (drawnItems.getLayers().length === 0) {
+                    document.getElementById('save-farm-map-btn').disabled = true;
+                }
+            });
+
+             // Attempt to get user's location
+            map.locate({setView: true, maxZoom: 16});
+            map.on('locationfound', e => {
+                L.marker(e.latlng).addTo(map)
+                    .bindPopup("You are somewhere around here.").openPopup();
+            });
+            map.on('locationerror', e => {
+                console.log(e.message);
+                // Silently fails if location is not available. Map defaults to PH view.
+            });
+        }
+
+
         // --- 4. AUTHENTICATION LOGIC ---
         const profileTitle = document.getElementById('profile-title');
         const editProfileBtn = document.getElementById('edit-profile-btn');
@@ -560,10 +768,108 @@
             }
         }
 
+        // --- Address Dropdown Logic ---
+        const provinceSelect = document.getElementById('province');
+        const municipalitySelect = document.getElementById('municipality');
+        const barangaySelect = document.getElementById('barangay');
+
+        function populateProvinces() {
+            provinceSelect.innerHTML = '<option value="">Select Province</option>';
+            if (window.philippineAddresses && window.philippineAddresses.provinces) {
+                window.philippineAddresses.provinces.forEach(province => {
+                    const option = document.createElement('option');
+                    option.value = province.name;
+                    option.textContent = province.name;
+                    provinceSelect.appendChild(option);
+                });
+            } else {
+                provinceSelect.innerHTML = '<option value="">Failed to load addresses</option>';
+            }
+        }
+
+        provinceSelect.addEventListener('change', () => {
+            const selectedProvinceName = provinceSelect.value;
+            const selectedProvince = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
+            municipalitySelect.innerHTML = '<option value="">Select Municipality</option>';
+            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+            barangaySelect.disabled = true;
+
+            if (selectedProvince) {
+                municipalitySelect.disabled = false;
+                selectedProvince.municipalities.forEach(municipality => {
+                    const option = document.createElement('option');
+                    option.value = municipality.name;
+                    option.textContent = municipality.name;
+                    municipalitySelect.appendChild(option);
+                });
+            } else {
+                municipalitySelect.disabled = true;
+            }
+        });
+
+        municipalitySelect.addEventListener('change', () => {
+            const selectedProvinceName = provinceSelect.value;
+            const selectedMunicipalityName = municipalitySelect.value;
+            const selectedProvince = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
+            const selectedMunicipality = selectedProvince?.municipalities.find(m => m.name === selectedMunicipalityName);
+            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+
+            if (selectedMunicipality && selectedMunicipality.barangays) {
+                barangaySelect.disabled = false;
+                selectedMunicipality.barangays.forEach(barangay => {
+                    const option = document.createElement('option');
+                    option.value = barangay;
+                    option.textContent = barangay;
+                    barangaySelect.appendChild(option);
+                });
+            } else {
+                barangaySelect.disabled = true;
+            }
+        });
+
+        // --- RSBSA Logic ---
+        const isFarmerCheckbox = document.getElementById('isFarmer');
+        const rsbsaContainer = document.getElementById('rsbsa-container');
+        isFarmerCheckbox.addEventListener('change', () => {
+            rsbsaContainer.classList.toggle('hidden', !isFarmerCheckbox.checked);
+        });
+
         function populateProfileFields(profile) {
             document.getElementById('profile-pic').src = profile.photoURL || (currentUser && currentUser.photoURL) || 'https://placehold.co/96x96/e2e8f0/334155?text=User';
             document.getElementById('fullName').value = profile.fullName || '';
-            document.getElementById('homeAddress').value = profile.homeAddress || '';
+
+            // Populate address fields only if the data is ready
+            if (window.philippineAddresses && window.philippineAddresses.provinces.length > 0) {
+                if (profile.province) {
+                    provinceSelect.value = profile.province;
+                    provinceSelect.dispatchEvent(new Event('change'));
+
+                    setTimeout(() => {
+                        if (profile.municipality) {
+                            municipalitySelect.value = profile.municipality;
+                            municipalitySelect.dispatchEvent(new Event('change'));
+
+                            setTimeout(() => {
+                                 if (profile.barangay) {
+                                    barangaySelect.value = profile.barangay;
+                                }
+                            }, 100);
+                        }
+                    }, 100);
+                }
+            }
+
+            // RSBSA Number
+            if (profile.rsbsaNumber) {
+                isFarmerCheckbox.checked = true;
+                rsbsaContainer.classList.remove('hidden');
+                document.getElementById('rsbsaNumber').value = profile.rsbsaNumber;
+            } else {
+                isFarmerCheckbox.checked = false;
+                rsbsaContainer.classList.add('hidden');
+                document.getElementById('rsbsaNumber').value = '';
+            }
+
             document.getElementById('birthdate').value = profile.birthdate || '';
             document.getElementById('civilStatus').value = profile.civilStatus || 'Single';
             document.getElementById('religion').value = profile.religion || '';
@@ -587,6 +893,12 @@
             if (user) {
                 currentUser = user;
                 updateOnlineStatus();
+
+                // Wait for the address data to be ready
+                await window.addressDataPromise;
+
+                // Now that address data is loaded, populate the dropdowns
+                populateProvinces();
                 
                 const userDocRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(userDocRef);
@@ -594,9 +906,10 @@
                 if (docSnap.exists()) {
                     userProfile = docSnap.data();
 
-                    const requiredFields = ['fullName', 'homeAddress', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
+                    const requiredFields = ['fullName', 'province', 'municipality', 'barangay', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
                     const isProfileComplete = requiredFields.every(field => userProfile[field] !== undefined && userProfile[field] !== null && userProfile[field] !== '');
 
+                    // Populate all fields, including the now-ready address dropdowns
                     populateProfileFields(userProfile);
 
                     if (isProfileComplete) {
@@ -668,22 +981,27 @@
 
         document.getElementById('save-profile-btn').addEventListener('click', async () => {
             const fullName = document.getElementById('fullName').value;
-            const homeAddress = document.getElementById('homeAddress').value;
+            const province = document.getElementById('province').value;
+            const municipality = document.getElementById('municipality').value;
+            const barangay = document.getElementById('barangay').value;
             const birthdate = document.getElementById('birthdate').value;
             const civilStatus = document.getElementById('civilStatus').value;
             const religion = document.getElementById('religion').value;
             const yearsFarming = document.getElementById('yearsFarming').value;
             const familyMembers = document.getElementById('familyMembers').value;
             const education = document.getElementById('education').value;
+            const rsbsaNumber = document.getElementById('rsbsaNumber').value;
 
-            if (!fullName.trim() || !homeAddress.trim() || !birthdate.trim() || !civilStatus.trim() || !religion.trim() || !yearsFarming.trim() || !familyMembers.trim() || !education.trim()) {
+            if (!fullName.trim() || !province.trim() || !municipality.trim() || !barangay.trim() || !birthdate.trim() || !civilStatus.trim() || !religion.trim() || !yearsFarming.trim() || !familyMembers.trim() || !education.trim()) {
                 showToast('Please fill out all fields.', 'error');
                 return;
             }
             
             const profileData = {
                 fullName: fullName.trim(),
-                homeAddress: homeAddress.trim(),
+                province: province,
+                municipality: municipality,
+                barangay: barangay,
                 birthdate: birthdate,
                 civilStatus: civilStatus,
                 religion: religion.trim(),
@@ -693,6 +1011,7 @@
                 role: selectedRole,
                 email: currentUser.email || '',
                 photoURL: currentUser.photoURL || '',
+                rsbsaNumber: rsbsaNumber.trim()
             };
 
             try {
@@ -743,12 +1062,86 @@
             }
         });
 
-        // --- 6. FARM MANAGEMENT ---
+        // --- 6. FARM MANAGEMENT & SETUP FLOW ---
         const farmModal = document.getElementById('farm-modal');
         document.getElementById('add-farm-btn').addEventListener('click', () => farmModal.style.display = 'flex');
         document.getElementById('close-farm-modal-btn').addEventListener('click', () => farmModal.style.display = 'none');
-        //--document.getElementById('back-to-farm-list-btn').addEventListener('click', () => showScreen('farmList'));--
-        document.getElementById('back-to-dashboard-btn').addEventListener('click', () => showScreen('dashboard'));
+        document.getElementById('back-to-dashboard-btn').addEventListener('click', () => showScreen('farmList'));
+
+        // --- New Farm Flow ---
+        document.getElementById('next-farm-map-btn').addEventListener('click', () => {
+            const farmName = document.getElementById('farmName').value.trim();
+            const tobaccoVariety = document.getElementById('tobaccoVariety').value.trim();
+            const plantingDate = document.getElementById('plantingDate').value;
+
+            if (!farmName || !tobaccoVariety || !plantingDate) {
+                showToast('Please fill out all farm details.', 'error');
+                return;
+            }
+
+            pendingFarmData = {
+                farmName,
+                tobaccoVariety,
+                plantingDate
+            };
+
+            farmModal.style.display = 'none';
+            showScreen('farmSetup');
+            // Invalidate map size and re-center, needed when map is in a hidden div
+            setTimeout(() => {
+                initializeMap();
+            }, 100);
+        });
+
+        document.getElementById('cancel-farm-setup-btn').addEventListener('click', () => {
+            pendingFarmData = {};
+            drawnItems.clearLayers();
+            document.getElementById('save-farm-map-btn').disabled = true;
+            showScreen('farmList'); // Go back to the farm list
+        });
+
+        document.getElementById('save-farm-map-btn').addEventListener('click', async () => {
+            if (drawnItems.getLayers().length === 0) {
+                showToast('Please draw the farm area on the map first.', 'error');
+                return;
+            }
+
+            // Extract polygon data
+            const geojson = drawnItems.getLayers()[0].toGeoJSON();
+            const coordinates = geojson.geometry.coordinates[0].map(p => ({ lat: p[1], lng: p[0] }));
+
+            const farmData = {
+                ...pendingFarmData,
+                polygonCoordinates: coordinates,
+                createdAt: serverTimestamp()
+            };
+
+            if (!currentUser) {
+                showToast('Error: No user logged in.', 'error');
+                return;
+            }
+
+            try {
+                // Save to a 'farmLots' subcollection
+                const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+                await addDoc(farmLotsCollection, farmData);
+
+                showToast('Farm plot saved successfully!', 'success');
+
+                // Reset state
+                pendingFarmData = {};
+                drawnItems.clearLayers();
+                document.getElementById('save-farm-map-btn').disabled = true;
+                document.getElementById('farmName').value = '';
+                document.getElementById('tobaccoVariety').value = '';
+                document.getElementById('plantingDate').value = '';
+
+                showScreen('farmList'); // Go back to the farm list to see the new entry
+            } catch (error) {
+                console.error("Error saving farm plot:", error);
+                showToast('Could not save farm plot. Please try again.', 'error');
+            }
+        });
         
         // --- 8. NEW SUBMISSION LOGIC ---
         const imageUploadInput = document.getElementById('image-upload');
@@ -825,6 +1218,10 @@
 
         document.getElementById('new-submission-btn').addEventListener('click', () => {
             showScreen('newSubmission');
+            // Invalidate map size and load data, needed when map is in a hidden div
+            setTimeout(() => {
+                initializeReportMap(currentFarmId);
+            }, 100);
         });
 
         async function loadSubmissions(farmId) {
@@ -866,53 +1263,10 @@
             lucide.createIcons();
         }
 
-        document.getElementById('save-farm-btn').addEventListener('click', async () => {
-            const farmNameInput = document.getElementById('farmName');
-            const tobaccoVarietyInput = document.getElementById('tobaccoVariety');
-            const farmName = farmNameInput.value.trim();
-            const tobaccoVariety = tobaccoVarietyInput.value.trim();
-
-            if (!farmName || !tobaccoVariety) {
-                showToast('Please fill out all fields.', 'error');
-                return;
-            }
-
-            farmModal.style.display = 'none';
-            farmNameInput.value = '';
-            tobaccoVarietyInput.value = '';
-            
-            const farmData = {
-                farmName: farmName,
-                tobaccoVariety: tobaccoVariety,
-            };
-
-            if (navigator.onLine) {
-                farmData.createdAt = serverTimestamp();
-                try {
-                    const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
-                    await addDoc(farmsCollection, farmData);
-                } catch (error) {
-                    console.error("Firestore save failed, saving to outbox:", error);
-                    farmData.createdAt = new Date();
-                    const idb = await dbPromise;
-                    await idb.add('outbox', farmData);
-                }
-            } else {
-                farmData.createdAt = new Date();
-                try {
-                    const idb = await dbPromise;
-                    await idb.add('outbox', farmData);
-                } catch (error) {
-                    console.error("Outbox save failed:", error);
-                    showToast('Could not save farm locally.', 'error');
-                }
-            }
-            updateOnlineStatus();
-        });
-
         function loadFarms() {
-            const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
-            onSnapshot(farmsCollection, (querySnapshot) => {
+            if (!currentUser) return;
+            const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+            onSnapshot(farmLotsCollection, (querySnapshot) => {
                 const farmListContainer = document.getElementById('farm-list-container');
                 farmListContainer.innerHTML = ''; // Clear existing list
                 
@@ -921,7 +1275,7 @@
                         <div class="text-center text-gray-500 mt-20">
                             <i data-lucide="map-pin" class="w-12 h-12 mx-auto text-gray-400"></i>
                             <p class="mt-4">No farm plots found.</p>
-                            <p>Add your first plot to start monitoring.</p>
+                            <p>Click the '+' button to add your first plot and map its location.</p>
                         </div>`;
                 } else {
                     querySnapshot.forEach((doc) => {
@@ -930,9 +1284,13 @@
                         const farmCard = document.createElement('div');
                         farmCard.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md';
                         farmCard.setAttribute('data-id', farmId);
+
+                        const plantingDate = farm.plantingDate ? new Date(farm.plantingDate).toLocaleDateString() : 'N/A';
+
                         farmCard.innerHTML = `
                             <p class="text-xl font-bold text-gray-800">${farm.farmName}</p>
-                            <p class="text-md text-gray-600">${farm.tobaccoVariety || 'N/A'}</p>
+                            <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
+                            <p class="text-sm text-gray-500">Planted on: ${plantingDate}</p>
                         `;
 
                         farmCard.addEventListener('click', () => {
@@ -950,32 +1308,7 @@
             });
         }
         
-        async function syncOutbox() {
-            if (!navigator.onLine || !currentUser) return;
-
-            const db = await dbPromise;
-            const allItems = await db.getAll('outbox');
-            if (allItems.length === 0) return;
-
-            const connectionStatusEl = document.getElementById('connection-status');
-            connectionStatusEl.textContent = `Syncing ${allItems.length} item(s)...`;
-            connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-yellow-100 text-yellow-800';
-
-            const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
-            
-            try {
-                await Promise.all(allItems.map(item => addDoc(farmsCollection, item)));
-                await db.clear('outbox');
-                connectionStatusEl.textContent = 'Sync Complete';
-                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-green-100 text-green-800';
-            } catch (error) {
-                console.error('Error syncing outbox:', error);
-                connectionStatusEl.textContent = 'Sync Failed';
-                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-red-100 text-red-800';
-            } finally {
-                setTimeout(updateOnlineStatus, 2000);
-            }
-        }
+        // Removed old syncOutbox function as it's now obsolete with the new online-only farm setup flow.
 
         async function syncSubmissionOutbox() {
             if (!navigator.onLine || !currentUser) return;
