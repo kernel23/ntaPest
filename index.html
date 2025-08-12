@@ -321,6 +321,12 @@
                                 <p class="pl-1">or drag and drop</p>
                             </div>
                             <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                             <div class="mt-4">
+                                <button id="open-camera-btn" type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    <i data-lucide="camera" class="mr-2 h-5 w-5"></i>
+                                    Capture with Camera
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -352,6 +358,34 @@
                     
                     <button id="save-submission-btn" class="mt-8 w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md">Save Submission</button>
                 </main>
+            </div>
+
+            <!-- Camera Screen -->
+            <div id="camera-screen" class="screen flex-col h-screen bg-black text-white">
+                <header class="bg-gray-900 p-4 flex justify-between items-center z-20">
+                    <button id="back-to-submission-btn" class="p-2 rounded-full hover:bg-gray-700">
+                        <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                    </button>
+                    <h2 class="text-xl font-bold">Capture Media</h2>
+                    <div class="w-10"></div> <!-- Spacer -->
+                </header>
+                <main class="flex-1 relative flex justify-center items-center">
+                    <video id="camera-feed" class="w-full h-full object-cover" autoplay playsinline></video>
+                    <div id="camera-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="w-11/12 h-2/3 border-4 border-dashed border-white rounded-lg" style="border-color: rgba(255, 255, 255, 0.7);">
+                            <p class="text-white text-center mt-4">Place affected leaf inside this box</p>
+                        </div>
+                    </div>
+                    <canvas id="photo-canvas" class="hidden"></canvas>
+                </main>
+                <footer class="bg-gray-900 p-4 flex justify-around items-center z-20">
+                    <button id="capture-photo-btn" class="p-4 bg-white rounded-full focus:outline-none">
+                        <i data-lucide="camera" class="w-8 h-8 text-gray-900"></i>
+                    </button>
+                    <button id="record-video-btn" class="p-4 bg-red-600 rounded-full focus:outline-none">
+                        <i data-lucide="video" class="w-8 h-8 text-white"></i>
+                    </button>
+                </footer>
             </div>
 
             <!-- Reports Screen -->
@@ -515,6 +549,7 @@
             farmList: document.getElementById('farm-list-screen'),
             dashboard: document.getElementById('dashboard-screen'),
             newSubmission: document.getElementById('new-submission-screen'),
+            camera: document.getElementById('camera-screen'),
             reports: document.getElementById('reports-screen'),
             diagnosis: document.getElementById('diagnosis-screen'),
             treatment: document.getElementById('treatment-screen'),
@@ -533,6 +568,15 @@
             // This should ideally return to the previous screen.
             // For simplicity, we'll return to the login screen as the link is only there.
             showScreen('login');
+        });
+
+        // --- Camera Navigation ---
+        document.getElementById('open-camera-btn').addEventListener('click', () => {
+            showScreen('camera');
+        });
+
+        document.getElementById('back-to-submission-btn').addEventListener('click', () => {
+            showScreen('newSubmission');
         });
 
         // --- Sidebar Navigation ---
@@ -574,9 +618,14 @@
 
         // Function to switch between screens
         function showScreen(screenName) {
+            // Stop camera if navigating away from it
+            if (mediaStream && screenName !== 'camera') {
+                stopCamera();
+            }
+
             const sidebar = document.getElementById('sidebar');
             const screenContainer = document.getElementById('screen-container');
-            const noSidebarScreens = ['loading', 'login'];
+            const noSidebarScreens = ['loading', 'login', 'camera'];
 
             if (noSidebarScreens.includes(screenName)) {
                 sidebar.classList.add('hidden');
@@ -598,6 +647,12 @@
             if (screens[screenName]) {
                 screens[screenName].classList.add('active');
             }
+
+            // Start camera if navigating to it
+            if (screenName === 'camera') {
+                startCamera();
+            }
+
             lucide.createIcons();
         }
 
@@ -626,6 +681,73 @@
                 toast.classList.add('opacity-0');
             }, 3000);
         }
+
+        // --- CAMERA LOGIC ---
+        const cameraFeed = document.getElementById('camera-feed');
+        const photoCanvas = document.getElementById('photo-canvas');
+        const capturePhotoBtn = document.getElementById('capture-photo-btn');
+        const recordVideoBtn = document.getElementById('record-video-btn');
+        let mediaStream = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+
+        async function startCamera() {
+            try {
+                if (!('mediaDevices' in navigator) || !('getUserMedia' in navigator.mediaDevices)) {
+                    throw new Error('Camera API is not available in this browser.');
+                }
+
+                const constraints = {
+                    video: {
+                        facingMode: 'environment', // Prioritize back camera
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                };
+
+                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraFeed.srcObject = mediaStream;
+                cameraFeed.play();
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                showToast(`Could not access camera: ${error.message}`, 'error');
+                // Fallback or show an error message
+                showScreen('newSubmission');
+            }
+        }
+
+        function stopCamera() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+        }
+
+        capturePhotoBtn.addEventListener('click', () => {
+            const context = photoCanvas.getContext('2d');
+            photoCanvas.width = cameraFeed.videoWidth;
+            photoCanvas.height = cameraFeed.videoHeight;
+            context.drawImage(cameraFeed, 0, 0, photoCanvas.width, photoCanvas.height);
+
+            const imageDataUrl = photoCanvas.toDataURL('image/jpeg', 0.9); // 90% quality
+
+            // Set the captured image on the submission form
+            const imagePreview = document.getElementById('submission-image-preview');
+            const imagePlaceholder = document.getElementById('image-placeholder-icon');
+            imagePreview.src = imageDataUrl;
+            imagePreview.classList.remove('hidden');
+            imagePlaceholder.classList.add('hidden');
+
+            // Stop the camera and go back to the form
+            stopCamera();
+            showScreen('newSubmission');
+        });
+
+        recordVideoBtn.addEventListener('click', () => {
+            // Placeholder for video recording functionality
+            showToast('Video recording is not yet implemented.', 'info');
+        });
+
 
         // --- MAP & FARM SETUP LOGIC ---
         let map;
