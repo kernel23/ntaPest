@@ -521,6 +521,13 @@
         }
         
         // --- 3. UI & STATE MANAGEMENT ---
+        let activeListeners = [];
+        function detachAllListeners() {
+            console.log(`Detaching ${activeListeners.length} active listeners.`);
+            activeListeners.forEach(unsubscribe => unsubscribe());
+            activeListeners = [];
+        }
+
         const screens = {
             loading: document.getElementById('loading-screen'),
             login: document.getElementById('login-screen'),
@@ -575,6 +582,8 @@
 
         // Function to switch between screens
         function showScreen(screenName) {
+            detachAllListeners(); // Clean up listeners from the previous screen
+
             // Stop camera if navigating away from it
             if (mediaStream && screenName !== 'camera') {
                 stopCamera();
@@ -582,16 +591,14 @@
 
             const sidebar = document.getElementById('sidebar');
             const screenContainer = document.getElementById('screen-container');
-
-            const noSidebarScreens = ['loading', 'login', 'camera','privacyPolicy'];
-
+            const noSidebarScreens = ['loading', 'login', 'camera', 'privacyPolicy'];
 
             if (noSidebarScreens.includes(screenName)) {
                 sidebar.classList.add('hidden');
-                screenContainer.classList.remove('with-sidebar'); // Use new class
+                screenContainer.classList.remove('with-sidebar');
             } else {
                 sidebar.classList.remove('hidden');
-                screenContainer.classList.add('with-sidebar'); // Use new class
+                screenContainer.classList.add('with-sidebar');
             }
 
             Object.values(screens).forEach(screen => screen.classList.remove('active'));
@@ -599,14 +606,17 @@
                 screens[screenName].classList.add('active');
             }
 
-            // Start camera if navigating to it
-            if (screenName === 'camera') {
-                startCamera();
-            }
-
-            // Load reports if navigating to the reports screen
-            if (screenName === 'reports') {
-                loadAllReports();
+            // Attach listeners and load data for the new screen
+            switch (screenName) {
+                case 'farmList':
+                    loadFarms();
+                    break;
+                case 'reports':
+                    loadAllReports();
+                    break;
+                case 'camera':
+                    startCamera();
+                    break;
             }
 
             lucide.createIcons();
@@ -1038,7 +1048,6 @@
                     if (isProfileComplete) {
                         setProfileMode('view');
                         document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
-                        loadFarms();
                         showScreen('farmList');
                         document.getElementById('add-farm-btn').style.display = 'flex';
                     } else {
@@ -1554,6 +1563,7 @@
                 }
                 lucide.createIcons();
             });
+            activeListeners.push(unsubscribe);
         }
 
         async function loadAllReports() {
@@ -1634,7 +1644,7 @@
         function loadFarms() {
             if (!currentUser) return;
             const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
-            onSnapshot(farmLotsCollection, (querySnapshot) => {
+            const unsubscribe = onSnapshot(farmLotsCollection, (querySnapshot) => {
                 const farmListContainer = document.getElementById('farm-list-container');
                 farmListContainer.innerHTML = ''; // Clear existing list
                 
