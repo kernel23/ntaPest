@@ -57,7 +57,7 @@
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-md opacity-0 transition-opacity duration-300 z-50">
+    <div id="toast" class="fixed bottom-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-md opacity-0 transition-opacity duration-300" style="z-index: 10001;">
         <p id="toast-message"></p>
     </div>
 
@@ -1285,7 +1285,7 @@
                 try {
                     const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
                     await deleteDoc(farmDocRef);
-                    showToast('The farm plot has been successfully deleted.', 'success');
+                    showToast('Deletion Successful: The farm plot has been removed.', 'success');
                     currentFarmId = null;
                     showScreen('farmList');
                 } catch (error) {
@@ -1324,13 +1324,13 @@
                     farmData.updatedAt = serverTimestamp();
                     const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
                     await updateDoc(farmDocRef, farmData);
-                    showToast('The farm plot details have been successfully updated.', 'success');
+                    showToast('Update Successful: The farm plot details have been saved.', 'success');
                 } else {
                     // Create new document
                     farmData.createdAt = serverTimestamp();
                     const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
                     await addDoc(farmLotsCollection, farmData);
-                    showToast('A new farm plot has been successfully created.', 'success');
+                    showToast('Creation Successful: A new farm plot has been added.', 'success');
                 }
 
                 // Reset state
@@ -1400,7 +1400,7 @@
                     submissionData.updatedAt = serverTimestamp();
                     const submissionDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions', currentSubmissionId);
                     await updateDoc(submissionDocRef, submissionData);
-                    showToast('The report has been successfully updated.', 'success');
+                    showToast('Report Updated: Your report has been successfully updated.', 'success');
                 } else {
                     // Create new submission
                     submissionData.timestamp = serverTimestamp();
@@ -1408,7 +1408,7 @@
                     submissionData.gps_coordinates = { latitude: 17.5734, longitude: 120.3856 };
                     const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions');
                     await addDoc(submissionsCollection, submissionData);
-                    showToast('A new report has been successfully submitted.', 'success');
+                    showToast('Report Submitted: Your new report has been saved.', 'success');
                 }
 
                 // Reset state and form
