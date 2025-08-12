@@ -1257,7 +1257,7 @@
                 try {
                     const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
                     await deleteDoc(farmDocRef);
-                    showToast('Farm plot deleted successfully!', 'success');
+                    showToast('The farm plot has been successfully deleted.', 'success');
                     currentFarmId = null;
                     showScreen('farmList');
                 } catch (error) {
@@ -1293,13 +1293,13 @@
                     farmData.updatedAt = serverTimestamp();
                     const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
                     await updateDoc(farmDocRef, farmData);
-                    showToast('Farm plot updated successfully!', 'success');
+                    showToast('The farm plot details have been successfully updated.', 'success');
                 } else {
                     // Create new document
                     farmData.createdAt = serverTimestamp();
                     const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
                     await addDoc(farmLotsCollection, farmData);
-                    showToast('Farm plot saved successfully!', 'success');
+                    showToast('A new farm plot has been successfully created.', 'success');
                 }
 
                 // Reset state
@@ -1365,7 +1365,7 @@
                     submissionData.updatedAt = serverTimestamp();
                     const submissionDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions', currentSubmissionId);
                     await updateDoc(submissionDocRef, submissionData);
-                    showToast('Report updated successfully!', 'success');
+                    showToast('The report has been successfully updated.', 'success');
                 } else {
                     // Create new submission
                     submissionData.timestamp = serverTimestamp();
@@ -1373,7 +1373,7 @@
                     submissionData.gps_coordinates = { latitude: 17.5734, longitude: 120.3856 };
                     const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions');
                     await addDoc(submissionsCollection, submissionData);
-                    showToast('Report saved successfully!', 'success');
+                    showToast('A new report has been successfully submitted.', 'success');
                 }
 
                 // Reset state and form
