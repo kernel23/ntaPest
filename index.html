@@ -17,6 +17,10 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <!-- Leaflet CSS for mapping -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+
     <style>
         /* Simple transition for showing/hiding screens */
         .screen { display: none; }
@@ -68,6 +72,7 @@
         .sidebar-collapsed .nav-item .sidebar-text {
             margin-left: 0;
         }
+        #map { height: 400px; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -381,6 +386,21 @@
                 </main>
             </div>
 
+            <!-- Farm Setup Screen -->
+            <div id="farm-setup-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md">
+                    <h2 class="text-2xl font-bold">Map Your Farm Plot</h2>
+                </header>
+                <main class="flex-1 p-6">
+                    <p class="mb-4 text-gray-700">Please use the drawing tool on the map to outline the boundary of your farm plot. You can pan and zoom to find your location.</p>
+                    <div id="map" class="w-full h-96 bg-gray-200 rounded-md shadow-inner"></div>
+                    <div class="mt-6 text-right">
+                        <button id="cancel-farm-setup-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md mr-2">Cancel</button>
+                        <button id="save-farm-map-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md" disabled>Save Farm Area</button>
+                    </div>
+                </main>
+            </div>
+
         </div>
     </div>
 
@@ -396,13 +416,20 @@
                 <input type="text" id="farmName" placeholder="e.g., North Field" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
                 <label for="tobaccoVariety" class="block text-sm font-medium text-gray-700 mt-4">Tobacco Variety</label>
                 <input type="text" id="tobaccoVariety" placeholder="e.g., Virginia" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
-                <button id="save-farm-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Plot</button>
+                <label for="plantingDate" class="block text-sm font-medium text-gray-700 mt-4">Date of Planting</label>
+                <input type="date" id="plantingDate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                <button id="next-farm-map-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Next: Set Location</button>
             </div>
         </div>
     </div>
 
     <!-- Address Data -->
     <script src="address-provider.js"></script>
+
+
+    <!-- Leaflet JS for mapping -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
     <!-- Firebase SDKs -->
     <script type="module">
@@ -483,7 +510,9 @@
             diagnosis: document.getElementById('diagnosis-screen'),
             treatment: document.getElementById('treatment-screen'),
             onlineClinic: document.getElementById('online-clinic-screen'),
-            privacyPolicy: document.getElementById('privacy-policy-screen')
+
+            privacyPolicy: document.getElementById('privacy-policy-screen'),
+            farmSetup: document.getElementById('farm-setup-screen')
         };
 
         // --- Privacy Policy Navigation ---
@@ -589,6 +618,85 @@
                 toast.classList.add('opacity-0');
             }, 3000);
         }
+
+        // --- MAP & FARM SETUP LOGIC ---
+        let map;
+        let drawnItems;
+        let pendingFarmData = {};
+
+        function initializeMap() {
+            // If map is already initialized, just reset its view
+            if (map) {
+                map.setView([12.8797, 121.7740], 5); // Reset to PH view
+                if(drawnItems) {
+                    drawnItems.clearLayers();
+                }
+                return;
+            }
+
+            // Initialize the map and set its view to the Philippines
+            map = L.map('map').setView([12.8797, 121.7740], 5);
+
+            // Add a tile layer to the map (e.g., OpenStreetMap)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Initialize the FeatureGroup to store editable layers
+            drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+
+            // Initialize the draw control and pass it the FeatureGroup
+            const drawControl = new L.Control.Draw({
+                edit: {
+                    featureGroup: drawnItems,
+                    remove: true
+                },
+                draw: {
+                    polygon: {
+                        allowIntersection: false,
+                        drawError: {
+                            color: '#e1e100',
+                            message: '<strong>Oh snap!</strong> you can\'t draw that!'
+                        },
+                        shapeOptions: {
+                            color: '#22c55e'
+                        }
+                    },
+                    polyline: false,
+                    rectangle: false,
+                    circle: false,
+                    marker: false,
+                    circlemarker: false
+                }
+            });
+            map.addControl(drawControl);
+
+            map.on(L.Draw.Event.CREATED, function (event) {
+                const layer = event.layer;
+                drawnItems.clearLayers(); // Clear previous drawings
+                drawnItems.addLayer(layer);
+                document.getElementById('save-farm-map-btn').disabled = false;
+            });
+
+            map.on(L.Draw.Event.DELETED, function() {
+                if (drawnItems.getLayers().length === 0) {
+                    document.getElementById('save-farm-map-btn').disabled = true;
+                }
+            });
+
+             // Attempt to get user's location
+            map.locate({setView: true, maxZoom: 16});
+            map.on('locationfound', e => {
+                L.marker(e.latlng).addTo(map)
+                    .bindPopup("You are somewhere around here.").openPopup();
+            });
+            map.on('locationerror', e => {
+                console.log(e.message);
+                // Silently fails if location is not available. Map defaults to PH view.
+            });
+        }
+
 
         // --- 4. AUTHENTICATION LOGIC ---
         const profileTitle = document.getElementById('profile-title');
@@ -915,12 +1023,86 @@
             }
         });
 
-        // --- 6. FARM MANAGEMENT ---
+        // --- 6. FARM MANAGEMENT & SETUP FLOW ---
         const farmModal = document.getElementById('farm-modal');
         document.getElementById('add-farm-btn').addEventListener('click', () => farmModal.style.display = 'flex');
         document.getElementById('close-farm-modal-btn').addEventListener('click', () => farmModal.style.display = 'none');
-        //--document.getElementById('back-to-farm-list-btn').addEventListener('click', () => showScreen('farmList'));--
-        document.getElementById('back-to-dashboard-btn').addEventListener('click', () => showScreen('dashboard'));
+        document.getElementById('back-to-dashboard-btn').addEventListener('click', () => showScreen('farmList'));
+
+        // --- New Farm Flow ---
+        document.getElementById('next-farm-map-btn').addEventListener('click', () => {
+            const farmName = document.getElementById('farmName').value.trim();
+            const tobaccoVariety = document.getElementById('tobaccoVariety').value.trim();
+            const plantingDate = document.getElementById('plantingDate').value;
+
+            if (!farmName || !tobaccoVariety || !plantingDate) {
+                showToast('Please fill out all farm details.', 'error');
+                return;
+            }
+
+            pendingFarmData = {
+                farmName,
+                tobaccoVariety,
+                plantingDate
+            };
+
+            farmModal.style.display = 'none';
+            showScreen('farmSetup');
+            // Invalidate map size and re-center, needed when map is in a hidden div
+            setTimeout(() => {
+                initializeMap();
+            }, 100);
+        });
+
+        document.getElementById('cancel-farm-setup-btn').addEventListener('click', () => {
+            pendingFarmData = {};
+            drawnItems.clearLayers();
+            document.getElementById('save-farm-map-btn').disabled = true;
+            showScreen('farmList'); // Go back to the farm list
+        });
+
+        document.getElementById('save-farm-map-btn').addEventListener('click', async () => {
+            if (drawnItems.getLayers().length === 0) {
+                showToast('Please draw the farm area on the map first.', 'error');
+                return;
+            }
+
+            // Extract polygon data
+            const geojson = drawnItems.getLayers()[0].toGeoJSON();
+            const coordinates = geojson.geometry.coordinates[0].map(p => ({ lat: p[1], lng: p[0] }));
+
+            const farmData = {
+                ...pendingFarmData,
+                polygonCoordinates: coordinates,
+                createdAt: serverTimestamp()
+            };
+
+            if (!currentUser) {
+                showToast('Error: No user logged in.', 'error');
+                return;
+            }
+
+            try {
+                // Save to a 'farmLots' subcollection
+                const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+                await addDoc(farmLotsCollection, farmData);
+
+                showToast('Farm plot saved successfully!', 'success');
+
+                // Reset state
+                pendingFarmData = {};
+                drawnItems.clearLayers();
+                document.getElementById('save-farm-map-btn').disabled = true;
+                document.getElementById('farmName').value = '';
+                document.getElementById('tobaccoVariety').value = '';
+                document.getElementById('plantingDate').value = '';
+
+                showScreen('farmList'); // Go back to the farm list to see the new entry
+            } catch (error) {
+                console.error("Error saving farm plot:", error);
+                showToast('Could not save farm plot. Please try again.', 'error');
+            }
+        });
         
         // --- 8. NEW SUBMISSION LOGIC ---
         const imageUploadInput = document.getElementById('image-upload');
@@ -1038,53 +1220,10 @@
             lucide.createIcons();
         }
 
-        document.getElementById('save-farm-btn').addEventListener('click', async () => {
-            const farmNameInput = document.getElementById('farmName');
-            const tobaccoVarietyInput = document.getElementById('tobaccoVariety');
-            const farmName = farmNameInput.value.trim();
-            const tobaccoVariety = tobaccoVarietyInput.value.trim();
-
-            if (!farmName || !tobaccoVariety) {
-                showToast('Please fill out all fields.', 'error');
-                return;
-            }
-
-            farmModal.style.display = 'none';
-            farmNameInput.value = '';
-            tobaccoVarietyInput.value = '';
-            
-            const farmData = {
-                farmName: farmName,
-                tobaccoVariety: tobaccoVariety,
-            };
-
-            if (navigator.onLine) {
-                farmData.createdAt = serverTimestamp();
-                try {
-                    const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
-                    await addDoc(farmsCollection, farmData);
-                } catch (error) {
-                    console.error("Firestore save failed, saving to outbox:", error);
-                    farmData.createdAt = new Date();
-                    const idb = await dbPromise;
-                    await idb.add('outbox', farmData);
-                }
-            } else {
-                farmData.createdAt = new Date();
-                try {
-                    const idb = await dbPromise;
-                    await idb.add('outbox', farmData);
-                } catch (error) {
-                    console.error("Outbox save failed:", error);
-                    showToast('Could not save farm locally.', 'error');
-                }
-            }
-            updateOnlineStatus();
-        });
-
         function loadFarms() {
-            const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
-            onSnapshot(farmsCollection, (querySnapshot) => {
+            if (!currentUser) return;
+            const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+            onSnapshot(farmLotsCollection, (querySnapshot) => {
                 const farmListContainer = document.getElementById('farm-list-container');
                 farmListContainer.innerHTML = ''; // Clear existing list
                 
@@ -1093,7 +1232,7 @@
                         <div class="text-center text-gray-500 mt-20">
                             <i data-lucide="map-pin" class="w-12 h-12 mx-auto text-gray-400"></i>
                             <p class="mt-4">No farm plots found.</p>
-                            <p>Add your first plot to start monitoring.</p>
+                            <p>Click the '+' button to add your first plot and map its location.</p>
                         </div>`;
                 } else {
                     querySnapshot.forEach((doc) => {
@@ -1102,9 +1241,13 @@
                         const farmCard = document.createElement('div');
                         farmCard.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md';
                         farmCard.setAttribute('data-id', farmId);
+
+                        const plantingDate = farm.plantingDate ? new Date(farm.plantingDate).toLocaleDateString() : 'N/A';
+
                         farmCard.innerHTML = `
                             <p class="text-xl font-bold text-gray-800">${farm.farmName}</p>
-                            <p class="text-md text-gray-600">${farm.tobaccoVariety || 'N/A'}</p>
+                            <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
+                            <p class="text-sm text-gray-500">Planted on: ${plantingDate}</p>
                         `;
 
                         farmCard.addEventListener('click', () => {
@@ -1122,32 +1265,7 @@
             });
         }
         
-        async function syncOutbox() {
-            if (!navigator.onLine || !currentUser) return;
-
-            const db = await dbPromise;
-            const allItems = await db.getAll('outbox');
-            if (allItems.length === 0) return;
-
-            const connectionStatusEl = document.getElementById('connection-status');
-            connectionStatusEl.textContent = `Syncing ${allItems.length} item(s)...`;
-            connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-yellow-100 text-yellow-800';
-
-            const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
-            
-            try {
-                await Promise.all(allItems.map(item => addDoc(farmsCollection, item)));
-                await db.clear('outbox');
-                connectionStatusEl.textContent = 'Sync Complete';
-                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-green-100 text-green-800';
-            } catch (error) {
-                console.error('Error syncing outbox:', error);
-                connectionStatusEl.textContent = 'Sync Failed';
-                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-red-100 text-red-800';
-            } finally {
-                setTimeout(updateOnlineStatus, 2000);
-            }
-        }
+        // Removed old syncOutbox function as it's now obsolete with the new online-only farm setup flow.
 
         async function syncSubmissionOutbox() {
             if (!navigator.onLine || !currentUser) return;
