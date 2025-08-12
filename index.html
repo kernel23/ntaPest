@@ -73,9 +73,7 @@
             margin-left: 0;
         }
         #map { height: 400px; }
-
         #report-map { height: 200px; margin-bottom: 1.5rem; }
-
     </style>
 </head>
 <body class="bg-gray-100">
@@ -284,7 +282,11 @@
                         <h2 id="dashboard-farm-name" class="text-2xl font-bold">Farm Health Log</h2>
                         <p id="dashboard-farm-variety" class="text-sm text-gray-600 ml-4"></p>
                     </div>
-                    <button id="new-submission-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">New Report</button>
+                    <div>
+                        <button id="edit-farm-details-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Edit Details</button>
+                        <button id="delete-farm-btn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md ml-2">Delete Farm</button>
+                        <button id="new-submission-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md ml-2">New Report</button>
+                    </div>
                 </header>
                 <main id="dashboard-main" class="flex-1 p-4 overflow-y-auto">
                     <div class="text-center text-gray-500 mt-20">
@@ -457,6 +459,8 @@
             doc,
             getDoc,
             setDoc,
+            updateDoc,
+            deleteDoc,
             collection,
             addDoc,
             onSnapshot,
@@ -515,7 +519,6 @@
             diagnosis: document.getElementById('diagnosis-screen'),
             treatment: document.getElementById('treatment-screen'),
             onlineClinic: document.getElementById('online-clinic-screen'),
-
             privacyPolicy: document.getElementById('privacy-policy-screen'),
             farmSetup: document.getElementById('farm-setup-screen')
         };
@@ -626,10 +629,35 @@
 
         // --- MAP & FARM SETUP LOGIC ---
         let map;
-
         let reportMap;
         let drawnItems;
         let pendingFarmData = {};
+
+        async function initializeMapForEdit(farmId) {
+             if (!currentUser || !farmId) return;
+
+            try {
+                const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', farmId);
+                const farmDocSnap = await getDoc(farmDocRef);
+
+                if (farmDocSnap.exists()) {
+                    const farmData = farmDocSnap.data();
+                    const coordinates = farmData.polygonCoordinates;
+
+                    if (coordinates && coordinates.length > 0) {
+                        const latLngs = coordinates.map(c => [c.lat, c.lng]);
+                        const polygon = L.polygon(latLngs, {color: '#22c55e'});
+
+                        drawnItems.clearLayers();
+                        drawnItems.addLayer(polygon);
+                        map.fitBounds(polygon.getBounds());
+                        document.getElementById('save-farm-map-btn').disabled = false;
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading farm data for editing:", error);
+            }
+        }
 
         async function initializeReportMap(farmId) {
             if (!currentUser || !farmId) return;
@@ -667,7 +695,6 @@
             }
         }
 
-
         function initializeMap() {
             // If map is already initialized, just reset its view
             if (map) {
@@ -684,7 +711,6 @@
             // Add a satellite tile layer to the map
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-
             }).addTo(map);
 
             // Initialize the FeatureGroup to store editable layers
@@ -1075,6 +1101,46 @@
         document.getElementById('back-to-dashboard-btn').addEventListener('click', () => showScreen('farmList'));
 
         // --- New Farm Flow ---
+        let isEditMode = false; // To track if we are editing or creating a new farm
+
+        document.getElementById('edit-farm-details-btn').addEventListener('click', async () => {
+            if (!currentFarmId || !currentUser) {
+                showToast('No farm selected.', 'error');
+                return;
+            }
+            isEditMode = true;
+
+            // Fetch current farm data
+            const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
+            const farmDocSnap = await getDoc(farmDocRef);
+
+            if (farmDocSnap.exists()) {
+                const farmData = farmDocSnap.data();
+                // Pre-fill the modal
+                document.getElementById('farmName').value = farmData.farmName || '';
+                document.getElementById('tobaccoVariety').value = farmData.tobaccoVariety || '';
+                document.getElementById('plantingDate').value = farmData.plantingDate || '';
+
+                // Change button text and show modal
+                document.getElementById('next-farm-map-btn').textContent = 'Update Details & Set Location';
+                farmModal.style.display = 'flex';
+            } else {
+                showToast('Could not find farm details to edit.', 'error');
+            }
+        });
+
+        // Reset edit mode when adding a new farm
+        document.getElementById('add-farm-btn').addEventListener('click', () => {
+            isEditMode = false;
+            // Clear fields and reset button text for new entry
+            document.getElementById('farmName').value = '';
+            document.getElementById('tobaccoVariety').value = '';
+            document.getElementById('plantingDate').value = '';
+            document.getElementById('next-farm-map-btn').textContent = 'Next: Set Location';
+            farmModal.style.display = 'flex';
+        });
+
+
         document.getElementById('next-farm-map-btn').addEventListener('click', () => {
             const farmName = document.getElementById('farmName').value.trim();
             const tobaccoVariety = document.getElementById('tobaccoVariety').value.trim();
@@ -1092,10 +1158,20 @@
             };
 
             farmModal.style.display = 'none';
+
+            if (isEditMode) {
+                document.getElementById('save-farm-map-btn').textContent = 'Update Farm Area';
+            } else {
+                document.getElementById('save-farm-map-btn').textContent = 'Save Farm Area';
+            }
+
             showScreen('farmSetup');
             // Invalidate map size and re-center, needed when map is in a hidden div
             setTimeout(() => {
-                initializeMap();
+                initializeMap(); // General map init
+                if (isEditMode) {
+                    initializeMapForEdit(currentFarmId); // Load existing polygon if editing
+                }
             }, 100);
         });
 
@@ -1106,9 +1182,29 @@
             showScreen('farmList'); // Go back to the farm list
         });
 
+        document.getElementById('delete-farm-btn').addEventListener('click', async () => {
+            if (!currentFarmId || !currentUser) {
+                showToast('No farm selected.', 'error');
+                return;
+            }
+
+            if (confirm('Are you sure you want to delete this farm plot? This action cannot be undone.')) {
+                try {
+                    const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
+                    await deleteDoc(farmDocRef);
+                    showToast('Farm plot deleted successfully!', 'success');
+                    currentFarmId = null;
+                    showScreen('farmList');
+                } catch (error) {
+                    console.error("Error deleting farm plot:", error);
+                    showToast('Failed to delete farm plot. Please try again.', 'error');
+                }
+            }
+        });
+
         document.getElementById('save-farm-map-btn').addEventListener('click', async () => {
             if (drawnItems.getLayers().length === 0) {
-                showToast('Please draw the farm area on the map first.', 'error');
+                showToast('Please draw or select a farm area on the map first.', 'error');
                 return;
             }
 
@@ -1119,7 +1215,6 @@
             const farmData = {
                 ...pendingFarmData,
                 polygonCoordinates: coordinates,
-                createdAt: serverTimestamp()
             };
 
             if (!currentUser) {
@@ -1128,13 +1223,22 @@
             }
 
             try {
-                // Save to a 'farmLots' subcollection
-                const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
-                await addDoc(farmLotsCollection, farmData);
-
-                showToast('Farm plot saved successfully!', 'success');
+                if (isEditMode) {
+                    // Update existing document
+                    farmData.updatedAt = serverTimestamp();
+                    const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
+                    await updateDoc(farmDocRef, farmData);
+                    showToast('Farm plot updated successfully!', 'success');
+                } else {
+                    // Create new document
+                    farmData.createdAt = serverTimestamp();
+                    const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+                    await addDoc(farmLotsCollection, farmData);
+                    showToast('Farm plot saved successfully!', 'success');
+                }
 
                 // Reset state
+                isEditMode = false;
                 pendingFarmData = {};
                 drawnItems.clearLayers();
                 document.getElementById('save-farm-map-btn').disabled = true;
@@ -1142,7 +1246,7 @@
                 document.getElementById('tobaccoVariety').value = '';
                 document.getElementById('plantingDate').value = '';
 
-                showScreen('farmList'); // Go back to the farm list to see the new entry
+                showScreen('farmList'); // Go back to the farm list
             } catch (error) {
                 console.error("Error saving farm plot:", error);
                 showToast('Could not save farm plot. Please try again.', 'error');
