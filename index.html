@@ -561,10 +561,7 @@
         // --- Sidebar Navigation ---
         document.getElementById('nav-farm-list').addEventListener('click', () => showScreen('farmList'));
         document.getElementById('nav-profile').addEventListener('click', () => showScreen('profile'));
-        document.getElementById('nav-reports').addEventListener('click', () => {
-            showScreen('reports');
-            loadAllReports();
-        });
+        document.getElementById('nav-reports').addEventListener('click', () => showScreen('reports'));
         document.getElementById('nav-diagnosis').addEventListener('click', () => showScreen('diagnosis'));
         document.getElementById('nav-treatment').addEventListener('click', () => showScreen('treatment'));
         document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic'));
@@ -605,6 +602,11 @@
             // Start camera if navigating to it
             if (screenName === 'camera') {
                 startCamera();
+            }
+
+            // Load reports if navigating to the reports screen
+            if (screenName === 'reports') {
+                loadAllReports();
             }
 
             lucide.createIcons();
