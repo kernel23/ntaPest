@@ -73,7 +73,9 @@
             margin-left: 0;
         }
         #map { height: 400px; }
+
         #report-map { height: 200px; margin-bottom: 1.5rem; }
+
     </style>
 </head>
 <body class="bg-gray-100">
@@ -513,6 +515,7 @@
             diagnosis: document.getElementById('diagnosis-screen'),
             treatment: document.getElementById('treatment-screen'),
             onlineClinic: document.getElementById('online-clinic-screen'),
+
             privacyPolicy: document.getElementById('privacy-policy-screen'),
             farmSetup: document.getElementById('farm-setup-screen')
         };
@@ -623,6 +626,7 @@
 
         // --- MAP & FARM SETUP LOGIC ---
         let map;
+
         let reportMap;
         let drawnItems;
         let pendingFarmData = {};
@@ -663,6 +667,7 @@
             }
         }
 
+
         function initializeMap() {
             // If map is already initialized, just reset its view
             if (map) {
@@ -679,6 +684,7 @@
             // Add a satellite tile layer to the map
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+
             }).addTo(map);
 
             // Initialize the FeatureGroup to store editable layers
