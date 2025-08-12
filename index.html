@@ -109,7 +109,7 @@
                 </div>
                 <div class="w-full max-w-sm">
                     <button id="google-signin-btn" class="w-full bg-white text-gray-700 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm flex items-center justify-center mb-3">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" class="mr-3"> <!-- Placeholder for Google Icon -->
+                        <img src="/assets/icons/google-logo.svg" alt="Google" class="mr-3"> <!-- Placeholder for Google Icon -->
                         Sign in with Google
                     </button>
                     <button id="facebook-signin-btn" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm flex items-center justify-center mb-4">
@@ -437,7 +437,7 @@
     <!-- Firebase SDKs -->
     <script type="module">
         // Import the IDB library for offline storage
-        import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
+        import { openDB } from '/assets/js/idb.js';
 
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -482,13 +482,36 @@
 
         // --- 2. PWA & OFFLINE SETUP ---
         // Initialize IndexedDB
-        const dbPromise = openDB('agri-guard-db', 2, {
+        const dbPromise = openDB('agri-guard-db', 3, {
             upgrade(db, oldVersion, newVersion, transaction) {
-                if (oldVersion < 1) {
-                    db.createObjectStore('outbox', { autoIncrement: true });
-                }
-                if (oldVersion < 2) {
-                    db.createObjectStore('submission_outbox', { autoIncrement: true });
+                switch (oldVersion) {
+                    case 0:
+                        // A fresh database install
+                        db.createObjectStore('user-profile'); // Key-value store, key is static 'profile'
+                        db.createObjectStore('farm-lots', { keyPath: 'id' });
+                        db.createObjectStore('submissions', { keyPath: 'id' });
+                        db.createObjectStore('outbox', { autoIncrement: true });
+                    case 1:
+                        // Upgrading from v1 to v2
+                        db.createObjectStore('submission_outbox', { autoIncrement: true });
+                    case 2:
+                        // Upgrading from v2 to v3
+                        if (db.objectStoreNames.contains('submission_outbox')) {
+                            // This logic is to migrate data if needed, for now we'll just delete it
+                            // and create the new stores. A real-world scenario might involve
+                            // reading from the old store and writing to the new one.
+                            db.deleteObjectStore('submission_outbox');
+                        }
+                         if (!db.objectStoreNames.contains('user-profile')) {
+                            db.createObjectStore('user-profile');
+                        }
+                        if (!db.objectStoreNames.contains('farm-lots')) {
+                            db.createObjectStore('farm-lots', { keyPath: 'id' });
+                        }
+                         if (!db.objectStoreNames.contains('submissions')) {
+                            db.createObjectStore('submissions', { keyPath: 'id' });
+                        }
+                        // The original 'outbox' from v1 is kept and will be our unified outbox.
                 }
             },
         });
@@ -982,52 +1005,91 @@
                 currentUser = user;
                 updateOnlineStatus();
 
-                // Wait for the address data to be ready
+                // Wait for the address data to be ready (it's cached by SW, so this should be fast)
                 await window.addressDataPromise;
-
-                // Now that address data is loaded, populate the dropdowns
                 populateProvinces();
-                
-                const userDocRef = doc(db, "users", user.uid);
-                const docSnap = await getDoc(userDocRef);
 
-                if (docSnap.exists()) {
-                    userProfile = docSnap.data();
+                // --- Offline First Profile Loading ---
+                const localDB = await dbPromise;
+                const localProfile = await localDB.get('user-profile', 'profile');
 
-                    const requiredFields = ['fullName', 'province', 'municipality', 'barangay', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
-                    const isProfileComplete = requiredFields.every(field => userProfile[field] !== undefined && userProfile[field] !== null && userProfile[field] !== '');
-
-                    // Populate all fields, including the now-ready address dropdowns
-                    populateProfileFields(userProfile);
-
-                    if (isProfileComplete) {
-                        setProfileMode('view');
-                        document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
-                        loadFarms();
-                        showScreen('farmList');
-                        document.getElementById('add-farm-btn').style.display = 'flex';
-                    } else {
-                        setProfileMode('new');
-                        showToast('Please complete your profile to continue.', 'info');
-                        showScreen('profile');
-                        document.getElementById('add-farm-btn').style.display = 'none';
-                    }
-                } else {
-                    userProfile = {};
-                    populateProfileFields({
-                        fullName: user.displayName,
-                        photoURL: user.photoURL
-                    });
-                    setProfileMode('new');
-                    showScreen('profile');
-                    document.getElementById('add-farm-btn').style.display = 'none';
+                if (localProfile) {
+                    console.log("Profile loaded from IndexedDB");
+                    handleUserProfile(localProfile);
                 }
+
+                if (navigator.onLine) {
+                    console.log("Fetching profile from Firestore...");
+                    const userDocRef = doc(db, "users", user.uid);
+                    try {
+                        const docSnap = await getDoc(userDocRef);
+                        if (docSnap.exists()) {
+                            const remoteProfile = docSnap.data();
+                            await localDB.put('user-profile', remoteProfile, 'profile'); // Update local cache
+                            console.log("Updated local profile from Firestore");
+                            handleUserProfile(remoteProfile); // Re-handle with fresh data
+                        } else {
+                             // User exists in auth, but not in firestore db.
+                             // This means it's a new user.
+                            handleUserProfile({
+                                fullName: user.displayName || '',
+                                photoURL: user.photoURL || ''
+                            }, true);
+                        }
+                    } catch (error) {
+                        console.error("Error fetching profile from Firestore:", error);
+                        if (!localProfile) {
+                             // If firestore fails and we have no local data, it's a problem.
+                             showToast("Could not load user profile.", "error");
+                        }
+                    }
+                } else if (!localProfile) {
+                    showToast("You are offline and no profile data is available.", "error");
+                    // Potentially sign out or show a more specific offline message
+                }
+
             } else {
+                // User is signed out, clear local data
                 currentUser = null;
                 userProfile = null;
+                const localDB = await dbPromise;
+                await Promise.all([
+                    localDB.clear('user-profile'),
+                    localDB.clear('farm-lots'),
+                    localDB.clear('submissions'),
+                    localDB.clear('outbox')
+                ]);
                 showScreen('login');
             }
         });
+
+        function handleUserProfile(profile, isNewUser = false) {
+            userProfile = profile;
+            populateProfileFields(userProfile);
+
+             if (isNewUser) {
+                setProfileMode('new');
+                showScreen('profile');
+                document.getElementById('add-farm-btn').style.display = 'none';
+                return;
+            }
+
+            const requiredFields = ['fullName', 'province', 'municipality', 'barangay', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
+            const isProfileComplete = requiredFields.every(field => userProfile[field] !== undefined && userProfile[field] !== null && userProfile[field] !== '');
+
+            if (isProfileComplete) {
+                setProfileMode('view');
+                document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                loadFarms(); // Load farms after profile is handled
+                showScreen('farmList');
+                document.getElementById('add-farm-btn').style.display = 'flex';
+            } else {
+                setProfileMode('new');
+                showToast('Please complete your profile to continue.', 'info');
+                showScreen('profile');
+                document.getElementById('add-farm-btn').style.display = 'none';
+            }
+        }
 
         // Event Listeners for Sign-in buttons
         document.getElementById('google-signin-btn').addEventListener('click', () => {
@@ -1099,54 +1161,35 @@
                 role: selectedRole,
                 email: currentUser.email || '',
                 photoURL: currentUser.photoURL || '',
-                rsbsaNumber: rsbsaNumber.trim()
+                rsbsaNumber: rsbsaNumber.trim(),
+                updatedAt: new Date().toISOString() // Use ISO string for local timestamp
             };
 
             try {
-                const userDocRef = doc(db, "users", currentUser.uid);
-                const docSnap = await getDoc(userDocRef);
+                const localDB = await dbPromise;
+                // Save to local DB first for instant UI update
+                await localDB.put('user-profile', profileData, 'profile');
 
-                if (docSnap.exists()) {
-                    // For existing profiles, set updatedAt
-                    profileData.updatedAt = serverTimestamp();
-                } else {
-                    // For new profiles, set createdAt
-                    profileData.createdAt = serverTimestamp();
-                }
+                // Add to outbox for syncing
+                await localDB.add('outbox', {
+                    type: 'SAVE_PROFILE',
+                    payload: profileData,
+                    timestamp: new Date().getTime()
+                });
 
-                await setDoc(userDocRef, profileData, { merge: true });
+                showToast("Profile saved locally. It will sync when online.", "success");
 
-                showToast("Profile saved successfully!", "success");
+                // Immediately handle the updated profile
+                handleUserProfile(profileData);
 
-                // Re-fetch the profile to ensure local data is consistent and clean
-                const updatedDocSnap = await getDoc(userDocRef);
-                if (updatedDocSnap.exists()) {
-                    userProfile = updatedDocSnap.data();
-                } else {
-                    // This case should ideally not happen if setDoc was successful.
-                    // We'll optimistically use the data we sent, but remove the server-only fields.
-                    if(profileData.updatedAt) delete profileData.updatedAt;
-                    if(profileData.createdAt) delete profileData.createdAt;
-                    userProfile = profileData;
-                }
-
-                const requiredFields = ['fullName', 'homeAddress', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
-                const isProfileComplete = requiredFields.every(field => userProfile[field]);
-
-                if (isProfileComplete) {
-                    populateProfileFields(userProfile); // Repopulate with the latest saved data
-                    setProfileMode('view');
-                    document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
-                    loadFarms();
-                    showScreen('farmList');
-                    document.getElementById('add-farm-btn').style.display = 'flex';
-                } else {
-                    setProfileMode('new');
+                // Trigger background sync if online
+                if (navigator.onLine) {
+                    syncOutbox();
                 }
 
             } catch (error) {
-                console.error("Error saving profile:", error);
-                showToast("Could not save profile. Please check connection.", 'error');
+                console.error("Error saving profile locally:", error);
+                showToast("Could not save profile locally.", 'error');
             }
         });
 
@@ -1246,14 +1289,28 @@
 
             if (confirm('Are you sure you want to delete this farm plot? This action cannot be undone.')) {
                 try {
-                    const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
-                    await deleteDoc(farmDocRef);
-                    showToast('Farm plot deleted successfully!', 'success');
+                    const localDB = await dbPromise;
+                    // Delete from local DB first
+                    await localDB.delete('farm-lots', currentFarmId);
+
+                    // Add to outbox for syncing
+                    await localDB.add('outbox', {
+                        type: 'DELETE_FARM',
+                        payload: { id: currentFarmId },
+                        timestamp: new Date().getTime()
+                    });
+
+                    showToast('Farm plot deleted locally.', 'success');
                     currentFarmId = null;
                     showScreen('farmList');
+                    loadFarms(); // Reload list to show deletion
+
+                    if (navigator.onLine) {
+                        syncOutbox();
+                    }
                 } catch (error) {
-                    console.error("Error deleting farm plot:", error);
-                    showToast('Failed to delete farm plot. Please try again.', 'error');
+                    console.error("Error deleting farm plot locally:", error);
+                    showToast('Failed to delete farm plot locally. Please try again.', 'error');
                 }
             }
         });
@@ -1264,34 +1321,36 @@
                 return;
             }
 
-            // Extract polygon data
             const geojson = drawnItems.getLayers()[0].toGeoJSON();
             const coordinates = geojson.geometry.coordinates[0].map(p => ({ lat: p[1], lng: p[0] }));
 
+            // Use currentFarmId if editing, otherwise generate a temporary local ID
+            const farmId = isEditMode ? currentFarmId : `local_${new Date().getTime()}`;
+
             const farmData = {
                 ...pendingFarmData,
+                id: farmId,
                 polygonCoordinates: coordinates,
+                updatedAt: new Date().toISOString(),
+                // Add a flag to indicate this is a local-only item until synced
+                isLocal: true
             };
 
-            if (!currentUser) {
-                showToast('Error: No user logged in.', 'error');
-                return;
+            if (!isEditMode) {
+                farmData.createdAt = new Date().toISOString();
             }
 
             try {
-                if (isEditMode) {
-                    // Update existing document
-                    farmData.updatedAt = serverTimestamp();
-                    const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
-                    await updateDoc(farmDocRef, farmData);
-                    showToast('Farm plot updated successfully!', 'success');
-                } else {
-                    // Create new document
-                    farmData.createdAt = serverTimestamp();
-                    const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
-                    await addDoc(farmLotsCollection, farmData);
-                    showToast('Farm plot saved successfully!', 'success');
-                }
+                const localDB = await dbPromise;
+                await localDB.put('farm-lots', farmData);
+
+                await localDB.add('outbox', {
+                    type: isEditMode ? 'UPDATE_FARM' : 'CREATE_FARM',
+                    payload: farmData,
+                    timestamp: new Date().getTime()
+                });
+
+                showToast('Farm plot saved locally.', 'success');
 
                 // Reset state
                 isEditMode = false;
@@ -1302,10 +1361,16 @@
                 document.getElementById('tobaccoVariety').value = '';
                 document.getElementById('plantingDate').value = '';
 
-                showScreen('farmList'); // Go back to the farm list
+                showScreen('farmList');
+                loadFarms(); // Reload the list from local DB to show the change
+
+                if (navigator.onLine) {
+                    syncOutbox();
+                }
+
             } catch (error) {
-                console.error("Error saving farm plot:", error);
-                showToast('Could not save farm plot. Please try again.', 'error');
+                console.error("Error saving farm plot locally:", error);
+                showToast('Could not save farm plot locally.', 'error');
             }
         });
         
@@ -1343,39 +1408,53 @@
                 return;
             }
 
+            const submissionId = isEditSubmissionMode ? currentSubmissionId : `local_${new Date().getTime()}`;
             const submissionData = {
+                id: submissionId,
+                farmId: currentFarmId,
                 imageDataUrl: imageSrc,
                 symptoms,
                 distribution,
                 severity,
+                timestamp: new Date().toISOString(),
+                gps_coordinates: { latitude: 17.5734, longitude: 120.3856 }, // Keep simulated GPS
+                isLocal: true
             };
 
             try {
-                if (isEditSubmissionMode) {
-                    // Update existing submission
-                    submissionData.updatedAt = serverTimestamp();
-                    const submissionDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions', currentSubmissionId);
-                    await updateDoc(submissionDocRef, submissionData);
-                    showToast('Report updated successfully!', 'success');
-                } else {
-                    // Create new submission
-                    submissionData.timestamp = serverTimestamp();
-                     // Simulate GPS data
-                    submissionData.gps_coordinates = { latitude: 17.5734, longitude: 120.3856 };
-                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions');
-                    await addDoc(submissionsCollection, submissionData);
-                    showToast('Report saved successfully!', 'success');
-                }
+                const localDB = await dbPromise;
+                await localDB.put('submissions', submissionData);
+
+                await localDB.add('outbox', {
+                    type: isEditSubmissionMode ? 'UPDATE_SUBMISSION' : 'CREATE_SUBMISSION',
+                    payload: submissionData,
+                    timestamp: new Date().getTime()
+                });
+
+                showToast('Report saved locally.', 'success');
 
                 // Reset state and form
                 isEditSubmissionMode = false;
                 currentSubmissionId = null;
-                document.getElementById('new-submission-btn').click(); // Programmatically click to reset the form
+                // Manually reset the form instead of clicking the button, to avoid re-triggering map init
+                document.getElementById('submission-image-preview').src = '';
+                document.getElementById('submission-image-preview').classList.add('hidden');
+                document.getElementById('image-placeholder-icon').classList.remove('hidden');
+                document.getElementById('image-upload').value = '';
+                document.querySelectorAll('#symptoms-checklist input:checked').forEach(cb => cb.checked = false);
+                document.querySelectorAll('#distribution-radios input:checked').forEach(rb => rb.checked = false);
+                document.querySelectorAll('#severity-radios input:checked').forEach(rb => rb.checked = false);
+
 
                 showScreen('dashboard');
+                loadSubmissions(currentFarmId); // Reload submissions for the current farm
+
+                if (navigator.onLine) {
+                    syncOutbox();
+                }
             } catch (error) {
-                console.error('Failed to save submission:', error);
-                showToast('Could not save report. Please try again.', 'error');
+                console.error('Failed to save submission locally:', error);
+                showToast('Could not save report locally. Please try again.', 'error');
             }
         });
 
@@ -1457,156 +1536,296 @@
             }, 100);
         });
 
-        function loadSubmissions(farmId) {
+        async function loadSubmissions(farmId) {
             if (!currentUser || !farmId) return;
 
-            const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmId, 'submissions');
+            const localDB = await dbPromise;
+            // A more complex query is needed here if we store all submissions in one store.
+            // For simplicity, we'll assume a structure where we can filter by farmId or clear per farm.
+            // Let's get all and filter for now.
+            const allLocalSubmissions = await localDB.getAll('submissions');
+            const localSubmissions = allLocalSubmissions.filter(s => s.farmId === farmId);
+            if (localSubmissions.length > 0) {
+                console.log(`Submissions for farm ${farmId} loaded from IndexedDB`);
+                renderSubmissionsList(localSubmissions);
+            }
+
+            if (navigator.onLine) {
+                const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmId, 'submissions');
+                onSnapshot(submissionsCollection, async (querySnapshot) => {
+                    console.log(`Received submissions update for farm ${farmId} from Firestore.`);
+                    const remoteSubmissions = [];
+                    querySnapshot.forEach(doc => {
+                        remoteSubmissions.push({ id: doc.id, farmId: farmId, ...doc.data() });
+                    });
+
+                    // Invalidation: delete old subs for this farm, then add new ones.
+                    const tx = (await dbPromise).transaction('submissions', 'readwrite');
+                    const allSubs = await tx.store.getAll();
+                    for (const sub of allSubs) {
+                        if (sub.farmId === farmId) {
+                            await tx.store.delete(sub.id);
+                        }
+                    }
+                    for (const sub of remoteSubmissions) {
+                        await tx.store.put(sub);
+                    }
+                    await tx.done;
+
+                    console.log(`Updated local submissions for farm ${farmId}`);
+                    const allUpdatedSubmissions = await localDB.getAll('submissions');
+                    const updatedSubmissions = allUpdatedSubmissions.filter(s => s.farmId === farmId);
+                    renderSubmissionsList(updatedSubmissions);
+
+                }, (error) => {
+                    console.error("Error with submissions snapshot:", error);
+                     if (localSubmissions.length === 0) {
+                        renderSubmissionsList([]);
+                    }
+                });
+            } else if (localSubmissions.length === 0) {
+                renderSubmissionsList([]);
+            }
+        }
+
+        function renderSubmissionsList(submissions) {
             const dashboardMain = document.getElementById('dashboard-main');
+            dashboardMain.innerHTML = ''; // Clear existing content
 
-            onSnapshot(submissionsCollection, (querySnapshot) => {
-                dashboardMain.innerHTML = ''; // Clear existing content
-
-                if (querySnapshot.empty) {
-                    dashboardMain.innerHTML = `
+            if (!submissions || submissions.length === 0) {
+                dashboardMain.innerHTML = `
                     <div class="text-center text-gray-500 mt-20">
                         <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto text-gray-400"></i>
                         <p class="mt-4">No scouting reports found for this farm.</p>
                         <p>Click 'New Report' to add one.</p>
                     </div>`;
-                } else {
-                    querySnapshot.forEach(doc => {
-                        const submission = doc.data();
-                        const submissionId = doc.id;
-                        const card = document.createElement('div');
-                        card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
+            } else {
+                submissions.forEach(submission => {
+                    const submissionId = submission.id;
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
 
-                        // Fallback for older data that might not have a proper timestamp
-                        const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date();
-                        const dateString = submissionDate.toLocaleDateString();
-                        const timeString = submissionDate.toLocaleTimeString();
+                    // Handle both Firestore timestamps and locally generated dates
+                    const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date(submission.timestamp);
+                    const dateString = submissionDate.toLocaleDateString();
+                    const timeString = submissionDate.toLocaleTimeString();
 
-                        card.innerHTML = `
-                            <div class="flex justify-between items-start">
-                                <div class="flex">
-                                    <img src="${submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image'}" class="w-24 h-24 rounded-md mr-4 object-cover">
-                                    <div>
-                                        <p class="font-bold">Report from ${dateString} at ${timeString}</p>
-                                        <p class="text-sm"><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
-                                        <p class="text-sm"><strong>Distribution:</strong> ${submission.distribution}</p>
-                                        <p class="text-sm"><strong>Severity:</strong> ${submission.severity}</p>
-                                    </div>
-                                </div>
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex">
+                                <img src="${submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image'}" class="w-24 h-24 rounded-md mr-4 object-cover">
                                 <div>
-                                    <button class="edit-submission-btn bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded" data-id="${submissionId}">Edit</button>
+                                    <p class="font-bold">Report from ${dateString} at ${timeString}</p>
+                                    <p class="text-sm"><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
+                                    <p class="text-sm"><strong>Distribution:</strong> ${submission.distribution}</p>
+                                    <p class="text-sm"><strong>Severity:</strong> ${submission.severity}</p>
                                 </div>
                             </div>
-                        `;
-                        dashboardMain.appendChild(card);
-                    });
-                }
-                lucide.createIcons();
-            });
+                            <div>
+                                <button class="edit-submission-btn bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded" data-id="${submissionId}">Edit</button>
+                            </div>
+                        </div>
+                    `;
+                    dashboardMain.appendChild(card);
+                });
+            }
+            lucide.createIcons();
         }
 
-        function loadFarms() {
+        async function loadFarms() {
             if (!currentUser) return;
-            const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
-            onSnapshot(farmLotsCollection, (querySnapshot) => {
-                const farmListContainer = document.getElementById('farm-list-container');
-                farmListContainer.innerHTML = ''; // Clear existing list
-                
-                if (querySnapshot.empty) {
-                    farmListContainer.innerHTML = `
-                        <div class="text-center text-gray-500 mt-20">
-                            <i data-lucide="map-pin" class="w-12 h-12 mx-auto text-gray-400"></i>
-                            <p class="mt-4">No farm plots found.</p>
-                            <p>Click the '+' button to add your first plot and map its location.</p>
-                        </div>`;
-                } else {
+
+            // --- Offline First Farm Loading ---
+            const localDB = await dbPromise;
+            const localFarms = await localDB.getAll('farm-lots');
+            if (localFarms.length > 0) {
+                console.log("Farms loaded from IndexedDB");
+                renderFarmList(localFarms);
+            }
+
+            if (navigator.onLine) {
+                const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+                onSnapshot(farmLotsCollection, async (querySnapshot) => {
+                    console.log("Received farm list update from Firestore.");
+                    const remoteFarms = [];
                     querySnapshot.forEach((doc) => {
-                        const farm = doc.data();
-                        const farmId = doc.id;
-                        const farmCard = document.createElement('div');
-                        farmCard.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md';
-                        farmCard.setAttribute('data-id', farmId);
-
-                        const plantingDate = farm.plantingDate ? new Date(farm.plantingDate).toLocaleDateString() : 'N/A';
-
-                        farmCard.innerHTML = `
-                            <p class="text-xl font-bold text-gray-800">${farm.farmName}</p>
-                            <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
-                            <p class="text-sm text-gray-500">Planted on: ${plantingDate}</p>
-                        `;
-
-                        farmCard.addEventListener('click', () => {
-                            currentFarmId = farmId;
-                            document.getElementById('dashboard-farm-name').textContent = farm.farmName;
-                            document.getElementById('dashboard-farm-variety').textContent = farm.tobaccoVariety || 'N/A';
-                            loadSubmissions(currentFarmId);
-                            showScreen('dashboard');
-                        });
-
-                        farmListContainer.appendChild(farmCard);
+                        remoteFarms.push({ id: doc.id, ...doc.data() });
                     });
-                }
-                lucide.createIcons();
-            });
+
+                    // Simple cache invalidation: clear and re-populate
+                    const tx = (await dbPromise).transaction('farm-lots', 'readwrite');
+                    await tx.store.clear();
+                    for (const farm of remoteFarms) {
+                        await tx.store.put(farm);
+                    }
+                    await tx.done;
+
+                    console.log("Updated local farm list from Firestore");
+                    const updatedLocalFarms = await localDB.getAll('farm-lots');
+                    renderFarmList(updatedLocalFarms);
+
+                }, (error) => {
+                    console.error("Error with farm list snapshot:", error);
+                    if (localFarms.length === 0) {
+                        renderFarmList([]); // Render empty state if firestore fails and we have no local data
+                    }
+                });
+            } else if (localFarms.length === 0) {
+                // Offline and no local data
+                renderFarmList([]);
+            }
+        }
+
+        function renderFarmList(farms) {
+            const farmListContainer = document.getElementById('farm-list-container');
+            farmListContainer.innerHTML = ''; // Clear existing list
+
+            if (!farms || farms.length === 0) {
+                farmListContainer.innerHTML = `
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="map-pin" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">No farm plots found.</p>
+                        <p>Click the '+' button to add your first plot and map its location.</p>
+                    </div>`;
+            } else {
+                farms.forEach((farm) => {
+                    const farmId = farm.id;
+                    const farmCard = document.createElement('div');
+                    farmCard.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md';
+                    farmCard.setAttribute('data-id', farmId);
+
+                    const plantingDate = farm.plantingDate ? new Date(farm.plantingDate).toLocaleDateString() : 'N/A';
+
+                    farmCard.innerHTML = `
+                        <p class="text-xl font-bold text-gray-800">${farm.farmName}</p>
+                        <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
+                        <p class="text-sm text-gray-500">Planted on: ${plantingDate}</p>
+                    `;
+
+                    farmCard.addEventListener('click', () => {
+                        currentFarmId = farmId;
+                        document.getElementById('dashboard-farm-name').textContent = farm.farmName;
+                        document.getElementById('dashboard-farm-variety').textContent = farm.tobaccoVariety || 'N/A';
+                        loadSubmissions(currentFarmId);
+                        showScreen('dashboard');
+                    });
+
+                    farmListContainer.appendChild(farmCard);
+                });
+            }
+            lucide.createIcons();
         }
         
-        // Removed old syncOutbox function as it's now obsolete with the new online-only farm setup flow.
-
-        async function syncSubmissionOutbox() {
+        async function syncOutbox() {
             if (!navigator.onLine || !currentUser) return;
 
-            const db = await dbPromise;
-            const allSubmissions = await db.getAll('submission_outbox');
-            if (allSubmissions.length === 0) return;
+            const localDB = await dbPromise;
+            const outboxItems = await localDB.getAll('outbox');
+            if (outboxItems.length === 0) {
+                console.log("Outbox is empty. Nothing to sync.");
+                return;
+            }
 
+            console.log(`Syncing ${outboxItems.length} item(s) from the outbox...`);
             const connectionStatusEl = document.getElementById('connection-status');
-            connectionStatusEl.textContent = `Syncing ${allSubmissions.length} submission(s)...`;
+            connectionStatusEl.textContent = `Syncing ${outboxItems.length} item(s)...`;
             connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-yellow-100 text-yellow-800';
 
-            try {
-                for (const submission of allSubmissions) {
-                    const { id, farmId, ...dataToSync } = submission;
-                    if (!farmId) continue;
+            for (const item of outboxItems) {
+                try {
+                    let { payload } = item;
+                    // Remove local-only flags before sending to server
+                    if (payload.isLocal) delete payload.isLocal;
 
-                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmId, 'submissions');
-                    await addDoc(submissionsCollection, dataToSync);
+                    if (item.type === 'SAVE_PROFILE') {
+                        payload.updatedAt = serverTimestamp();
+                        const userDocRef = doc(db, "users", currentUser.uid);
+                        await setDoc(userDocRef, payload, { merge: true });
+                    } else if (item.type === 'CREATE_FARM') {
+                        const localId = payload.id;
+                        payload.createdAt = serverTimestamp();
+                        // Remove the temporary local ID from the payload
+                        delete payload.id;
+                        const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+                        const newDocRef = await addDoc(farmLotsCollection, payload);
+                        // **Critical Step:** Update local data with the real Firestore ID
+                        const dbTx = await localDB.transaction(['farm-lots', 'submissions'], 'readwrite');
+                        await dbTx.objectStore('farm-lots').delete(localId);
+                        payload.id = newDocRef.id;
+                        await dbTx.objectStore('farm-lots').put(payload);
+                        // Also update any submissions that were associated with the local farm ID
+                        const submissions = await dbTx.objectStore('submissions').getAll();
+                        for (const sub of submissions) {
+                            if (sub.farmId === localId) {
+                                sub.farmId = newDocRef.id;
+                                await dbTx.objectStore('submissions').put(sub);
+                            }
+                        }
+                        await dbTx.done;
+                    } else if (item.type === 'UPDATE_FARM') {
+                        payload.updatedAt = serverTimestamp();
+                        const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', payload.id);
+                        await updateDoc(farmDocRef, payload);
+                    } else if (item.type === 'DELETE_FARM') {
+                        const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', payload.id);
+                        await deleteDoc(farmDocRef);
+                    } else if (item.type === 'CREATE_SUBMISSION') {
+                        payload.timestamp = serverTimestamp();
+                        const localId = payload.id;
+                        delete payload.id;
+                        const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', payload.farmId, 'submissions');
+                        const newDocRef = await addDoc(submissionsCollection, payload);
+                        // Update local submission with real ID
+                        await localDB.delete('submissions', localId);
+                        payload.id = newDocRef.id;
+                        await localDB.put('submissions', payload);
+                    } else if (item.type === 'UPDATE_SUBMISSION') {
+                         payload.timestamp = serverTimestamp();
+                         const submissionDocRef = doc(db, 'users', currentUser.uid, 'farmLots', payload.farmId, 'submissions', payload.id);
+                         await updateDoc(submissionDocRef, payload);
+                    }
+
+                    // If successful, remove the item from the outbox
+                    await localDB.delete('outbox', item.id);
+                    console.log(`Successfully synced and removed outbox item: ${item.type} (${item.id})`);
+
+                } catch (error) {
+                    console.error(`Failed to sync item ${item.id} (${item.type}):`, error);
+                    connectionStatusEl.textContent = 'Sync Failed';
+                    connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-red-100 text-red-800';
+                    // If one item fails, we stop to avoid potential data consistency issues.
+                    // A more advanced implementation could handle retries or mark items as failed.
+                    break;
                 }
-
-                await db.clear('submission_outbox');
-            } catch (error) {
-                console.error('Error syncing submission outbox:', error);
-                connectionStatusEl.textContent = 'Sync Failed';
-                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-red-100 text-red-800';
             }
+
+            // After sync attempt, re-check outbox and update status
+            const remainingItems = await localDB.count('outbox');
+            if (remainingItems === 0) {
+                 console.log("Outbox sync complete.");
+                 // A full data reload might be good here to ensure consistency
+                 loadFarms();
+            }
+            updateOnlineStatus(); // Refresh the connection status indicator
         }
 
         // --- 7. CONNECTION STATUS UI ---
         const connectionStatusEl = document.getElementById('connection-status');
         async function updateOnlineStatus() {
-            const db = await dbPromise;
-            const farmOutboxCount = await db.count('outbox');
-            const submissionOutboxCount = await db.count('submission_outbox');
+            const localDB = await dbPromise;
+            const outboxCount = await localDB.count('outbox');
 
             if (navigator.onLine) {
-                if (farmOutboxCount > 0) {
-                    syncOutbox();
-                }
-                if (submissionOutboxCount > 0) {
-                    syncSubmissionOutbox();
-                }
+                connectionStatusEl.textContent = 'Online';
+                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-blue-100 text-blue-800';
 
-                if (farmOutboxCount === 0 && submissionOutboxCount === 0) {
-                    connectionStatusEl.textContent = 'Online';
-                    connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-blue-100 text-blue-800';
+                if (outboxCount > 0) {
+                    syncOutbox(); // The only sync function we need now
                 }
             } else {
                 let message = 'Offline Mode';
-                const totalOutboxCount = farmOutboxCount + submissionOutboxCount;
-                if (totalOutboxCount > 0) {
-                    message += ` (${totalOutboxCount} item(s) waiting to sync)`;
+                if (outboxCount > 0) {
+                    message += ` (${outboxCount} item(s) waiting to sync)`;
                 }
                 connectionStatusEl.textContent = message;
                 connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-gray-200 text-gray-800';
