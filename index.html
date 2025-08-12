@@ -45,8 +45,19 @@
 </head>
 <body class="bg-gray-100">
 
+    <!-- Saving Overlay -->
+    <div id="saving-overlay" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center" style="z-index: 10000;">
+        <div class="text-center text-white">
+            <svg class="animate-spin h-10 w-10 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p id="saving-message" class="mt-4 text-lg">Saving...</p>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-md opacity-0 transition-opacity duration-300" style="z-index: 9999;">
+    <div id="toast" class="fixed top-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-md opacity-0 transition-opacity duration-300 z-50">
         <p id="toast-message"></p>
     </div>
 
@@ -357,6 +368,11 @@
                 </header>
                 <main id="reports-container" class="flex-1 p-4 overflow-y-auto">
                     <!-- Report cards will be inserted here by JavaScript -->
+                    <div id="no-reports-message" class="text-center text-gray-500 mt-20">
+                        <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">No reports found across all your farms.</p>
+                        <p>Submissions you create will appear here.</p>
+                    </div>
                 </main>
             </div>
 
@@ -618,6 +634,19 @@
             toastTimeout = setTimeout(() => {
                 toast.classList.add('opacity-0');
             }, 3000);
+        }
+
+        function showSavingOverlay(message = 'Saving...') {
+            document.getElementById('saving-message').textContent = message;
+            const overlay = document.getElementById('saving-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        function hideSavingOverlay() {
+            const overlay = document.getElementById('saving-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
         }
 
         // --- CAMERA LOGIC ---
@@ -1089,6 +1118,8 @@
                 return;
             }
             
+            showSavingOverlay('Saving Profile...');
+
             const profileData = {
                 fullName: fullName.trim(),
                 province: province,
@@ -1151,6 +1182,8 @@
             } catch (error) {
                 console.error("Error saving profile:", error);
                 showToast("Could not save profile. Please check connection.", 'error');
+            } finally {
+                hideSavingOverlay();
             }
         });
 
@@ -1268,6 +1301,8 @@
                 return;
             }
 
+            showSavingOverlay('Saving Farm Plot...');
+
             // Extract polygon data
             const geojson = drawnItems.getLayers()[0].toGeoJSON();
             const coordinates = geojson.geometry.coordinates[0].map(p => ({ lat: p[1], lng: p[0] }));
@@ -1279,6 +1314,7 @@
 
             if (!currentUser) {
                 showToast('Error: No user logged in.', 'error');
+                hideSavingOverlay();
                 return;
             }
 
@@ -1310,6 +1346,8 @@
             } catch (error) {
                 console.error("Error saving farm plot:", error);
                 showToast('Could not save farm plot. Please try again.', 'error');
+            } finally {
+                hideSavingOverlay();
             }
         });
         
@@ -1347,6 +1385,8 @@
                 return;
             }
 
+            showSavingOverlay('Saving Report...');
+
             const submissionData = {
                 imageDataUrl: imageSrc,
                 symptoms,
@@ -1380,6 +1420,8 @@
             } catch (error) {
                 console.error('Failed to save submission:', error);
                 showToast('Could not save report. Please try again.', 'error');
+            } finally {
+                hideSavingOverlay();
             }
         });
 
@@ -1516,6 +1558,7 @@
             if (!currentUser) return;
 
             const reportsContainer = document.getElementById('reports-container');
+            const noReportsMessage = document.getElementById('no-reports-message');
             reportsContainer.innerHTML = ''; // Clear previous content
 
             try {
@@ -1540,32 +1583,24 @@
                 if (allSubmissions.length > 0) {
                     // Sort by timestamp, newest first
                     allSubmissions.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
+                    noReportsMessage.classList.add('hidden');
                     renderAllReports(allSubmissions);
                 } else {
-                    reportsContainer.innerHTML = `
-                    <div class="text-center text-gray-500 mt-20">
-                        <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
-                        <p class="mt-4">No reports found across all your farms.</p>
-                        <p>Submissions you create will appear here.</p>
-                    </div>`;
-                    lucide.createIcons();
+                    reportsContainer.appendChild(noReportsMessage);
+                    noReportsMessage.classList.remove('hidden');
                 }
 
             } catch (error) {
                 console.error("Error loading all reports:", error);
                 showToast("Could not load reports. Please try again.", 'error');
-                reportsContainer.innerHTML = `
-                    <div class="text-center text-gray-500 mt-20">
-                        <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
-                        <p class="mt-4">An error occurred while loading reports.</p>
-                    </div>`;
-                lucide.createIcons();
+                reportsContainer.appendChild(noReportsMessage);
+                noReportsMessage.classList.remove('hidden');
             }
         }
 
         function renderAllReports(submissions) {
             const reportsContainer = document.getElementById('reports-container');
-            // The container is now cleared by loadAllReports()
+            reportsContainer.innerHTML = ''; // Clear previous content, like the 'no reports' message
 
             submissions.forEach(submission => {
                 const card = document.createElement('div');
