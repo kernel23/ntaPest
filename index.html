@@ -1571,7 +1571,7 @@
                     const { id, farmId, ...dataToSync } = submission;
                     if (!farmId) continue;
 
-                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farms', farmId, 'submissions');
+                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmId, 'submissions');
                     await addDoc(submissionsCollection, dataToSync);
                 }
 
