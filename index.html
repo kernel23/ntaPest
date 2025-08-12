@@ -353,10 +353,15 @@
             <!-- Reports Screen -->
             <div id="reports-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
                 <header class="bg-white p-4 shadow-md">
-                    <h2 class="text-2xl font-bold">Reports</h2>
+                    <h2 class="text-2xl font-bold">All Pest & Disease Reports</h2>
                 </header>
-                <main class="flex-1 p-4">
-                    <p>Reports will be displayed here.</p>
+                <main id="reports-container" class="flex-1 p-4 overflow-y-auto">
+                    <!-- Report cards will be inserted here by JavaScript -->
+                    <div id="no-reports-message" class="text-center text-gray-500 mt-20">
+                        <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">No reports found across all your farms.</p>
+                        <p>Submissions you create will appear here.</p>
+                    </div>
                 </main>
             </div>
 
@@ -460,7 +465,8 @@
             collection,
             addDoc,
             onSnapshot,
-            serverTimestamp
+            serverTimestamp,
+            getDocs
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // --- 1. FIREBASE CONFIGURATION ---
@@ -544,7 +550,10 @@
         // --- Sidebar Navigation ---
         document.getElementById('nav-farm-list').addEventListener('click', () => showScreen('farmList'));
         document.getElementById('nav-profile').addEventListener('click', () => showScreen('profile'));
-        document.getElementById('nav-reports').addEventListener('click', () => showScreen('reports'));
+        document.getElementById('nav-reports').addEventListener('click', () => {
+            showScreen('reports');
+            loadAllReports();
+        });
         document.getElementById('nav-diagnosis').addEventListener('click', () => showScreen('diagnosis'));
         document.getElementById('nav-treatment').addEventListener('click', () => showScreen('treatment'));
         document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic'));
@@ -1506,6 +1515,81 @@
                 }
                 lucide.createIcons();
             });
+        }
+
+        async function loadAllReports() {
+            if (!currentUser) return;
+
+            const reportsContainer = document.getElementById('reports-container');
+            const noReportsMessage = document.getElementById('no-reports-message');
+            reportsContainer.innerHTML = ''; // Clear previous content
+
+            try {
+                const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+                const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                let allSubmissions = [];
+
+                for (const farmDoc of farmLotsSnapshot.docs) {
+                    const farmData = farmDoc.data();
+                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmDoc.id, 'submissions');
+                    const submissionsSnapshot = await getDocs(submissionsCollection);
+
+                    submissionsSnapshot.forEach(submissionDoc => {
+                        allSubmissions.push({
+                            ...submissionDoc.data(),
+                            id: submissionDoc.id,
+                            farmName: farmData.farmName // Add farm name to each submission
+                        });
+                    });
+                }
+
+                if (allSubmissions.length > 0) {
+                    // Sort by timestamp, newest first
+                    allSubmissions.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
+                    noReportsMessage.classList.add('hidden');
+                    renderAllReports(allSubmissions);
+                } else {
+                    reportsContainer.appendChild(noReportsMessage);
+                    noReportsMessage.classList.remove('hidden');
+                }
+
+            } catch (error) {
+                console.error("Error loading all reports:", error);
+                showToast("Could not load reports. Please try again.", 'error');
+                reportsContainer.appendChild(noReportsMessage);
+                noReportsMessage.classList.remove('hidden');
+            }
+        }
+
+        function renderAllReports(submissions) {
+            const reportsContainer = document.getElementById('reports-container');
+            reportsContainer.innerHTML = ''; // Clear previous content, like the 'no reports' message
+
+            submissions.forEach(submission => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
+
+                const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date();
+                const dateString = submissionDate.toLocaleDateString();
+                const timeString = submissionDate.toLocaleTimeString();
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex w-full">
+                            <img src="${submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image'}" class="w-24 h-24 rounded-md mr-4 object-cover">
+                            <div class="flex-grow">
+                                <p class="font-bold text-lg">${submission.farmName}</p>
+                                <p class="text-sm text-gray-500 mb-2">Reported on ${dateString} at ${timeString}</p>
+                                <p class="text-sm"><strong>Symptoms:</strong> <span class="capitalize">${submission.symptoms.join(', ')}</span></p>
+                                <p class="text-sm"><strong>Distribution:</strong> <span class="capitalize">${submission.distribution}</span></p>
+                                <p class="text-sm"><strong>Severity:</strong> <span class="capitalize">${submission.severity}</span></p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                reportsContainer.appendChild(card);
+            });
+            lucide.createIcons();
         }
 
         function loadFarms() {
