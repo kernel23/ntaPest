@@ -27,9 +27,8 @@
         .screen.active { display: flex; }
         body { font-family: 'Inter', sans-serif; } /* Using a common sans-serif font */
 
-        /* Sidebar Transitions */
+        /* Fixed Sidebar */
         #sidebar {
-            transition: width 0.5s ease-in-out;
             position: absolute;
             top: 0;
             left: 0;
@@ -37,40 +36,8 @@
             z-index: 10;
         }
 
-        #screen-container {
-            transition: margin-left 0.5s ease-in-out;
-        }
-
-        .ml-16 {
-            margin-left: 4rem !important; /* Use !important to ensure it overrides Tailwind's ml-64 */
-        }
-
-        #sidebar-title, .sidebar-text {
-            transition: opacity 0.2s ease-out, width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            white-space: nowrap;
-            overflow: hidden;
-        }
-
-        .sidebar-collapsed {
-            width: 4rem; /* w-16 */
-        }
-
-        .sidebar-collapsed #sidebar-title {
-            opacity: 0;
-            width: 0;
-        }
-
-        .sidebar-collapsed .sidebar-text {
-            opacity: 0;
-            width: 0;
-        }
-
-        .sidebar-collapsed .nav-item {
-            justify-content: center;
-        }
-
-        .sidebar-collapsed .nav-item .sidebar-text {
-            margin-left: 0;
+        #screen-container.with-sidebar {
+            margin-left: 4rem; /* ml-16 */
         }
         #map { height: 400px; }
         #report-map { height: 200px; margin-bottom: 1.5rem; }
@@ -84,44 +51,39 @@
     </div>
 
     <div id="app-container" class="h-screen w-screen relative">
-        <!-- Sidebar (hidden by default, shown after login) -->
-        <aside id="sidebar" class="w-64 bg-green-800 text-white p-4 hidden flex-col">
-            <div class="flex justify-between items-center mb-10">
-                <h1 id="sidebar-title" class="text-2xl font-bold text-white transition-opacity duration-300">Agri-Guard</h1>
-                <button id="sidebar-toggle" class="p-2 rounded-lg hover:bg-green-700">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
+        <!-- Fixed Icon-Only Sidebar -->
+        <aside id="sidebar" class="w-16 bg-green-800 text-white p-4 hidden flex-col items-center">
+            <!-- Logo -->
+            <div class="mb-10">
+                 <i data-lucide="leaf" class="w-8 h-8 text-green-400"></i>
             </div>
-            <nav class="flex-1">
-                <a href="#" id="nav-farm-list" class="nav-item flex items-center p-2 rounded-lg hover:bg-green-700">
+
+            <!-- Navigation -->
+            <nav class="flex-1 flex flex-col items-center space-y-4">
+                <a href="#" id="nav-farm-list" class="nav-item p-2 rounded-lg hover:bg-green-700" title="My Farms">
                     <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">My Farms</span>
                 </a>
-                <a href="#" id="nav-profile" class="nav-item flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                <a href="#" id="nav-profile" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Profile">
                     <i data-lucide="user" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">Profile</span>
                 </a>
-                <a href="#" id="nav-reports" class="nav-item flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                <a href="#" id="nav-reports" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Reports">
                     <i data-lucide="file-text" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">Reports</span>
                 </a>
-                <a href="#" id="nav-diagnosis" class="nav-item flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                <a href="#" id="nav-diagnosis" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Diagnosis">
                     <i data-lucide="stethoscope" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">Diagnosis</span>
                 </a>
-                <a href="#" id="nav-treatment" class="nav-item flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                <a href="#" id="nav-treatment" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Treatment">
                     <i data-lucide="syringe" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">Treatment</span>
                 </a>
-                <a href="#" id="nav-clinic" class="nav-item flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                <a href="#" id="nav-clinic" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Online Clinic">
                     <i data-lucide="message-square" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">Online Clinic</span>
                 </a>
             </nav>
+
+            <!-- Logout Button -->
             <div class="mt-auto">
-                <button id="sidebar-logout-btn" class="nav-item w-full flex items-center p-2 rounded-lg hover:bg-red-700">
+                <button id="sidebar-logout-btn" class="nav-item p-2 rounded-lg hover:bg-red-700" title="Logout">
                     <i data-lucide="log-out" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">Logout</span>
                 </button>
             </div>
         </aside>
@@ -544,29 +506,7 @@
         document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic'));
         document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
 
-        // --- Sidebar Toggle Logic ---
-        const sidebar = document.getElementById('sidebar');
-        const sidebarToggle = document.getElementById('sidebar-toggle');
-        const sidebarToggleIcon = sidebarToggle.querySelector('i'); // Get the icon element
-        const screenContainer = document.getElementById('screen-container');
-
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('sidebar-collapsed');
-
-            // Change the icon and margin based on the sidebar's state
-            if (sidebar.classList.contains('sidebar-collapsed')) {
-                sidebarToggleIcon.setAttribute('data-lucide', 'menu');
-                screenContainer.classList.remove('ml-64');
-                screenContainer.classList.add('ml-16');
-            } else {
-                sidebarToggleIcon.setAttribute('data-lucide', 'x');
-                screenContainer.classList.remove('ml-16');
-                screenContainer.classList.add('ml-64');
-            }
-
-            // Re-render icons
-            lucide.createIcons();
-        });
+        // --- Sidebar is now fixed, toggle logic removed ---
 
         let currentUser = null;
         let userProfile = null;
@@ -576,22 +516,14 @@
         function showScreen(screenName) {
             const sidebar = document.getElementById('sidebar');
             const screenContainer = document.getElementById('screen-container');
-            const noSidebarScreens = ['loading', 'login'];
+            const noSidebarScreens = ['loading', 'login', 'privacyPolicy']; // Added privacy policy here
 
             if (noSidebarScreens.includes(screenName)) {
                 sidebar.classList.add('hidden');
-                screenContainer.classList.remove('ml-64', 'ml-16'); // Remove margins
+                screenContainer.classList.remove('with-sidebar'); // Use new class
             } else {
                 sidebar.classList.remove('hidden');
-                // When showing a screen with a sidebar, we need to apply the correct margin
-                // based on whether the sidebar is currently collapsed or not.
-                if (sidebar.classList.contains('sidebar-collapsed')) {
-                    screenContainer.classList.add('ml-16');
-                    screenContainer.classList.remove('ml-64');
-                } else {
-                    screenContainer.classList.add('ml-64');
-                    screenContainer.classList.remove('ml-16');
-                }
+                screenContainer.classList.add('with-sidebar'); // Use new class
             }
 
             Object.values(screens).forEach(screen => screen.classList.remove('active'));
