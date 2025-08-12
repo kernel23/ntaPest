@@ -1,7 +1,7 @@
 // Service Worker for Agri-Guard PWA (sw.js)
 
-const CACHE_NAME = 'agri-guard-cache-v3'; // Bumped version
-const IMMUTABLE_CACHE_NAME = 'agri-guard-immutable-cache-v3'; // Bumped version
+const CACHE_NAME = 'agri-guard-cache-v4';
+const IMMUTABLE_CACHE_NAME = 'agri-guard-immutable-cache-v4';
 
 // Assets that are part of the app's "shell" and are unlikely to change
 const appShellFiles = [
@@ -75,27 +75,20 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
-    // Strategy: Network First for navigation requests (to get latest index.html)
     if (event.request.mode === 'navigate') {
         event.respondWith(networkFirst(event));
         return;
     }
-
-    // Strategy: Stale-While-Revalidate for specific dynamic assets
     if (staleWhileRevalidateFiles.includes(url.href)) {
         event.respondWith(staleWhileRevalidate(event));
         return;
     }
-
-    // Strategy: Cache First for everything else (app shell, immutable assets)
     event.respondWith(cacheFirst(event));
 });
 
-// Network-First, Falling Back to Cache strategy
 async function networkFirst(event) {
     try {
         const networkResponse = await fetch(event.request);
-        // If we get a response, update the cache and return it
         const cache = await caches.open(CACHE_NAME);
         await cache.put(event.request, networkResponse.clone());
         return networkResponse;
@@ -105,11 +98,9 @@ async function networkFirst(event) {
     }
 }
 
-// Stale-While-Revalidate strategy
 async function staleWhileRevalidate(event) {
     const cache = await caches.open(CACHE_NAME);
     const cachedResponse = await cache.match(event.request);
-
     const fetchPromise = fetch(event.request).then(networkResponse => {
         if (networkResponse && networkResponse.ok) {
             cache.put(event.request, networkResponse.clone());
@@ -119,23 +110,24 @@ async function staleWhileRevalidate(event) {
         console.warn('Service Worker: Fetch failed, falling back to cache if available.', err);
         return cachedResponse || Promise.reject(err);
     });
-
     return cachedResponse || fetchPromise;
 }
 
-// Cache-First strategy
 async function cacheFirst(event) {
     const cachedResponse = await caches.match(event.request);
-    return cachedResponse || fetch(event.request).then(networkResponse => {
-        // For cache-first, we generally assume assets are pre-cached.
-        // However, it can be useful to cache assets that were missed during install.
+    if (cachedResponse) {
+        return cachedResponse;
+    }
+    try {
+        const networkResponse = await fetch(event.request);
         if (networkResponse && networkResponse.ok) {
-            const cache = event.request.url.includes('firebase') ? caches.open(IMMUTABLE_CACHE_NAME) : caches.open(CACHE_NAME);
-            cache.then(c => c.put(event.request, networkResponse.clone()));
+            const cacheName = event.request.url.includes('firebase') ? IMMUTABLE_CACHE_NAME : CACHE_NAME;
+            const cache = await caches.open(cacheName);
+            await cache.put(event.request, networkResponse.clone());
         }
         return networkResponse;
-    }).catch(error => {
+    } catch (error) {
         console.error('Service Worker: Fetch error for a cache-first resource.', error);
         throw error;
-    });
+    }
 }
