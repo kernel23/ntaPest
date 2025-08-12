@@ -1010,8 +1010,8 @@
                 populateProvinces();
 
                 // --- Offline First Profile Loading ---
-                const db = await dbPromise;
-                const localProfile = await db.get('user-profile', 'profile');
+                const localDB = await dbPromise;
+                const localProfile = await localDB.get('user-profile', 'profile');
 
                 if (localProfile) {
                     console.log("Profile loaded from IndexedDB");
@@ -1025,7 +1025,7 @@
                         const docSnap = await getDoc(userDocRef);
                         if (docSnap.exists()) {
                             const remoteProfile = docSnap.data();
-                            await db.put('user-profile', remoteProfile, 'profile'); // Update local cache
+                            await localDB.put('user-profile', remoteProfile, 'profile'); // Update local cache
                             console.log("Updated local profile from Firestore");
                             handleUserProfile(remoteProfile); // Re-handle with fresh data
                         } else {
@@ -1052,12 +1052,12 @@
                 // User is signed out, clear local data
                 currentUser = null;
                 userProfile = null;
-                const db = await dbPromise;
+                const localDB = await dbPromise;
                 await Promise.all([
-                    db.clear('user-profile'),
-                    db.clear('farm-lots'),
-                    db.clear('submissions'),
-                    db.clear('outbox')
+                    localDB.clear('user-profile'),
+                    localDB.clear('farm-lots'),
+                    localDB.clear('submissions'),
+                    localDB.clear('outbox')
                 ]);
                 showScreen('login');
             }
@@ -1166,12 +1166,12 @@
             };
 
             try {
-                const db = await dbPromise;
+                const localDB = await dbPromise;
                 // Save to local DB first for instant UI update
-                await db.put('user-profile', profileData, 'profile');
+                await localDB.put('user-profile', profileData, 'profile');
 
                 // Add to outbox for syncing
-                await db.add('outbox', {
+                await localDB.add('outbox', {
                     type: 'SAVE_PROFILE',
                     payload: profileData,
                     timestamp: new Date().getTime()
@@ -1289,12 +1289,12 @@
 
             if (confirm('Are you sure you want to delete this farm plot? This action cannot be undone.')) {
                 try {
-                    const db = await dbPromise;
+                    const localDB = await dbPromise;
                     // Delete from local DB first
-                    await db.delete('farm-lots', currentFarmId);
+                    await localDB.delete('farm-lots', currentFarmId);
 
                     // Add to outbox for syncing
-                    await db.add('outbox', {
+                    await localDB.add('outbox', {
                         type: 'DELETE_FARM',
                         payload: { id: currentFarmId },
                         timestamp: new Date().getTime()
@@ -1341,10 +1341,10 @@
             }
 
             try {
-                const db = await dbPromise;
-                await db.put('farm-lots', farmData);
+                const localDB = await dbPromise;
+                await localDB.put('farm-lots', farmData);
 
-                await db.add('outbox', {
+                await localDB.add('outbox', {
                     type: isEditMode ? 'UPDATE_FARM' : 'CREATE_FARM',
                     payload: farmData,
                     timestamp: new Date().getTime()
@@ -1422,10 +1422,10 @@
             };
 
             try {
-                const db = await dbPromise;
-                await db.put('submissions', submissionData);
+                const localDB = await dbPromise;
+                await localDB.put('submissions', submissionData);
 
-                await db.add('outbox', {
+                await localDB.add('outbox', {
                     type: isEditSubmissionMode ? 'UPDATE_SUBMISSION' : 'CREATE_SUBMISSION',
                     payload: submissionData,
                     timestamp: new Date().getTime()
@@ -1539,11 +1539,11 @@
         async function loadSubmissions(farmId) {
             if (!currentUser || !farmId) return;
 
-            const db = await dbPromise;
+            const localDB = await dbPromise;
             // A more complex query is needed here if we store all submissions in one store.
             // For simplicity, we'll assume a structure where we can filter by farmId or clear per farm.
             // Let's get all and filter for now.
-            const allLocalSubmissions = await db.getAll('submissions');
+            const allLocalSubmissions = await localDB.getAll('submissions');
             const localSubmissions = allLocalSubmissions.filter(s => s.farmId === farmId);
             if (localSubmissions.length > 0) {
                 console.log(`Submissions for farm ${farmId} loaded from IndexedDB`);
@@ -1573,7 +1573,7 @@
                     await tx.done;
 
                     console.log(`Updated local submissions for farm ${farmId}`);
-                    const allUpdatedSubmissions = await db.getAll('submissions');
+                    const allUpdatedSubmissions = await localDB.getAll('submissions');
                     const updatedSubmissions = allUpdatedSubmissions.filter(s => s.farmId === farmId);
                     renderSubmissionsList(updatedSubmissions);
 
@@ -1636,8 +1636,8 @@
             if (!currentUser) return;
 
             // --- Offline First Farm Loading ---
-            const db = await dbPromise;
-            const localFarms = await db.getAll('farm-lots');
+            const localDB = await dbPromise;
+            const localFarms = await localDB.getAll('farm-lots');
             if (localFarms.length > 0) {
                 console.log("Farms loaded from IndexedDB");
                 renderFarmList(localFarms);
@@ -1661,7 +1661,7 @@
                     await tx.done;
 
                     console.log("Updated local farm list from Firestore");
-                    const updatedLocalFarms = await db.getAll('farm-lots');
+                    const updatedLocalFarms = await localDB.getAll('farm-lots');
                     renderFarmList(updatedLocalFarms);
 
                 }, (error) => {
@@ -1719,8 +1719,8 @@
         async function syncOutbox() {
             if (!navigator.onLine || !currentUser) return;
 
-            const db = await dbPromise;
-            const outboxItems = await db.getAll('outbox');
+            const localDB = await dbPromise;
+            const outboxItems = await localDB.getAll('outbox');
             if (outboxItems.length === 0) {
                 console.log("Outbox is empty. Nothing to sync.");
                 return;
@@ -1749,7 +1749,7 @@
                         const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
                         const newDocRef = await addDoc(farmLotsCollection, payload);
                         // **Critical Step:** Update local data with the real Firestore ID
-                        const dbTx = await db.transaction(['farm-lots', 'submissions'], 'readwrite');
+                        const dbTx = await localDB.transaction(['farm-lots', 'submissions'], 'readwrite');
                         await dbTx.objectStore('farm-lots').delete(localId);
                         payload.id = newDocRef.id;
                         await dbTx.objectStore('farm-lots').put(payload);
@@ -1776,9 +1776,9 @@
                         const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', payload.farmId, 'submissions');
                         const newDocRef = await addDoc(submissionsCollection, payload);
                         // Update local submission with real ID
-                        await db.delete('submissions', localId);
+                        await localDB.delete('submissions', localId);
                         payload.id = newDocRef.id;
-                        await db.put('submissions', payload);
+                        await localDB.put('submissions', payload);
                     } else if (item.type === 'UPDATE_SUBMISSION') {
                          payload.timestamp = serverTimestamp();
                          const submissionDocRef = doc(db, 'users', currentUser.uid, 'farmLots', payload.farmId, 'submissions', payload.id);
@@ -1786,7 +1786,7 @@
                     }
 
                     // If successful, remove the item from the outbox
-                    await db.delete('outbox', item.id);
+                    await localDB.delete('outbox', item.id);
                     console.log(`Successfully synced and removed outbox item: ${item.type} (${item.id})`);
 
                 } catch (error) {
@@ -1800,7 +1800,7 @@
             }
 
             // After sync attempt, re-check outbox and update status
-            const remainingItems = await db.count('outbox');
+            const remainingItems = await localDB.count('outbox');
             if (remainingItems === 0) {
                  console.log("Outbox sync complete.");
                  // A full data reload might be good here to ensure consistency
@@ -1812,8 +1812,8 @@
         // --- 7. CONNECTION STATUS UI ---
         const connectionStatusEl = document.getElementById('connection-status');
         async function updateOnlineStatus() {
-            const db = await dbPromise;
-            const outboxCount = await db.count('outbox');
+            const localDB = await dbPromise;
+            const outboxCount = await localDB.count('outbox');
 
             if (navigator.onLine) {
                 connectionStatusEl.textContent = 'Online';
