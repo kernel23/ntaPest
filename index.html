@@ -150,6 +150,31 @@
                     </button>
                     <button id="guest-signin-btn" class="w-full text-gray-600 py-2">Continue as Guest</button>
                 </div>
+                <div class="mt-4 text-center text-xs text-gray-500">
+                    By signing in, you agree to our <a href="#" id="privacy-policy-link" class="underline hover:text-green-700">Privacy Policy</a>. All personal data is encrypted in transit.
+                </div>
+            </div>
+
+            <!-- Privacy Policy Screen -->
+            <div id="privacy-policy-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Privacy Policy</h2>
+                    <button id="close-privacy-policy-btn" class="p-2 rounded-full hover:bg-gray-100">
+                        <i data-lucide="x" class="w-6 h-6 text-gray-600"></i>
+                    </button>
+                </header>
+                <main class="flex-1 p-6 overflow-y-auto">
+                    <p class="mb-4"><strong>Last updated: August 11, 2025</strong></p>
+                    <p class="mb-4">This Privacy Policy describes Our policies and procedures on the collection, use and disclosure of Your information when You use the Service and tells You about Your privacy rights and how the law protects You.</p>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Interpretation and Definitions</h3>
+                    <p class="mb-4">The words of which the initial letter is capitalized have meanings defined under the following conditions. The following definitions shall have the same meaning regardless of whether they appear in singular or in plural.</p>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Collecting and Using Your Personal Data</h3>
+                    <p class="mb-4">While using Our Service, We may ask You to provide Us with certain personally identifiable information that can be used to contact or identify You. Personally identifiable information may include, but is not limited to: Email address, First name and last name, Phone number, Address, State, Province, ZIP/Postal code, City, Usage Data.</p>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Data Encryption</h3>
+                    <p class="mb-4">We are committed to ensuring that your information is secure. To prevent unauthorized access or disclosure, we have put in place suitable physical, electronic and managerial procedures to safeguard and secure the information we collect online. All personal data is encrypted in transit between your device and our servers using Secure Socket Layer (SSL) technology.</p>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Contact Us</h3>
+                    <p>If you have any questions about this Privacy Policy, You can contact us by email: privacy@agri-guard.com</p>
+                </main>
             </div>
 
             <!-- Create Profile Screen -->
@@ -163,8 +188,18 @@
                     </div>
                     <label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
                     <input type="text" id="fullName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-                    <label for="homeAddress" class="block text-sm font-medium text-gray-700 mt-4">Home Address</label>
-                    <textarea id="homeAddress" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"></textarea>
+
+                    <label for="province" class="block text-sm font-medium text-gray-700 mt-4">Province</label>
+                    <select id="province" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        <option>Loading provinces...</option>
+                    </select>
+
+                    <label for="municipality" class="block text-sm font-medium text-gray-700 mt-4">Municipality</label>
+                    <select id="municipality" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500" disabled></select>
+
+                    <label for="barangay" class="block text-sm font-medium text-gray-700 mt-4">Barangay</label>
+                    <select id="barangay" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500" disabled></select>
+
                     <label for="birthdate" class="block text-sm font-medium text-gray-700 mt-4">Birthdate</label>
                     <input type="date" id="birthdate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
                     <label for="civilStatus" class="block text-sm font-medium text-gray-700 mt-4">Civil Status</label>
@@ -189,6 +224,16 @@
                         <option>College</option>
                         <option>Post-graduate</option>
                     </select>
+                    <div class="mt-4">
+                        <label for="isFarmer" class="flex items-center">
+                            <input type="checkbox" id="isFarmer" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                            <span class="ml-2 text-sm font-medium text-gray-700">I am a farmer</span>
+                        </label>
+                    </div>
+                    <div id="rsbsa-container" class="hidden mt-4">
+                        <label for="rsbsaNumber" class="block text-sm font-medium text-gray-700">RSBSA Number (Optional)</label>
+                        <input type="text" id="rsbsaNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    </div>
                     <p class="mt-6 mb-2 font-medium text-gray-700">Select Your Role:</p>
                     <div class="flex gap-4">
                         <button id="role-farmer-btn" class="role-btn flex-1 p-4 rounded-lg border-2 border-green-600 bg-green-600 text-white">Farmer</button>
@@ -356,6 +401,9 @@
         </div>
     </div>
 
+    <!-- Address Data -->
+    <script src="address-provider.js"></script>
+
     <!-- Firebase SDKs -->
     <script type="module">
         // Import the IDB library for offline storage
@@ -434,8 +482,21 @@
             reports: document.getElementById('reports-screen'),
             diagnosis: document.getElementById('diagnosis-screen'),
             treatment: document.getElementById('treatment-screen'),
-            onlineClinic: document.getElementById('online-clinic-screen')
+            onlineClinic: document.getElementById('online-clinic-screen'),
+            privacyPolicy: document.getElementById('privacy-policy-screen')
         };
+
+        // --- Privacy Policy Navigation ---
+        document.getElementById('privacy-policy-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            showScreen('privacyPolicy');
+        });
+
+        document.getElementById('close-privacy-policy-btn').addEventListener('click', () => {
+            // This should ideally return to the previous screen.
+            // For simplicity, we'll return to the login screen as the link is only there.
+            showScreen('login');
+        });
 
         // --- Sidebar Navigation ---
         document.getElementById('nav-farm-list').addEventListener('click', () => showScreen('farmList'));
@@ -560,10 +621,108 @@
             }
         }
 
+        // --- Address Dropdown Logic ---
+        const provinceSelect = document.getElementById('province');
+        const municipalitySelect = document.getElementById('municipality');
+        const barangaySelect = document.getElementById('barangay');
+
+        function populateProvinces() {
+            provinceSelect.innerHTML = '<option value="">Select Province</option>';
+            if (window.philippineAddresses && window.philippineAddresses.provinces) {
+                window.philippineAddresses.provinces.forEach(province => {
+                    const option = document.createElement('option');
+                    option.value = province.name;
+                    option.textContent = province.name;
+                    provinceSelect.appendChild(option);
+                });
+            } else {
+                provinceSelect.innerHTML = '<option value="">Failed to load addresses</option>';
+            }
+        }
+
+        provinceSelect.addEventListener('change', () => {
+            const selectedProvinceName = provinceSelect.value;
+            const selectedProvince = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
+            municipalitySelect.innerHTML = '<option value="">Select Municipality</option>';
+            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+            barangaySelect.disabled = true;
+
+            if (selectedProvince) {
+                municipalitySelect.disabled = false;
+                selectedProvince.municipalities.forEach(municipality => {
+                    const option = document.createElement('option');
+                    option.value = municipality.name;
+                    option.textContent = municipality.name;
+                    municipalitySelect.appendChild(option);
+                });
+            } else {
+                municipalitySelect.disabled = true;
+            }
+        });
+
+        municipalitySelect.addEventListener('change', () => {
+            const selectedProvinceName = provinceSelect.value;
+            const selectedMunicipalityName = municipalitySelect.value;
+            const selectedProvince = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
+            const selectedMunicipality = selectedProvince?.municipalities.find(m => m.name === selectedMunicipalityName);
+            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+
+            if (selectedMunicipality && selectedMunicipality.barangays) {
+                barangaySelect.disabled = false;
+                selectedMunicipality.barangays.forEach(barangay => {
+                    const option = document.createElement('option');
+                    option.value = barangay;
+                    option.textContent = barangay;
+                    barangaySelect.appendChild(option);
+                });
+            } else {
+                barangaySelect.disabled = true;
+            }
+        });
+
+        // --- RSBSA Logic ---
+        const isFarmerCheckbox = document.getElementById('isFarmer');
+        const rsbsaContainer = document.getElementById('rsbsa-container');
+        isFarmerCheckbox.addEventListener('change', () => {
+            rsbsaContainer.classList.toggle('hidden', !isFarmerCheckbox.checked);
+        });
+
         function populateProfileFields(profile) {
             document.getElementById('profile-pic').src = profile.photoURL || (currentUser && currentUser.photoURL) || 'https://placehold.co/96x96/e2e8f0/334155?text=User';
             document.getElementById('fullName').value = profile.fullName || '';
-            document.getElementById('homeAddress').value = profile.homeAddress || '';
+
+            // Populate address fields only if the data is ready
+            if (window.philippineAddresses && window.philippineAddresses.provinces.length > 0) {
+                if (profile.province) {
+                    provinceSelect.value = profile.province;
+                    provinceSelect.dispatchEvent(new Event('change'));
+
+                    setTimeout(() => {
+                        if (profile.municipality) {
+                            municipalitySelect.value = profile.municipality;
+                            municipalitySelect.dispatchEvent(new Event('change'));
+
+                            setTimeout(() => {
+                                 if (profile.barangay) {
+                                    barangaySelect.value = profile.barangay;
+                                }
+                            }, 100);
+                        }
+                    }, 100);
+                }
+            }
+
+            // RSBSA Number
+            if (profile.rsbsaNumber) {
+                isFarmerCheckbox.checked = true;
+                rsbsaContainer.classList.remove('hidden');
+                document.getElementById('rsbsaNumber').value = profile.rsbsaNumber;
+            } else {
+                isFarmerCheckbox.checked = false;
+                rsbsaContainer.classList.add('hidden');
+                document.getElementById('rsbsaNumber').value = '';
+            }
+
             document.getElementById('birthdate').value = profile.birthdate || '';
             document.getElementById('civilStatus').value = profile.civilStatus || 'Single';
             document.getElementById('religion').value = profile.religion || '';
@@ -587,6 +746,12 @@
             if (user) {
                 currentUser = user;
                 updateOnlineStatus();
+
+                // Wait for the address data to be ready
+                await window.addressDataPromise;
+
+                // Now that address data is loaded, populate the dropdowns
+                populateProvinces();
                 
                 const userDocRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(userDocRef);
@@ -594,9 +759,10 @@
                 if (docSnap.exists()) {
                     userProfile = docSnap.data();
 
-                    const requiredFields = ['fullName', 'homeAddress', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
+                    const requiredFields = ['fullName', 'province', 'municipality', 'barangay', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
                     const isProfileComplete = requiredFields.every(field => userProfile[field] !== undefined && userProfile[field] !== null && userProfile[field] !== '');
 
+                    // Populate all fields, including the now-ready address dropdowns
                     populateProfileFields(userProfile);
 
                     if (isProfileComplete) {
@@ -668,22 +834,27 @@
 
         document.getElementById('save-profile-btn').addEventListener('click', async () => {
             const fullName = document.getElementById('fullName').value;
-            const homeAddress = document.getElementById('homeAddress').value;
+            const province = document.getElementById('province').value;
+            const municipality = document.getElementById('municipality').value;
+            const barangay = document.getElementById('barangay').value;
             const birthdate = document.getElementById('birthdate').value;
             const civilStatus = document.getElementById('civilStatus').value;
             const religion = document.getElementById('religion').value;
             const yearsFarming = document.getElementById('yearsFarming').value;
             const familyMembers = document.getElementById('familyMembers').value;
             const education = document.getElementById('education').value;
+            const rsbsaNumber = document.getElementById('rsbsaNumber').value;
 
-            if (!fullName.trim() || !homeAddress.trim() || !birthdate.trim() || !civilStatus.trim() || !religion.trim() || !yearsFarming.trim() || !familyMembers.trim() || !education.trim()) {
+            if (!fullName.trim() || !province.trim() || !municipality.trim() || !barangay.trim() || !birthdate.trim() || !civilStatus.trim() || !religion.trim() || !yearsFarming.trim() || !familyMembers.trim() || !education.trim()) {
                 showToast('Please fill out all fields.', 'error');
                 return;
             }
             
             const profileData = {
                 fullName: fullName.trim(),
-                homeAddress: homeAddress.trim(),
+                province: province,
+                municipality: municipality,
+                barangay: barangay,
                 birthdate: birthdate,
                 civilStatus: civilStatus,
                 religion: religion.trim(),
@@ -693,6 +864,7 @@
                 role: selectedRole,
                 email: currentUser.email || '',
                 photoURL: currentUser.photoURL || '',
+                rsbsaNumber: rsbsaNumber.trim()
             };
 
             try {
