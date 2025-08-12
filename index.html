@@ -1273,60 +1273,127 @@
 
         document.getElementById('save-submission-btn').addEventListener('click', async () => {
             const imageSrc = document.getElementById('submission-image-preview').src;
-
             const symptoms = Array.from(document.querySelectorAll('#symptoms-checklist input:checked')).map(cb => cb.value);
             const distribution = document.querySelector('#distribution-radios input:checked')?.value;
             const severity = document.querySelector('#severity-radios input:checked')?.value;
 
-            if (!imageSrc || symptoms.length === 0 || !distribution || !severity) {
+            if (!imageSrc.startsWith('data:image') || symptoms.length === 0 || !distribution || !severity) {
                 showToast('Please fill out all fields and select an image.', 'error');
                 return;
             }
 
-            // Simulate GPS data
-            const gps_coordinates = {
-                latitude: 17.5734,
-                longitude: 120.3856
-            };
-
-            if (!currentFarmId) {
-                showToast('Could not identify the current farm. Please go back to the farm list.', 'error');
+            if (!currentFarmId || !currentUser) {
+                showToast('Could not identify the current farm or user. Please go back to the farm list.', 'error');
                 return;
             }
 
             const submissionData = {
-                farmId: currentFarmId,
                 imageDataUrl: imageSrc,
                 symptoms,
                 distribution,
                 severity,
-                gps_coordinates,
-                timestamp: new Date()
             };
 
             try {
-                const db = await dbPromise;
-                await db.add('submission_outbox', submissionData);
-                showToast('Submission saved locally. It will be synced when online.', 'success');
+                if (isEditSubmissionMode) {
+                    // Update existing submission
+                    submissionData.updatedAt = serverTimestamp();
+                    const submissionDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions', currentSubmissionId);
+                    await updateDoc(submissionDocRef, submissionData);
+                    showToast('Report updated successfully!', 'success');
+                } else {
+                    // Create new submission
+                    submissionData.timestamp = serverTimestamp();
+                     // Simulate GPS data
+                    submissionData.gps_coordinates = { latitude: 17.5734, longitude: 120.3856 };
+                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions');
+                    await addDoc(submissionsCollection, submissionData);
+                    showToast('Report saved successfully!', 'success');
+                }
 
-                // Reset form
-                document.getElementById('submission-image-preview').src = '';
-                document.getElementById('submission-image-preview').classList.add('hidden');
-                document.getElementById('image-placeholder-icon').classList.remove('hidden');
-                document.querySelectorAll('#symptoms-checklist input:checked').forEach(cb => cb.checked = false);
-                document.querySelectorAll('#distribution-radios input:checked').forEach(rb => rb.checked = false);
-                document.querySelectorAll('#severity-radios input:checked').forEach(rb => rb.checked = false);
+                // Reset state and form
+                isEditSubmissionMode = false;
+                currentSubmissionId = null;
+                document.getElementById('new-submission-btn').click(); // Programmatically click to reset the form
 
                 showScreen('dashboard');
             } catch (error) {
-                console.error('Failed to save submission locally:', error);
-                showToast('Could not save submission.', 'error');
+                console.error('Failed to save submission:', error);
+                showToast('Could not save report. Please try again.', 'error');
             }
         });
 
         let currentFarmId = null;
+        let isEditSubmissionMode = false;
+        let currentSubmissionId = null;
+
+        // --- Submission Edit Flow ---
+        document.getElementById('dashboard-main').addEventListener('click', async (e) => {
+            if (e.target && e.target.classList.contains('edit-submission-btn')) {
+                currentSubmissionId = e.target.getAttribute('data-id');
+                if (!currentSubmissionId || !currentUser || !currentFarmId) {
+                    showToast('Error: Cannot find submission to edit.', 'error');
+                    return;
+                }
+                isEditSubmissionMode = true;
+
+                try {
+                    const submissionDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions', currentSubmissionId);
+                    const submissionDocSnap = await getDoc(submissionDocRef);
+
+                    if (submissionDocSnap.exists()) {
+                        const sub = submissionDocSnap.data();
+
+                        // Pre-fill the form
+                        document.getElementById('submission-image-preview').src = sub.imageDataUrl || '';
+                        document.getElementById('submission-image-preview').classList.remove('hidden');
+                        document.getElementById('image-placeholder-icon').classList.add('hidden');
+
+                        // Reset checkboxes before setting new state
+                        document.querySelectorAll('#symptoms-checklist input[type="checkbox"]').forEach(cb => cb.checked = false);
+                        sub.symptoms.forEach(symptomValue => {
+                            const checkbox = document.getElementById(`symptom-${symptomValue}`);
+                            if (checkbox) checkbox.checked = true;
+                        });
+
+                        // Reset radios before setting new state
+                        document.querySelectorAll('#distribution-radios input[type="radio"]').forEach(rb => rb.checked = false);
+                        const distRadio = document.getElementById(`dist-${sub.distribution}`);
+                        if (distRadio) distRadio.checked = true;
+
+                        document.querySelectorAll('#severity-radios input[type="radio"]').forEach(rb => rb.checked = false);
+                        const sevRadio = document.getElementById(`sev-${sub.severity}`);
+                        if (sevRadio) sevRadio.checked = true;
+
+                        // Update button and show screen
+                        document.getElementById('save-submission-btn').textContent = 'Update Report';
+                        showScreen('newSubmission');
+                        initializeReportMap(currentFarmId);
+
+                    } else {
+                        showToast('Submission data not found.', 'error');
+                    }
+                } catch (error) {
+                    console.error("Error fetching submission for edit:", error);
+                    showToast('Could not load submission data.', 'error');
+                }
+            }
+        });
 
         document.getElementById('new-submission-btn').addEventListener('click', () => {
+            isEditSubmissionMode = false;
+            currentSubmissionId = null;
+
+            // Reset the form for a new entry
+            document.getElementById('submission-image-preview').src = '';
+            document.getElementById('submission-image-preview').classList.add('hidden');
+            document.getElementById('image-placeholder-icon').classList.remove('hidden');
+            document.getElementById('image-upload').value = '';
+            document.querySelectorAll('#symptoms-checklist input:checked').forEach(cb => cb.checked = false);
+            document.querySelectorAll('#distribution-radios input:checked').forEach(rb => rb.checked = false);
+            document.querySelectorAll('#severity-radios input:checked').forEach(rb => rb.checked = false);
+
+            document.getElementById('save-submission-btn').textContent = 'Save Submission';
             showScreen('newSubmission');
             // Invalidate map size and load data, needed when map is in a hidden div
             setTimeout(() => {
@@ -1334,43 +1401,55 @@
             }, 100);
         });
 
-        async function loadSubmissions(farmId) {
+        function loadSubmissions(farmId) {
+            if (!currentUser || !farmId) return;
+
+            const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmId, 'submissions');
             const dashboardMain = document.getElementById('dashboard-main');
-            dashboardMain.innerHTML = ''; // Clear existing content
 
-            const db = await dbPromise;
-            const submissions = await db.getAll('submission_outbox');
+            onSnapshot(submissionsCollection, (querySnapshot) => {
+                dashboardMain.innerHTML = ''; // Clear existing content
 
-            if (submissions.length === 0) {
-                dashboardMain.innerHTML = `
-                <div class="text-center text-gray-500 mt-20">
-                    <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto text-gray-400"></i>
-                    <p class="mt-4">No submissions yet for this farm.</p>
-                </div>`;
-            } else {
-                submissions.forEach(submission => {
-                    const card = document.createElement('div');
-                    card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
+                if (querySnapshot.empty) {
+                    dashboardMain.innerHTML = `
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">No scouting reports found for this farm.</p>
+                        <p>Click 'New Report' to add one.</p>
+                    </div>`;
+                } else {
+                    querySnapshot.forEach(doc => {
+                        const submission = doc.data();
+                        const submissionId = doc.id;
+                        const card = document.createElement('div');
+                        card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
 
-                    const date = new Date(submission.timestamp);
-                    const dateString = date.toLocaleDateString();
-                    const timeString = date.toLocaleTimeString();
+                        // Fallback for older data that might not have a proper timestamp
+                        const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date();
+                        const dateString = submissionDate.toLocaleDateString();
+                        const timeString = submissionDate.toLocaleTimeString();
 
-                    card.innerHTML = `
-                        <div class="flex">
-                            <img src="${submission.imageDataUrl}" class="w-24 h-24 rounded-md mr-4">
-                            <div>
-                                <p class="font-bold">Submission from ${dateString} at ${timeString}</p>
-                                <p><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
-                                <p><strong>Distribution:</strong> ${submission.distribution}</p>
-                                <p><strong>Severity:</strong> ${submission.severity}</p>
+                        card.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <div class="flex">
+                                    <img src="${submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image'}" class="w-24 h-24 rounded-md mr-4 object-cover">
+                                    <div>
+                                        <p class="font-bold">Report from ${dateString} at ${timeString}</p>
+                                        <p class="text-sm"><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
+                                        <p class="text-sm"><strong>Distribution:</strong> ${submission.distribution}</p>
+                                        <p class="text-sm"><strong>Severity:</strong> ${submission.severity}</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button class="edit-submission-btn bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded" data-id="${submissionId}">Edit</button>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                    dashboardMain.appendChild(card);
-                });
-            }
-            lucide.createIcons();
+                        `;
+                        dashboardMain.appendChild(card);
+                    });
+                }
+                lucide.createIcons();
+            });
         }
 
         function loadFarms() {
