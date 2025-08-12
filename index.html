@@ -368,11 +368,6 @@
                 </header>
                 <main id="reports-container" class="flex-1 p-4 overflow-y-auto">
                     <!-- Report cards will be inserted here by JavaScript -->
-                    <div id="no-reports-message" class="text-center text-gray-500 mt-20">
-                        <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
-                        <p class="mt-4">No reports found across all your farms.</p>
-                        <p>Submissions you create will appear here.</p>
-                    </div>
                 </main>
             </div>
 
@@ -1570,8 +1565,7 @@
             if (!currentUser) return;
 
             const reportsContainer = document.getElementById('reports-container');
-            const noReportsMessage = document.getElementById('no-reports-message');
-            reportsContainer.innerHTML = ''; // Clear previous content
+            reportsContainer.innerHTML = ''; // Clear previous content before doing anything else.
 
             try {
                 const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
@@ -1587,32 +1581,44 @@
                         allSubmissions.push({
                             ...submissionDoc.data(),
                             id: submissionDoc.id,
-                            farmName: farmData.farmName // Add farm name to each submission
+                            farmName: farmData.farmName
                         });
                     });
                 }
 
                 if (allSubmissions.length > 0) {
-                    // Sort by timestamp, newest first
                     allSubmissions.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
-                    noReportsMessage.classList.add('hidden');
                     renderAllReports(allSubmissions);
                 } else {
+                    // Dynamically create and append the 'no reports' message
+                    const noReportsMessage = document.createElement('div');
+                    noReportsMessage.className = 'text-center text-gray-500 mt-20';
+                    noReportsMessage.innerHTML = `
+                        <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">No reports found across all your farms.</p>
+                        <p>Submissions you create will appear here.</p>
+                    `;
                     reportsContainer.appendChild(noReportsMessage);
-                    noReportsMessage.classList.remove('hidden');
+                    lucide.createIcons();
                 }
 
             } catch (error) {
                 console.error("Error loading all reports:", error);
                 showToast("Could not load reports. Please try again.", 'error');
-                reportsContainer.appendChild(noReportsMessage);
-                noReportsMessage.classList.remove('hidden');
+                 // Display a user-friendly error message in the container
+                reportsContainer.innerHTML = `
+                    <div class="text-center text-red-500 mt-20">
+                        <i data-lucide="alert-triangle" class="w-12 h-12 mx-auto text-red-400"></i>
+                        <p class="mt-4">Sorry, we couldn't load the reports.</p>
+                        <p>Please check your connection and try again.</p>
+                    </div>
+                `;
+                lucide.createIcons();
             }
         }
 
         function renderAllReports(submissions) {
             const reportsContainer = document.getElementById('reports-container');
-            reportsContainer.innerHTML = ''; // Clear previous content, like the 'no reports' message
 
             submissions.forEach(submission => {
                 const card = document.createElement('div');
