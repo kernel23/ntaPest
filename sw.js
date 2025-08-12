@@ -5,7 +5,6 @@ const CACHE_NAME = 'agri-guard-cache-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  'https://cdn.tailwindcss.com',
   'https://unpkg.com/lucide@latest',
   'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js',
   'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js',

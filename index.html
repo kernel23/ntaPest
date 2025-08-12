@@ -17,13 +17,17 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <!-- Leaflet CSS for mapping -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+
     <style>
         /* Simple transition for showing/hiding screens */
         .screen { display: none; }
         .screen.active { display: flex; }
         body { font-family: 'Inter', sans-serif; } /* Using a common sans-serif font */
 
-        /* Sidebar Transitions */
+        /* Fixed Sidebar */
         #sidebar {
             transition: width 0.5s ease-in-out;
         }
@@ -54,7 +58,10 @@
 
         .sidebar-collapsed .nav-item .sidebar-text {
             margin-left: 0;
+
         }
+        #map { height: 400px; }
+        #report-map { height: 200px; margin-bottom: 1.5rem; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -72,37 +79,35 @@
                 <button id="sidebar-toggle" class="p-2 rounded-lg hover:bg-green-700">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
+
             </div>
-            <nav class="flex-1">
-                <a href="#" id="nav-farm-list" class="nav-item flex items-center p-2 rounded-lg hover:bg-green-700">
+
+            <!-- Navigation -->
+            <nav class="flex-1 flex flex-col items-center space-y-4">
+                <a href="#" id="nav-farm-list" class="nav-item p-2 rounded-lg hover:bg-green-700" title="My Farms">
                     <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">My Farms</span>
                 </a>
-                <a href="#" id="nav-profile" class="nav-item flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                <a href="#" id="nav-profile" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Profile">
                     <i data-lucide="user" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">Profile</span>
                 </a>
-                <a href="#" id="nav-reports" class="nav-item flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                <a href="#" id="nav-reports" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Reports">
                     <i data-lucide="file-text" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">Reports</span>
                 </a>
-                <a href="#" id="nav-diagnosis" class="nav-item flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                <a href="#" id="nav-diagnosis" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Diagnosis">
                     <i data-lucide="stethoscope" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">Diagnosis</span>
                 </a>
-                <a href="#" id="nav-treatment" class="nav-item flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                <a href="#" id="nav-treatment" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Treatment">
                     <i data-lucide="syringe" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">Treatment</span>
                 </a>
-                <a href="#" id="nav-clinic" class="nav-item flex items-center p-2 rounded-lg hover:bg-green-700 mt-2">
+                <a href="#" id="nav-clinic" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Online Clinic">
                     <i data-lucide="message-square" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">Online Clinic</span>
                 </a>
             </nav>
+
+            <!-- Logout Button -->
             <div class="mt-auto">
-                <button id="sidebar-logout-btn" class="nav-item w-full flex items-center p-2 rounded-lg hover:bg-red-700">
+                <button id="sidebar-logout-btn" class="nav-item p-2 rounded-lg hover:bg-red-700" title="Logout">
                     <i data-lucide="log-out" class="w-6 h-6"></i>
-                    <span class="ml-3 sidebar-text">Logout</span>
                 </button>
             </div>
         </aside>
@@ -137,6 +142,31 @@
                     </button>
                     <button id="guest-signin-btn" class="w-full text-gray-600 py-2">Continue as Guest</button>
                 </div>
+                <div class="mt-4 text-center text-xs text-gray-500">
+                    By signing in, you agree to our <a href="#" id="privacy-policy-link" class="underline hover:text-green-700">Privacy Policy</a>. All personal data is encrypted in transit.
+                </div>
+            </div>
+
+            <!-- Privacy Policy Screen -->
+            <div id="privacy-policy-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">Privacy Policy</h2>
+                    <button id="close-privacy-policy-btn" class="p-2 rounded-full hover:bg-gray-100">
+                        <i data-lucide="x" class="w-6 h-6 text-gray-600"></i>
+                    </button>
+                </header>
+                <main class="flex-1 p-6 overflow-y-auto">
+                    <p class="mb-4"><strong>Last updated: August 11, 2025</strong></p>
+                    <p class="mb-4">This Privacy Policy describes Our policies and procedures on the collection, use and disclosure of Your information when You use the Service and tells You about Your privacy rights and how the law protects You.</p>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Interpretation and Definitions</h3>
+                    <p class="mb-4">The words of which the initial letter is capitalized have meanings defined under the following conditions. The following definitions shall have the same meaning regardless of whether they appear in singular or in plural.</p>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Collecting and Using Your Personal Data</h3>
+                    <p class="mb-4">While using Our Service, We may ask You to provide Us with certain personally identifiable information that can be used to contact or identify You. Personally identifiable information may include, but is not limited to: Email address, First name and last name, Phone number, Address, State, Province, ZIP/Postal code, City, Usage Data.</p>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Data Encryption</h3>
+                    <p class="mb-4">We are committed to ensuring that your information is secure. To prevent unauthorized access or disclosure, we have put in place suitable physical, electronic and managerial procedures to safeguard and secure the information we collect online. All personal data is encrypted in transit between your device and our servers using Secure Socket Layer (SSL) technology.</p>
+                    <h3 class="text-lg font-bold mt-6 mb-2">Contact Us</h3>
+                    <p>If you have any questions about this Privacy Policy, You can contact us by email: privacy@agri-guard.com</p>
+                </main>
             </div>
 
             <!-- Create Profile Screen -->
@@ -150,8 +180,18 @@
                     </div>
                     <label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
                     <input type="text" id="fullName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-                    <label for="homeAddress" class="block text-sm font-medium text-gray-700 mt-4">Home Address</label>
-                    <textarea id="homeAddress" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"></textarea>
+
+                    <label for="province" class="block text-sm font-medium text-gray-700 mt-4">Province</label>
+                    <select id="province" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        <option>Loading provinces...</option>
+                    </select>
+
+                    <label for="municipality" class="block text-sm font-medium text-gray-700 mt-4">Municipality</label>
+                    <select id="municipality" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500" disabled></select>
+
+                    <label for="barangay" class="block text-sm font-medium text-gray-700 mt-4">Barangay</label>
+                    <select id="barangay" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500" disabled></select>
+
                     <label for="birthdate" class="block text-sm font-medium text-gray-700 mt-4">Birthdate</label>
                     <input type="date" id="birthdate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
                     <label for="civilStatus" class="block text-sm font-medium text-gray-700 mt-4">Civil Status</label>
@@ -176,6 +216,16 @@
                         <option>College</option>
                         <option>Post-graduate</option>
                     </select>
+                    <div class="mt-4">
+                        <label for="isFarmer" class="flex items-center">
+                            <input type="checkbox" id="isFarmer" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                            <span class="ml-2 text-sm font-medium text-gray-700">I am a farmer</span>
+                        </label>
+                    </div>
+                    <div id="rsbsa-container" class="hidden mt-4">
+                        <label for="rsbsaNumber" class="block text-sm font-medium text-gray-700">RSBSA Number (Optional)</label>
+                        <input type="text" id="rsbsaNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    </div>
                     <p class="mt-6 mb-2 font-medium text-gray-700">Select Your Role:</p>
                     <div class="flex gap-4">
                         <button id="role-farmer-btn" class="role-btn flex-1 p-4 rounded-lg border-2 border-green-600 bg-green-600 text-white">Farmer</button>
@@ -218,7 +268,11 @@
                         <h2 id="dashboard-farm-name" class="text-2xl font-bold">Farm Health Log</h2>
                         <p id="dashboard-farm-variety" class="text-sm text-gray-600 ml-4"></p>
                     </div>
-                    <button id="new-submission-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">New Report</button>
+                    <div>
+                        <button id="edit-farm-details-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Edit Details</button>
+                        <button id="delete-farm-btn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md ml-2">Delete Farm</button>
+                        <button id="new-submission-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md ml-2">New Report</button>
+                    </div>
                 </header>
                 <main id="dashboard-main" class="flex-1 p-4 overflow-y-auto">
                     <div class="text-center text-gray-500 mt-20">
@@ -237,6 +291,9 @@
                     <h2 class="text-2xl font-bold">New Scouting Report</h2>
                 </header>
                 <main class="flex-1 p-6 overflow-y-auto">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Farm Location</label>
+                    <div id="report-map" class="w-full h-48 bg-gray-200 rounded-md shadow-inner"></div>
+
                     <label class="block text-sm font-medium text-gray-700 mb-2">Upload Image of Affected Plant</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                         <div class="space-y-1 text-center">
@@ -250,6 +307,12 @@
                                 <p class="pl-1">or drag and drop</p>
                             </div>
                             <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                             <div class="mt-4">
+                                <button id="open-camera-btn" type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                    <i data-lucide="camera" class="mr-2 h-5 w-5"></i>
+                                    Capture with Camera
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -281,6 +344,34 @@
                     
                     <button id="save-submission-btn" class="mt-8 w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md">Save Submission</button>
                 </main>
+            </div>
+
+            <!-- Camera Screen -->
+            <div id="camera-screen" class="screen flex-col h-screen bg-black text-white">
+                <header class="bg-gray-900 p-4 flex justify-between items-center z-20">
+                    <button id="back-to-submission-btn" class="p-2 rounded-full hover:bg-gray-700">
+                        <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                    </button>
+                    <h2 class="text-xl font-bold">Capture Media</h2>
+                    <div class="w-10"></div> <!-- Spacer -->
+                </header>
+                <main class="flex-1 relative flex justify-center items-center">
+                    <video id="camera-feed" class="w-full h-full object-cover" autoplay playsinline></video>
+                    <div id="camera-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="w-11/12 h-2/3 border-4 border-dashed border-white rounded-lg" style="border-color: rgba(255, 255, 255, 0.7);">
+                            <p class="text-white text-center mt-4">Place affected leaf inside this box</p>
+                        </div>
+                    </div>
+                    <canvas id="photo-canvas" class="hidden"></canvas>
+                </main>
+                <footer class="bg-gray-900 p-4 flex justify-around items-center z-20">
+                    <button id="capture-photo-btn" class="p-4 bg-white rounded-full focus:outline-none">
+                        <i data-lucide="camera" class="w-8 h-8 text-gray-900"></i>
+                    </button>
+                    <button id="record-video-btn" class="p-4 bg-red-600 rounded-full focus:outline-none">
+                        <i data-lucide="video" class="w-8 h-8 text-white"></i>
+                    </button>
+                </footer>
             </div>
 
             <!-- Reports Screen -->
@@ -323,6 +414,21 @@
                 </main>
             </div>
 
+            <!-- Farm Setup Screen -->
+            <div id="farm-setup-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md">
+                    <h2 class="text-2xl font-bold">Map Your Farm Plot</h2>
+                </header>
+                <main class="flex-1 p-6">
+                    <p class="mb-4 text-gray-700">Please use the drawing tool on the map to outline the boundary of your farm plot. You can pan and zoom to find your location.</p>
+                    <div id="map" class="w-full h-96 bg-gray-200 rounded-md shadow-inner"></div>
+                    <div class="mt-6 text-right">
+                        <button id="cancel-farm-setup-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md mr-2">Cancel</button>
+                        <button id="save-farm-map-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md" disabled>Save Farm Area</button>
+                    </div>
+                </main>
+            </div>
+
         </div>
     </div>
 
@@ -338,10 +444,19 @@
                 <input type="text" id="farmName" placeholder="e.g., North Field" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
                 <label for="tobaccoVariety" class="block text-sm font-medium text-gray-700 mt-4">Tobacco Variety</label>
                 <input type="text" id="tobaccoVariety" placeholder="e.g., Virginia" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
-                <button id="save-farm-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Plot</button>
+                <label for="plantingDate" class="block text-sm font-medium text-gray-700 mt-4">Date of Planting</label>
+                <input type="date" id="plantingDate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                <button id="next-farm-map-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Next: Set Location</button>
             </div>
         </div>
     </div>
+
+    <!-- Address Data -->
+    <script src="address-provider.js"></script>
+
+    <!-- Leaflet JS for mapping -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
     <!-- Firebase SDKs -->
     <script type="module">
@@ -364,6 +479,8 @@
             doc,
             getDoc,
             setDoc,
+            updateDoc,
+            deleteDoc,
             collection,
             addDoc,
             onSnapshot,
@@ -418,11 +535,35 @@
             farmList: document.getElementById('farm-list-screen'),
             dashboard: document.getElementById('dashboard-screen'),
             newSubmission: document.getElementById('new-submission-screen'),
+            camera: document.getElementById('camera-screen'),
             reports: document.getElementById('reports-screen'),
             diagnosis: document.getElementById('diagnosis-screen'),
             treatment: document.getElementById('treatment-screen'),
-            onlineClinic: document.getElementById('online-clinic-screen')
+            onlineClinic: document.getElementById('online-clinic-screen'),
+            privacyPolicy: document.getElementById('privacy-policy-screen'),
+            farmSetup: document.getElementById('farm-setup-screen')
         };
+
+        // --- Privacy Policy Navigation ---
+        document.getElementById('privacy-policy-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            showScreen('privacyPolicy');
+        });
+
+        document.getElementById('close-privacy-policy-btn').addEventListener('click', () => {
+            // This should ideally return to the previous screen.
+            // For simplicity, we'll return to the login screen as the link is only there.
+            showScreen('login');
+        });
+
+        // --- Camera Navigation ---
+        document.getElementById('open-camera-btn').addEventListener('click', () => {
+            showScreen('camera');
+        });
+
+        document.getElementById('back-to-submission-btn').addEventListener('click', () => {
+            showScreen('newSubmission');
+        });
 
         // --- Sidebar Navigation ---
         document.getElementById('nav-farm-list').addEventListener('click', () => showScreen('farmList'));
@@ -432,6 +573,7 @@
         document.getElementById('nav-treatment').addEventListener('click', () => showScreen('treatment'));
         document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic'));
         document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
+
 
         // --- Sidebar Toggle Logic ---
         const sidebar = document.getElementById('sidebar');
@@ -453,25 +595,39 @@
             lucide.createIcons();
         });
 
+
         let currentUser = null;
         let userProfile = null;
         let selectedRole = 'Farmer';
 
         // Function to switch between screens
         function showScreen(screenName) {
+            // Stop camera if navigating away from it
+            if (mediaStream && screenName !== 'camera') {
+                stopCamera();
+            }
+
             const sidebar = document.getElementById('sidebar');
+
             const noSidebarScreens = ['loading', 'login'];
 
             if (noSidebarScreens.includes(screenName)) {
                 sidebar.classList.add('hidden');
             } else {
                 sidebar.classList.remove('hidden');
+
             }
 
             Object.values(screens).forEach(screen => screen.classList.remove('active'));
             if (screens[screenName]) {
                 screens[screenName].classList.add('active');
             }
+
+            // Start camera if navigating to it
+            if (screenName === 'camera') {
+                startCamera();
+            }
+
             lucide.createIcons();
         }
 
@@ -500,6 +656,215 @@
                 toast.classList.add('opacity-0');
             }, 3000);
         }
+
+        // --- CAMERA LOGIC ---
+        const cameraFeed = document.getElementById('camera-feed');
+        const photoCanvas = document.getElementById('photo-canvas');
+        const capturePhotoBtn = document.getElementById('capture-photo-btn');
+        const recordVideoBtn = document.getElementById('record-video-btn');
+        let mediaStream = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+
+        async function startCamera() {
+            try {
+                if (!('mediaDevices' in navigator) || !('getUserMedia' in navigator.mediaDevices)) {
+                    throw new Error('Camera API is not available in this browser.');
+                }
+
+                const constraints = {
+                    video: {
+                        facingMode: 'environment', // Prioritize back camera
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                };
+
+                mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraFeed.srcObject = mediaStream;
+                cameraFeed.play();
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                showToast(`Could not access camera: ${error.message}`, 'error');
+                // Fallback or show an error message
+                showScreen('newSubmission');
+            }
+        }
+
+        function stopCamera() {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+        }
+
+        capturePhotoBtn.addEventListener('click', () => {
+            const context = photoCanvas.getContext('2d');
+            photoCanvas.width = cameraFeed.videoWidth;
+            photoCanvas.height = cameraFeed.videoHeight;
+            context.drawImage(cameraFeed, 0, 0, photoCanvas.width, photoCanvas.height);
+
+            const imageDataUrl = photoCanvas.toDataURL('image/jpeg', 0.9); // 90% quality
+
+            // Set the captured image on the submission form
+            const imagePreview = document.getElementById('submission-image-preview');
+            const imagePlaceholder = document.getElementById('image-placeholder-icon');
+            imagePreview.src = imageDataUrl;
+            imagePreview.classList.remove('hidden');
+            imagePlaceholder.classList.add('hidden');
+
+            // Stop the camera and go back to the form
+            stopCamera();
+            showScreen('newSubmission');
+        });
+
+        recordVideoBtn.addEventListener('click', () => {
+            // Placeholder for video recording functionality
+            showToast('Video recording is not yet implemented.', 'info');
+        });
+
+
+        // --- MAP & FARM SETUP LOGIC ---
+        let map;
+        let reportMap;
+        let drawnItems;
+        let pendingFarmData = {};
+
+        async function initializeMapForEdit(farmId) {
+             if (!currentUser || !farmId) return;
+
+            try {
+                const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', farmId);
+                const farmDocSnap = await getDoc(farmDocRef);
+
+                if (farmDocSnap.exists()) {
+                    const farmData = farmDocSnap.data();
+                    const coordinates = farmData.polygonCoordinates;
+
+                    if (coordinates && coordinates.length > 0) {
+                        const latLngs = coordinates.map(c => [c.lat, c.lng]);
+                        const polygon = L.polygon(latLngs, {color: '#22c55e'});
+
+                        drawnItems.clearLayers();
+                        drawnItems.addLayer(polygon);
+                        map.fitBounds(polygon.getBounds());
+                        document.getElementById('save-farm-map-btn').disabled = false;
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading farm data for editing:", error);
+            }
+        }
+
+        async function initializeReportMap(farmId) {
+            if (!currentUser || !farmId) return;
+
+            try {
+                const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', farmId);
+                const farmDocSnap = await getDoc(farmDocRef);
+
+                if (farmDocSnap.exists()) {
+                    const farmData = farmDocSnap.data();
+                    const coordinates = farmData.polygonCoordinates;
+
+                    if (reportMap) {
+                        reportMap.remove();
+                    }
+
+                    reportMap = L.map('report-map', {
+                        scrollWheelZoom: false,
+                        dragging: false,
+                        zoomControl: false
+                    });
+
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Tiles &copy; Esri'
+                    }).addTo(reportMap);
+
+                    if (coordinates && coordinates.length > 0) {
+                        const latLngs = coordinates.map(c => [c.lat, c.lng]);
+                        const polygon = L.polygon(latLngs, {color: '#22c55e'}).addTo(reportMap);
+                        reportMap.fitBounds(polygon.getBounds());
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading farm data for report map:", error);
+            }
+        }
+
+        function initializeMap() {
+            // If map is already initialized, just reset its view
+            if (map) {
+                map.setView([12.8797, 121.7740], 5); // Reset to PH view
+                if(drawnItems) {
+                    drawnItems.clearLayers();
+                }
+                return;
+            }
+
+            // Initialize the map and set its view to the Philippines
+            map = L.map('map').setView([12.8797, 121.7740], 5);
+
+            // Add a satellite tile layer to the map
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            }).addTo(map);
+
+            // Initialize the FeatureGroup to store editable layers
+            drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+
+            // Initialize the draw control and pass it the FeatureGroup
+            const drawControl = new L.Control.Draw({
+                edit: {
+                    featureGroup: drawnItems,
+                    remove: true
+                },
+                draw: {
+                    polygon: {
+                        allowIntersection: false,
+                        drawError: {
+                            color: '#e1e100',
+                            message: '<strong>Oh snap!</strong> you can\'t draw that!'
+                        },
+                        shapeOptions: {
+                            color: '#22c55e'
+                        }
+                    },
+                    polyline: false,
+                    rectangle: false,
+                    circle: false,
+                    marker: false,
+                    circlemarker: false
+                }
+            });
+            map.addControl(drawControl);
+
+            map.on(L.Draw.Event.CREATED, function (event) {
+                const layer = event.layer;
+                drawnItems.clearLayers(); // Clear previous drawings
+                drawnItems.addLayer(layer);
+                document.getElementById('save-farm-map-btn').disabled = false;
+            });
+
+            map.on(L.Draw.Event.DELETED, function() {
+                if (drawnItems.getLayers().length === 0) {
+                    document.getElementById('save-farm-map-btn').disabled = true;
+                }
+            });
+
+             // Attempt to get user's location
+            map.locate({setView: true, maxZoom: 16});
+            map.on('locationfound', e => {
+                L.marker(e.latlng).addTo(map)
+                    .bindPopup("You are somewhere around here.").openPopup();
+            });
+            map.on('locationerror', e => {
+                console.log(e.message);
+                // Silently fails if location is not available. Map defaults to PH view.
+            });
+        }
+
 
         // --- 4. AUTHENTICATION LOGIC ---
         const profileTitle = document.getElementById('profile-title');
@@ -532,10 +897,108 @@
             }
         }
 
+        // --- Address Dropdown Logic ---
+        const provinceSelect = document.getElementById('province');
+        const municipalitySelect = document.getElementById('municipality');
+        const barangaySelect = document.getElementById('barangay');
+
+        function populateProvinces() {
+            provinceSelect.innerHTML = '<option value="">Select Province</option>';
+            if (window.philippineAddresses && window.philippineAddresses.provinces) {
+                window.philippineAddresses.provinces.forEach(province => {
+                    const option = document.createElement('option');
+                    option.value = province.name;
+                    option.textContent = province.name;
+                    provinceSelect.appendChild(option);
+                });
+            } else {
+                provinceSelect.innerHTML = '<option value="">Failed to load addresses</option>';
+            }
+        }
+
+        provinceSelect.addEventListener('change', () => {
+            const selectedProvinceName = provinceSelect.value;
+            const selectedProvince = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
+            municipalitySelect.innerHTML = '<option value="">Select Municipality</option>';
+            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+            barangaySelect.disabled = true;
+
+            if (selectedProvince) {
+                municipalitySelect.disabled = false;
+                selectedProvince.municipalities.forEach(municipality => {
+                    const option = document.createElement('option');
+                    option.value = municipality.name;
+                    option.textContent = municipality.name;
+                    municipalitySelect.appendChild(option);
+                });
+            } else {
+                municipalitySelect.disabled = true;
+            }
+        });
+
+        municipalitySelect.addEventListener('change', () => {
+            const selectedProvinceName = provinceSelect.value;
+            const selectedMunicipalityName = municipalitySelect.value;
+            const selectedProvince = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
+            const selectedMunicipality = selectedProvince?.municipalities.find(m => m.name === selectedMunicipalityName);
+            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+
+            if (selectedMunicipality && selectedMunicipality.barangays) {
+                barangaySelect.disabled = false;
+                selectedMunicipality.barangays.forEach(barangay => {
+                    const option = document.createElement('option');
+                    option.value = barangay;
+                    option.textContent = barangay;
+                    barangaySelect.appendChild(option);
+                });
+            } else {
+                barangaySelect.disabled = true;
+            }
+        });
+
+        // --- RSBSA Logic ---
+        const isFarmerCheckbox = document.getElementById('isFarmer');
+        const rsbsaContainer = document.getElementById('rsbsa-container');
+        isFarmerCheckbox.addEventListener('change', () => {
+            rsbsaContainer.classList.toggle('hidden', !isFarmerCheckbox.checked);
+        });
+
         function populateProfileFields(profile) {
             document.getElementById('profile-pic').src = profile.photoURL || (currentUser && currentUser.photoURL) || 'https://placehold.co/96x96/e2e8f0/334155?text=User';
             document.getElementById('fullName').value = profile.fullName || '';
-            document.getElementById('homeAddress').value = profile.homeAddress || '';
+
+            // Populate address fields only if the data is ready
+            if (window.philippineAddresses && window.philippineAddresses.provinces.length > 0) {
+                if (profile.province) {
+                    provinceSelect.value = profile.province;
+                    provinceSelect.dispatchEvent(new Event('change'));
+
+                    setTimeout(() => {
+                        if (profile.municipality) {
+                            municipalitySelect.value = profile.municipality;
+                            municipalitySelect.dispatchEvent(new Event('change'));
+
+                            setTimeout(() => {
+                                 if (profile.barangay) {
+                                    barangaySelect.value = profile.barangay;
+                                }
+                            }, 100);
+                        }
+                    }, 100);
+                }
+            }
+
+            // RSBSA Number
+            if (profile.rsbsaNumber) {
+                isFarmerCheckbox.checked = true;
+                rsbsaContainer.classList.remove('hidden');
+                document.getElementById('rsbsaNumber').value = profile.rsbsaNumber;
+            } else {
+                isFarmerCheckbox.checked = false;
+                rsbsaContainer.classList.add('hidden');
+                document.getElementById('rsbsaNumber').value = '';
+            }
+
             document.getElementById('birthdate').value = profile.birthdate || '';
             document.getElementById('civilStatus').value = profile.civilStatus || 'Single';
             document.getElementById('religion').value = profile.religion || '';
@@ -559,6 +1022,12 @@
             if (user) {
                 currentUser = user;
                 updateOnlineStatus();
+
+                // Wait for the address data to be ready
+                await window.addressDataPromise;
+
+                // Now that address data is loaded, populate the dropdowns
+                populateProvinces();
                 
                 const userDocRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(userDocRef);
@@ -566,9 +1035,10 @@
                 if (docSnap.exists()) {
                     userProfile = docSnap.data();
 
-                    const requiredFields = ['fullName', 'homeAddress', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
+                    const requiredFields = ['fullName', 'province', 'municipality', 'barangay', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
                     const isProfileComplete = requiredFields.every(field => userProfile[field] !== undefined && userProfile[field] !== null && userProfile[field] !== '');
 
+                    // Populate all fields, including the now-ready address dropdowns
                     populateProfileFields(userProfile);
 
                     if (isProfileComplete) {
@@ -640,22 +1110,27 @@
 
         document.getElementById('save-profile-btn').addEventListener('click', async () => {
             const fullName = document.getElementById('fullName').value;
-            const homeAddress = document.getElementById('homeAddress').value;
+            const province = document.getElementById('province').value;
+            const municipality = document.getElementById('municipality').value;
+            const barangay = document.getElementById('barangay').value;
             const birthdate = document.getElementById('birthdate').value;
             const civilStatus = document.getElementById('civilStatus').value;
             const religion = document.getElementById('religion').value;
             const yearsFarming = document.getElementById('yearsFarming').value;
             const familyMembers = document.getElementById('familyMembers').value;
             const education = document.getElementById('education').value;
+            const rsbsaNumber = document.getElementById('rsbsaNumber').value;
 
-            if (!fullName.trim() || !homeAddress.trim() || !birthdate.trim() || !civilStatus.trim() || !religion.trim() || !yearsFarming.trim() || !familyMembers.trim() || !education.trim()) {
+            if (!fullName.trim() || !province.trim() || !municipality.trim() || !barangay.trim() || !birthdate.trim() || !civilStatus.trim() || !religion.trim() || !yearsFarming.trim() || !familyMembers.trim() || !education.trim()) {
                 showToast('Please fill out all fields.', 'error');
                 return;
             }
             
             const profileData = {
                 fullName: fullName.trim(),
-                homeAddress: homeAddress.trim(),
+                province: province,
+                municipality: municipality,
+                barangay: barangay,
                 birthdate: birthdate,
                 civilStatus: civilStatus,
                 religion: religion.trim(),
@@ -665,6 +1140,7 @@
                 role: selectedRole,
                 email: currentUser.email || '',
                 photoURL: currentUser.photoURL || '',
+                rsbsaNumber: rsbsaNumber.trim()
             };
 
             try {
@@ -715,12 +1191,164 @@
             }
         });
 
-        // --- 6. FARM MANAGEMENT ---
+        // --- 6. FARM MANAGEMENT & SETUP FLOW ---
         const farmModal = document.getElementById('farm-modal');
         document.getElementById('add-farm-btn').addEventListener('click', () => farmModal.style.display = 'flex');
         document.getElementById('close-farm-modal-btn').addEventListener('click', () => farmModal.style.display = 'none');
-        //--document.getElementById('back-to-farm-list-btn').addEventListener('click', () => showScreen('farmList'));--
-        document.getElementById('back-to-dashboard-btn').addEventListener('click', () => showScreen('dashboard'));
+        document.getElementById('back-to-dashboard-btn').addEventListener('click', () => showScreen('farmList'));
+
+        // --- New Farm Flow ---
+        let isEditMode = false; // To track if we are editing or creating a new farm
+
+        document.getElementById('edit-farm-details-btn').addEventListener('click', async () => {
+            if (!currentFarmId || !currentUser) {
+                showToast('No farm selected.', 'error');
+                return;
+            }
+            isEditMode = true;
+
+            // Fetch current farm data
+            const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
+            const farmDocSnap = await getDoc(farmDocRef);
+
+            if (farmDocSnap.exists()) {
+                const farmData = farmDocSnap.data();
+                // Pre-fill the modal
+                document.getElementById('farmName').value = farmData.farmName || '';
+                document.getElementById('tobaccoVariety').value = farmData.tobaccoVariety || '';
+                document.getElementById('plantingDate').value = farmData.plantingDate || '';
+
+                // Change button text and show modal
+                document.getElementById('next-farm-map-btn').textContent = 'Update Details & Set Location';
+                farmModal.style.display = 'flex';
+            } else {
+                showToast('Could not find farm details to edit.', 'error');
+            }
+        });
+
+        // Reset edit mode when adding a new farm
+        document.getElementById('add-farm-btn').addEventListener('click', () => {
+            isEditMode = false;
+            // Clear fields and reset button text for new entry
+            document.getElementById('farmName').value = '';
+            document.getElementById('tobaccoVariety').value = '';
+            document.getElementById('plantingDate').value = '';
+            document.getElementById('next-farm-map-btn').textContent = 'Next: Set Location';
+            farmModal.style.display = 'flex';
+        });
+
+
+        document.getElementById('next-farm-map-btn').addEventListener('click', () => {
+            const farmName = document.getElementById('farmName').value.trim();
+            const tobaccoVariety = document.getElementById('tobaccoVariety').value.trim();
+            const plantingDate = document.getElementById('plantingDate').value;
+
+            if (!farmName || !tobaccoVariety || !plantingDate) {
+                showToast('Please fill out all farm details.', 'error');
+                return;
+            }
+
+            pendingFarmData = {
+                farmName,
+                tobaccoVariety,
+                plantingDate
+            };
+
+            farmModal.style.display = 'none';
+
+            if (isEditMode) {
+                document.getElementById('save-farm-map-btn').textContent = 'Update Farm Area';
+            } else {
+                document.getElementById('save-farm-map-btn').textContent = 'Save Farm Area';
+            }
+
+            showScreen('farmSetup');
+            // Invalidate map size and re-center, needed when map is in a hidden div
+            setTimeout(() => {
+                initializeMap(); // General map init
+                if (isEditMode) {
+                    initializeMapForEdit(currentFarmId); // Load existing polygon if editing
+                }
+            }, 100);
+        });
+
+        document.getElementById('cancel-farm-setup-btn').addEventListener('click', () => {
+            pendingFarmData = {};
+            drawnItems.clearLayers();
+            document.getElementById('save-farm-map-btn').disabled = true;
+            showScreen('farmList'); // Go back to the farm list
+        });
+
+        document.getElementById('delete-farm-btn').addEventListener('click', async () => {
+            if (!currentFarmId || !currentUser) {
+                showToast('No farm selected.', 'error');
+                return;
+            }
+
+            if (confirm('Are you sure you want to delete this farm plot? This action cannot be undone.')) {
+                try {
+                    const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
+                    await deleteDoc(farmDocRef);
+                    showToast('Farm plot deleted successfully!', 'success');
+                    currentFarmId = null;
+                    showScreen('farmList');
+                } catch (error) {
+                    console.error("Error deleting farm plot:", error);
+                    showToast('Failed to delete farm plot. Please try again.', 'error');
+                }
+            }
+        });
+
+        document.getElementById('save-farm-map-btn').addEventListener('click', async () => {
+            if (drawnItems.getLayers().length === 0) {
+                showToast('Please draw or select a farm area on the map first.', 'error');
+                return;
+            }
+
+            // Extract polygon data
+            const geojson = drawnItems.getLayers()[0].toGeoJSON();
+            const coordinates = geojson.geometry.coordinates[0].map(p => ({ lat: p[1], lng: p[0] }));
+
+            const farmData = {
+                ...pendingFarmData,
+                polygonCoordinates: coordinates,
+            };
+
+            if (!currentUser) {
+                showToast('Error: No user logged in.', 'error');
+                return;
+            }
+
+            try {
+                if (isEditMode) {
+                    // Update existing document
+                    farmData.updatedAt = serverTimestamp();
+                    const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
+                    await updateDoc(farmDocRef, farmData);
+                    showToast('Farm plot updated successfully!', 'success');
+                } else {
+                    // Create new document
+                    farmData.createdAt = serverTimestamp();
+                    const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+                    await addDoc(farmLotsCollection, farmData);
+                    showToast('Farm plot saved successfully!', 'success');
+                }
+
+                // Reset state
+                isEditMode = false;
+                pendingFarmData = {};
+                drawnItems.clearLayers();
+                document.getElementById('save-farm-map-btn').disabled = true;
+                document.getElementById('farmName').value = '';
+                document.getElementById('tobaccoVariety').value = '';
+                document.getElementById('plantingDate').value = '';
+
+                showScreen('farmList'); // Go back to the farm list
+            } catch (error) {
+                console.error("Error saving farm plot:", error);
+                showToast('Could not save farm plot. Please try again.', 'error');
+            }
+        });
         
         // --- 8. NEW SUBMISSION LOGIC ---
         const imageUploadInput = document.getElementById('image-upload');
@@ -742,149 +1370,189 @@
 
         document.getElementById('save-submission-btn').addEventListener('click', async () => {
             const imageSrc = document.getElementById('submission-image-preview').src;
-
             const symptoms = Array.from(document.querySelectorAll('#symptoms-checklist input:checked')).map(cb => cb.value);
             const distribution = document.querySelector('#distribution-radios input:checked')?.value;
             const severity = document.querySelector('#severity-radios input:checked')?.value;
 
-            if (!imageSrc || symptoms.length === 0 || !distribution || !severity) {
+            if (!imageSrc.startsWith('data:image') || symptoms.length === 0 || !distribution || !severity) {
                 showToast('Please fill out all fields and select an image.', 'error');
                 return;
             }
 
-            // Simulate GPS data
-            const gps_coordinates = {
-                latitude: 17.5734,
-                longitude: 120.3856
-            };
-
-            if (!currentFarmId) {
-                showToast('Could not identify the current farm. Please go back to the farm list.', 'error');
+            if (!currentFarmId || !currentUser) {
+                showToast('Could not identify the current farm or user. Please go back to the farm list.', 'error');
                 return;
             }
 
             const submissionData = {
-                farmId: currentFarmId,
                 imageDataUrl: imageSrc,
                 symptoms,
                 distribution,
                 severity,
-                gps_coordinates,
-                timestamp: new Date()
             };
 
             try {
-                const db = await dbPromise;
-                await db.add('submission_outbox', submissionData);
-                showToast('Submission saved locally. It will be synced when online.', 'success');
+                if (isEditSubmissionMode) {
+                    // Update existing submission
+                    submissionData.updatedAt = serverTimestamp();
+                    const submissionDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions', currentSubmissionId);
+                    await updateDoc(submissionDocRef, submissionData);
+                    showToast('Report updated successfully!', 'success');
+                } else {
+                    // Create new submission
+                    submissionData.timestamp = serverTimestamp();
+                     // Simulate GPS data
+                    submissionData.gps_coordinates = { latitude: 17.5734, longitude: 120.3856 };
+                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions');
+                    await addDoc(submissionsCollection, submissionData);
+                    showToast('Report saved successfully!', 'success');
+                }
 
-                // Reset form
-                document.getElementById('submission-image-preview').src = '';
-                document.getElementById('submission-image-preview').classList.add('hidden');
-                document.getElementById('image-placeholder-icon').classList.remove('hidden');
-                document.querySelectorAll('#symptoms-checklist input:checked').forEach(cb => cb.checked = false);
-                document.querySelectorAll('#distribution-radios input:checked').forEach(rb => rb.checked = false);
-                document.querySelectorAll('#severity-radios input:checked').forEach(rb => rb.checked = false);
+                // Reset state and form
+                isEditSubmissionMode = false;
+                currentSubmissionId = null;
+                document.getElementById('new-submission-btn').click(); // Programmatically click to reset the form
 
                 showScreen('dashboard');
             } catch (error) {
-                console.error('Failed to save submission locally:', error);
-                showToast('Could not save submission.', 'error');
+                console.error('Failed to save submission:', error);
+                showToast('Could not save report. Please try again.', 'error');
             }
         });
 
         let currentFarmId = null;
+        let isEditSubmissionMode = false;
+        let currentSubmissionId = null;
+
+        // --- Submission Edit Flow ---
+        document.getElementById('dashboard-main').addEventListener('click', async (e) => {
+            if (e.target && e.target.classList.contains('edit-submission-btn')) {
+                currentSubmissionId = e.target.getAttribute('data-id');
+                if (!currentSubmissionId || !currentUser || !currentFarmId) {
+                    showToast('Error: Cannot find submission to edit.', 'error');
+                    return;
+                }
+                isEditSubmissionMode = true;
+
+                try {
+                    const submissionDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions', currentSubmissionId);
+                    const submissionDocSnap = await getDoc(submissionDocRef);
+
+                    if (submissionDocSnap.exists()) {
+                        const sub = submissionDocSnap.data();
+
+                        // Pre-fill the form
+                        document.getElementById('submission-image-preview').src = sub.imageDataUrl || '';
+                        document.getElementById('submission-image-preview').classList.remove('hidden');
+                        document.getElementById('image-placeholder-icon').classList.add('hidden');
+
+                        // Reset checkboxes before setting new state
+                        document.querySelectorAll('#symptoms-checklist input[type="checkbox"]').forEach(cb => cb.checked = false);
+                        sub.symptoms.forEach(symptomValue => {
+                            const checkbox = document.getElementById(`symptom-${symptomValue}`);
+                            if (checkbox) checkbox.checked = true;
+                        });
+
+                        // Reset radios before setting new state
+                        document.querySelectorAll('#distribution-radios input[type="radio"]').forEach(rb => rb.checked = false);
+                        const distRadio = document.getElementById(`dist-${sub.distribution}`);
+                        if (distRadio) distRadio.checked = true;
+
+                        document.querySelectorAll('#severity-radios input[type="radio"]').forEach(rb => rb.checked = false);
+                        const sevRadio = document.getElementById(`sev-${sub.severity}`);
+                        if (sevRadio) sevRadio.checked = true;
+
+                        // Update button and show screen
+                        document.getElementById('save-submission-btn').textContent = 'Update Report';
+                        showScreen('newSubmission');
+                        initializeReportMap(currentFarmId);
+
+                    } else {
+                        showToast('Submission data not found.', 'error');
+                    }
+                } catch (error) {
+                    console.error("Error fetching submission for edit:", error);
+                    showToast('Could not load submission data.', 'error');
+                }
+            }
+        });
 
         document.getElementById('new-submission-btn').addEventListener('click', () => {
+            isEditSubmissionMode = false;
+            currentSubmissionId = null;
+
+            // Reset the form for a new entry
+            document.getElementById('submission-image-preview').src = '';
+            document.getElementById('submission-image-preview').classList.add('hidden');
+            document.getElementById('image-placeholder-icon').classList.remove('hidden');
+            document.getElementById('image-upload').value = '';
+            document.querySelectorAll('#symptoms-checklist input:checked').forEach(cb => cb.checked = false);
+            document.querySelectorAll('#distribution-radios input:checked').forEach(rb => rb.checked = false);
+            document.querySelectorAll('#severity-radios input:checked').forEach(rb => rb.checked = false);
+
+            document.getElementById('save-submission-btn').textContent = 'Save Submission';
             showScreen('newSubmission');
+            // Invalidate map size and load data, needed when map is in a hidden div
+            setTimeout(() => {
+                initializeReportMap(currentFarmId);
+            }, 100);
         });
 
-        async function loadSubmissions(farmId) {
+        function loadSubmissions(farmId) {
+            if (!currentUser || !farmId) return;
+
+            const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmId, 'submissions');
             const dashboardMain = document.getElementById('dashboard-main');
-            dashboardMain.innerHTML = ''; // Clear existing content
 
-            const db = await dbPromise;
-            const submissions = await db.getAll('submission_outbox');
+            onSnapshot(submissionsCollection, (querySnapshot) => {
+                dashboardMain.innerHTML = ''; // Clear existing content
 
-            if (submissions.length === 0) {
-                dashboardMain.innerHTML = `
-                <div class="text-center text-gray-500 mt-20">
-                    <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto text-gray-400"></i>
-                    <p class="mt-4">No submissions yet for this farm.</p>
-                </div>`;
-            } else {
-                submissions.forEach(submission => {
-                    const card = document.createElement('div');
-                    card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
+                if (querySnapshot.empty) {
+                    dashboardMain.innerHTML = `
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">No scouting reports found for this farm.</p>
+                        <p>Click 'New Report' to add one.</p>
+                    </div>`;
+                } else {
+                    querySnapshot.forEach(doc => {
+                        const submission = doc.data();
+                        const submissionId = doc.id;
+                        const card = document.createElement('div');
+                        card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
 
-                    const date = new Date(submission.timestamp);
-                    const dateString = date.toLocaleDateString();
-                    const timeString = date.toLocaleTimeString();
+                        // Fallback for older data that might not have a proper timestamp
+                        const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date();
+                        const dateString = submissionDate.toLocaleDateString();
+                        const timeString = submissionDate.toLocaleTimeString();
 
-                    card.innerHTML = `
-                        <div class="flex">
-                            <img src="${submission.imageDataUrl}" class="w-24 h-24 rounded-md mr-4">
-                            <div>
-                                <p class="font-bold">Submission from ${dateString} at ${timeString}</p>
-                                <p><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
-                                <p><strong>Distribution:</strong> ${submission.distribution}</p>
-                                <p><strong>Severity:</strong> ${submission.severity}</p>
+                        card.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <div class="flex">
+                                    <img src="${submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image'}" class="w-24 h-24 rounded-md mr-4 object-cover">
+                                    <div>
+                                        <p class="font-bold">Report from ${dateString} at ${timeString}</p>
+                                        <p class="text-sm"><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
+                                        <p class="text-sm"><strong>Distribution:</strong> ${submission.distribution}</p>
+                                        <p class="text-sm"><strong>Severity:</strong> ${submission.severity}</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button class="edit-submission-btn bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded" data-id="${submissionId}">Edit</button>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                    dashboardMain.appendChild(card);
-                });
-            }
-            lucide.createIcons();
+                        `;
+                        dashboardMain.appendChild(card);
+                    });
+                }
+                lucide.createIcons();
+            });
         }
 
-        document.getElementById('save-farm-btn').addEventListener('click', async () => {
-            const farmNameInput = document.getElementById('farmName');
-            const tobaccoVarietyInput = document.getElementById('tobaccoVariety');
-            const farmName = farmNameInput.value.trim();
-            const tobaccoVariety = tobaccoVarietyInput.value.trim();
-
-            if (!farmName || !tobaccoVariety) {
-                showToast('Please fill out all fields.', 'error');
-                return;
-            }
-
-            farmModal.style.display = 'none';
-            farmNameInput.value = '';
-            tobaccoVarietyInput.value = '';
-            
-            const farmData = {
-                farmName: farmName,
-                tobaccoVariety: tobaccoVariety,
-            };
-
-            if (navigator.onLine) {
-                farmData.createdAt = serverTimestamp();
-                try {
-                    const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
-                    await addDoc(farmsCollection, farmData);
-                } catch (error) {
-                    console.error("Firestore save failed, saving to outbox:", error);
-                    farmData.createdAt = new Date();
-                    const idb = await dbPromise;
-                    await idb.add('outbox', farmData);
-                }
-            } else {
-                farmData.createdAt = new Date();
-                try {
-                    const idb = await dbPromise;
-                    await idb.add('outbox', farmData);
-                } catch (error) {
-                    console.error("Outbox save failed:", error);
-                    showToast('Could not save farm locally.', 'error');
-                }
-            }
-            updateOnlineStatus();
-        });
-
         function loadFarms() {
-            const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
-            onSnapshot(farmsCollection, (querySnapshot) => {
+            if (!currentUser) return;
+            const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+            onSnapshot(farmLotsCollection, (querySnapshot) => {
                 const farmListContainer = document.getElementById('farm-list-container');
                 farmListContainer.innerHTML = ''; // Clear existing list
                 
@@ -893,7 +1561,7 @@
                         <div class="text-center text-gray-500 mt-20">
                             <i data-lucide="map-pin" class="w-12 h-12 mx-auto text-gray-400"></i>
                             <p class="mt-4">No farm plots found.</p>
-                            <p>Add your first plot to start monitoring.</p>
+                            <p>Click the '+' button to add your first plot and map its location.</p>
                         </div>`;
                 } else {
                     querySnapshot.forEach((doc) => {
@@ -902,9 +1570,13 @@
                         const farmCard = document.createElement('div');
                         farmCard.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md';
                         farmCard.setAttribute('data-id', farmId);
+
+                        const plantingDate = farm.plantingDate ? new Date(farm.plantingDate).toLocaleDateString() : 'N/A';
+
                         farmCard.innerHTML = `
                             <p class="text-xl font-bold text-gray-800">${farm.farmName}</p>
-                            <p class="text-md text-gray-600">${farm.tobaccoVariety || 'N/A'}</p>
+                            <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
+                            <p class="text-sm text-gray-500">Planted on: ${plantingDate}</p>
                         `;
 
                         farmCard.addEventListener('click', () => {
@@ -922,32 +1594,7 @@
             });
         }
         
-        async function syncOutbox() {
-            if (!navigator.onLine || !currentUser) return;
-
-            const db = await dbPromise;
-            const allItems = await db.getAll('outbox');
-            if (allItems.length === 0) return;
-
-            const connectionStatusEl = document.getElementById('connection-status');
-            connectionStatusEl.textContent = `Syncing ${allItems.length} item(s)...`;
-            connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-yellow-100 text-yellow-800';
-
-            const farmsCollection = collection(db, 'users', currentUser.uid, 'farms');
-            
-            try {
-                await Promise.all(allItems.map(item => addDoc(farmsCollection, item)));
-                await db.clear('outbox');
-                connectionStatusEl.textContent = 'Sync Complete';
-                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-green-100 text-green-800';
-            } catch (error) {
-                console.error('Error syncing outbox:', error);
-                connectionStatusEl.textContent = 'Sync Failed';
-                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-red-100 text-red-800';
-            } finally {
-                setTimeout(updateOnlineStatus, 2000);
-            }
-        }
+        // Removed old syncOutbox function as it's now obsolete with the new online-only farm setup flow.
 
         async function syncSubmissionOutbox() {
             if (!navigator.onLine || !currentUser) return;
@@ -965,7 +1612,7 @@
                     const { id, farmId, ...dataToSync } = submission;
                     if (!farmId) continue;
 
-                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farms', farmId, 'submissions');
+                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmId, 'submissions');
                     await addDoc(submissionsCollection, dataToSync);
                 }
 
