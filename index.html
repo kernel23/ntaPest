@@ -368,11 +368,6 @@
                 </header>
                 <main id="reports-container" class="flex-1 p-4 overflow-y-auto">
                     <!-- Report cards will be inserted here by JavaScript -->
-                    <div id="no-reports-message" class="text-center text-gray-500 mt-20">
-                        <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
-                        <p class="mt-4">No reports found across all your farms.</p>
-                        <p>Submissions you create will appear here.</p>
-                    </div>
                 </main>
             </div>
 
@@ -521,6 +516,13 @@
         }
         
         // --- 3. UI & STATE MANAGEMENT ---
+        let activeListeners = [];
+        function detachAllListeners() {
+            console.log(`Detaching ${activeListeners.length} active listeners.`);
+            activeListeners.forEach(unsubscribe => unsubscribe());
+            activeListeners = [];
+        }
+
         const screens = {
             loading: document.getElementById('loading-screen'),
             login: document.getElementById('login-screen'),
@@ -561,10 +563,7 @@
         // --- Sidebar Navigation ---
         document.getElementById('nav-farm-list').addEventListener('click', () => showScreen('farmList'));
         document.getElementById('nav-profile').addEventListener('click', () => showScreen('profile'));
-        document.getElementById('nav-reports').addEventListener('click', () => {
-            showScreen('reports');
-            loadAllReports();
-        });
+        document.getElementById('nav-reports').addEventListener('click', () => showScreen('reports'));
         document.getElementById('nav-diagnosis').addEventListener('click', () => showScreen('diagnosis'));
         document.getElementById('nav-treatment').addEventListener('click', () => showScreen('treatment'));
         document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic'));
@@ -578,6 +577,8 @@
 
         // Function to switch between screens
         function showScreen(screenName) {
+            detachAllListeners(); // Clean up listeners from the previous screen
+
             // Stop camera if navigating away from it
             if (mediaStream && screenName !== 'camera') {
                 stopCamera();
@@ -585,16 +586,14 @@
 
             const sidebar = document.getElementById('sidebar');
             const screenContainer = document.getElementById('screen-container');
-
-            const noSidebarScreens = ['loading', 'login', 'camera','privacyPolicy'];
-
+            const noSidebarScreens = ['loading', 'login', 'camera', 'privacyPolicy'];
 
             if (noSidebarScreens.includes(screenName)) {
                 sidebar.classList.add('hidden');
-                screenContainer.classList.remove('with-sidebar'); // Use new class
+                screenContainer.classList.remove('with-sidebar');
             } else {
                 sidebar.classList.remove('hidden');
-                screenContainer.classList.add('with-sidebar'); // Use new class
+                screenContainer.classList.add('with-sidebar');
             }
 
             Object.values(screens).forEach(screen => screen.classList.remove('active'));
@@ -602,9 +601,17 @@
                 screens[screenName].classList.add('active');
             }
 
-            // Start camera if navigating to it
-            if (screenName === 'camera') {
-                startCamera();
+            // Attach listeners and load data for the new screen
+            switch (screenName) {
+                case 'farmList':
+                    loadFarms();
+                    break;
+                case 'reports':
+                    loadAllReports();
+                    break;
+                case 'camera':
+                    startCamera();
+                    break;
             }
 
             lucide.createIcons();
@@ -1036,7 +1043,6 @@
                     if (isProfileComplete) {
                         setProfileMode('view');
                         document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
-                        loadFarms();
                         showScreen('farmList');
                         document.getElementById('add-farm-btn').style.display = 'flex';
                     } else {
@@ -1552,14 +1558,14 @@
                 }
                 lucide.createIcons();
             });
+            activeListeners.push(unsubscribe);
         }
 
         async function loadAllReports() {
             if (!currentUser) return;
 
             const reportsContainer = document.getElementById('reports-container');
-            const noReportsMessage = document.getElementById('no-reports-message');
-            reportsContainer.innerHTML = ''; // Clear previous content
+            reportsContainer.innerHTML = ''; // Clear previous content before doing anything else.
 
             try {
                 const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
@@ -1575,32 +1581,44 @@
                         allSubmissions.push({
                             ...submissionDoc.data(),
                             id: submissionDoc.id,
-                            farmName: farmData.farmName // Add farm name to each submission
+                            farmName: farmData.farmName
                         });
                     });
                 }
 
                 if (allSubmissions.length > 0) {
-                    // Sort by timestamp, newest first
                     allSubmissions.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
-                    noReportsMessage.classList.add('hidden');
                     renderAllReports(allSubmissions);
                 } else {
+                    // Dynamically create and append the 'no reports' message
+                    const noReportsMessage = document.createElement('div');
+                    noReportsMessage.className = 'text-center text-gray-500 mt-20';
+                    noReportsMessage.innerHTML = `
+                        <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">No reports found across all your farms.</p>
+                        <p>Submissions you create will appear here.</p>
+                    `;
                     reportsContainer.appendChild(noReportsMessage);
-                    noReportsMessage.classList.remove('hidden');
+                    lucide.createIcons();
                 }
 
             } catch (error) {
                 console.error("Error loading all reports:", error);
                 showToast("Could not load reports. Please try again.", 'error');
-                reportsContainer.appendChild(noReportsMessage);
-                noReportsMessage.classList.remove('hidden');
+                 // Display a user-friendly error message in the container
+                reportsContainer.innerHTML = `
+                    <div class="text-center text-red-500 mt-20">
+                        <i data-lucide="alert-triangle" class="w-12 h-12 mx-auto text-red-400"></i>
+                        <p class="mt-4">Sorry, we couldn't load the reports.</p>
+                        <p>Please check your connection and try again.</p>
+                    </div>
+                `;
+                lucide.createIcons();
             }
         }
 
         function renderAllReports(submissions) {
             const reportsContainer = document.getElementById('reports-container');
-            reportsContainer.innerHTML = ''; // Clear previous content, like the 'no reports' message
 
             submissions.forEach(submission => {
                 const card = document.createElement('div');
@@ -1632,7 +1650,7 @@
         function loadFarms() {
             if (!currentUser) return;
             const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
-            onSnapshot(farmLotsCollection, (querySnapshot) => {
+            const unsubscribe = onSnapshot(farmLotsCollection, (querySnapshot) => {
                 const farmListContainer = document.getElementById('farm-list-container');
                 farmListContainer.innerHTML = ''; // Clear existing list
                 
