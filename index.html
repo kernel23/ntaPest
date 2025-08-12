@@ -356,7 +356,12 @@
                     <h2 class="text-2xl font-bold">All Pest & Disease Reports</h2>
                 </header>
                 <main id="reports-container" class="flex-1 p-4 overflow-y-auto">
-                    <!-- Report cards and messages will be inserted here by JavaScript -->
+                    <!-- Report cards will be inserted here by JavaScript -->
+                    <div id="no-reports-message" class="text-center text-gray-500 mt-20">
+                        <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">No reports found across all your farms.</p>
+                        <p>Submissions you create will appear here.</p>
+                    </div>
                 </main>
             </div>
 
@@ -1516,14 +1521,8 @@
             if (!currentUser) return;
 
             const reportsContainer = document.getElementById('reports-container');
-            // Start by showing a loading indicator. This also clears the container.
-            reportsContainer.innerHTML = `<div class="text-center text-gray-500 mt-20">
-                <svg class="animate-spin h-10 w-10 text-green-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <p class="mt-4 text-lg text-green-700">Loading reports...</p>
-            </div>`;
+            const noReportsMessage = document.getElementById('no-reports-message');
+            reportsContainer.innerHTML = ''; // Clear previous content
 
             try {
                 const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
@@ -1547,28 +1546,18 @@
                 if (allSubmissions.length > 0) {
                     // Sort by timestamp, newest first
                     allSubmissions.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
-                    renderAllReports(allSubmissions); // This function will clear the "Loading..." and render reports.
+                    noReportsMessage.classList.add('hidden');
+                    renderAllReports(allSubmissions);
                 } else {
-                    // No reports found, so we manually set the innerHTML to the "no reports" message.
-                    reportsContainer.innerHTML = `
-                        <div id="no-reports-message" class="text-center text-gray-500 mt-20">
-                            <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
-                            <p class="mt-4">No reports found across all your farms.</p>
-                            <p>Submissions you create will appear here.</p>
-                        </div>`;
-                    lucide.createIcons();
+                    reportsContainer.appendChild(noReportsMessage);
+                    noReportsMessage.classList.remove('hidden');
                 }
 
             } catch (error) {
                 console.error("Error loading all reports:", error);
                 showToast("Could not load reports. Please try again.", 'error');
-                // On error, also show a message.
-                reportsContainer.innerHTML = `
-                    <div class="text-center text-gray-500 mt-20">
-                        <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-red-400"></i>
-                        <p class="mt-4">Error loading reports.</p>
-                    </div>`;
-                lucide.createIcons();
+                reportsContainer.appendChild(noReportsMessage);
+                noReportsMessage.classList.remove('hidden');
             }
         }
 
