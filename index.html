@@ -73,6 +73,9 @@
             margin-left: 0;
         }
         #map { height: 400px; }
+
+        #report-map { height: 200px; margin-bottom: 1.5rem; }
+
     </style>
 </head>
 <body class="bg-gray-100">
@@ -300,6 +303,9 @@
                     <h2 class="text-2xl font-bold">New Scouting Report</h2>
                 </header>
                 <main class="flex-1 p-6 overflow-y-auto">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Farm Location</label>
+                    <div id="report-map" class="w-full h-48 bg-gray-200 rounded-md shadow-inner"></div>
+
                     <label class="block text-sm font-medium text-gray-700 mb-2">Upload Image of Affected Plant</label>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                         <div class="space-y-1 text-center">
@@ -425,7 +431,6 @@
 
     <!-- Address Data -->
     <script src="address-provider.js"></script>
-
 
     <!-- Leaflet JS for mapping -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -621,8 +626,47 @@
 
         // --- MAP & FARM SETUP LOGIC ---
         let map;
+
+        let reportMap;
         let drawnItems;
         let pendingFarmData = {};
+
+        async function initializeReportMap(farmId) {
+            if (!currentUser || !farmId) return;
+
+            try {
+                const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', farmId);
+                const farmDocSnap = await getDoc(farmDocRef);
+
+                if (farmDocSnap.exists()) {
+                    const farmData = farmDocSnap.data();
+                    const coordinates = farmData.polygonCoordinates;
+
+                    if (reportMap) {
+                        reportMap.remove();
+                    }
+
+                    reportMap = L.map('report-map', {
+                        scrollWheelZoom: false,
+                        dragging: false,
+                        zoomControl: false
+                    });
+
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Tiles &copy; Esri'
+                    }).addTo(reportMap);
+
+                    if (coordinates && coordinates.length > 0) {
+                        const latLngs = coordinates.map(c => [c.lat, c.lng]);
+                        const polygon = L.polygon(latLngs, {color: '#22c55e'}).addTo(reportMap);
+                        reportMap.fitBounds(polygon.getBounds());
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading farm data for report map:", error);
+            }
+        }
+
 
         function initializeMap() {
             // If map is already initialized, just reset its view
@@ -637,9 +681,10 @@
             // Initialize the map and set its view to the Philippines
             map = L.map('map').setView([12.8797, 121.7740], 5);
 
-            // Add a tile layer to the map (e.g., OpenStreetMap)
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            // Add a satellite tile layer to the map
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+
             }).addTo(map);
 
             // Initialize the FeatureGroup to store editable layers
@@ -1179,6 +1224,10 @@
 
         document.getElementById('new-submission-btn').addEventListener('click', () => {
             showScreen('newSubmission');
+            // Invalidate map size and load data, needed when map is in a hidden div
+            setTimeout(() => {
+                initializeReportMap(currentFarmId);
+            }, 100);
         });
 
         async function loadSubmissions(farmId) {
