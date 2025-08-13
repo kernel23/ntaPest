@@ -474,13 +474,18 @@
                 <h3 class="text-xl font-bold">Diagnose Report</h3>
                 <button id="close-diagnosis-modal-btn" class="p-1"><i data-lucide="x"></i></button>
             </div>
-            <div class="p-6">
+            <div class="p-6 max-h-[80vh] overflow-y-auto">
                 <div id="diagnosis-report-details" class="mb-4">
                     <!-- Report details will be loaded here -->
                 </div>
                 <h4 class="text-lg font-bold mt-4 mb-2">Add Diagnosis</h4>
-                <label for="pest-disease" class="block text-sm font-medium text-gray-700">Identified Pest/Disease</label>
-                <input type="text" id="pest-disease" placeholder="e.g., Tobacco Hornworm" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                <label for="pest-disease-select" class="block text-sm font-medium text-gray-700">Identified Pest/Disease</label>
+                <select id="pest-disease-select" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <option value="">Select a pest or disease...</option>
+                </select>
+                <div id="pest-disease-info" class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm hidden">
+                    <!-- Pest/disease info will be displayed here -->
+                </div>
                 <label for="diagnosis-notes" class="block text-sm font-medium text-gray-700 mt-4">Diagnosis Notes</label>
                 <textarea id="diagnosis-notes" rows="4" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></textarea>
                 <button id="save-diagnosis-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Diagnosis</button>
@@ -501,22 +506,39 @@
                 </div>
 
                 <h4 class="text-lg font-bold mt-4 mb-2">Final Diagnosis</h4>
-                <label for="final-pest-disease" class="block text-sm font-medium text-gray-700">Identified Pest/Disease</label>
-                <input type="text" id="final-pest-disease" placeholder="e.g., Tobacco Hornworm" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                <label for="final-pest-disease-select" class="block text-sm font-medium text-gray-700">Identified Pest/Disease</label>
+                 <select id="final-pest-disease-select" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <option value="">Select a pest or disease...</option>
+                </select>
+                <div id="final-pest-disease-info" class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm hidden">
+                    <!-- Final pest/disease info will be displayed here -->
+                </div>
                 <label for="final-diagnosis-notes" class="block text-sm font-medium text-gray-700 mt-4">Final Diagnosis Notes</label>
                 <textarea id="final-diagnosis-notes" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></textarea>
 
                 <h4 class="text-lg font-bold mt-6 mb-2">Add Treatment Plan</h4>
 
-                <fieldset id="treatment-actions-checklist" class="mt-4">
-                    <legend class="text-base font-medium text-gray-900">Recommended Actions</legend>
-                    <div class="mt-2 grid grid-cols-2 gap-2">
-                        <div class="flex items-start"><div class="flex items-center h-5"><input name="treatment-action" value="chemical" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label class="font-medium text-gray-700">Chemical Control</label></div></div>
-                        <div class="flex items-start"><div class="flex items-center h-5"><input name="treatment-action" value="biological" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label class="font-medium text-gray-700">Biological Control</label></div></div>
-                        <div class="flex items-start"><div class="flex items-center h-5"><input name="treatment-action" value="cultural" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label class="font-medium text-gray-700">Cultural Control</label></div></div>
-                        <div class="flex items-start"><div class="flex items-center h-5"><input name="treatment-action" value="physical" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label class="font-medium text-gray-700">Physical/Mechanical</label></div></div>
+                <div id="treatment-plan-container" class="mt-4 space-y-4">
+                    <div>
+                        <label class="text-base font-medium text-gray-900">Prevention</label>
+                        <div id="treatment-prevention-list" class="mt-2 space-y-2 text-sm">
+                            <!-- Prevention checkboxes will be inserted here -->
+                        </div>
                     </div>
-                </fieldset>
+                    <div class="mt-4">
+                        <label class="text-base font-medium text-gray-900">Monitoring</label>
+                        <div id="treatment-monitoring-list" class="mt-2 space-y-2 text-sm">
+                            <!-- Monitoring checkboxes will be inserted here -->
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="text-base font-medium text-gray-900">Direct Control</label>
+                        <div id="treatment-control-list" class="mt-2 space-y-2 text-sm">
+                            <!-- Control checkboxes will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+
 
                 <label for="treatment-instructions" class="block text-sm font-medium text-gray-700 mt-4">Specific Instructions</label>
                 <textarea id="treatment-instructions" rows="4" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></textarea>
@@ -606,6 +628,24 @@
         const db = getFirestore(app);
 
         // --- 2. PWA & OFFLINE SETUP ---
+        let pestAndDiseaseData = {}; // Global variable to hold the data
+
+        window.pestDiseaseDataPromise = (async function() {
+            try {
+                const response = await fetch('pestDiseases.json');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                pestAndDiseaseData = await response.json();
+                console.log('Pest and disease data loaded successfully.');
+                return true;
+            } catch (error) {
+                console.error('Failed to load pest and disease data:', error);
+                pestAndDiseaseData = null;
+                return false;
+            }
+        })();
+
         // Initialize IndexedDB
         const dbPromise = openDB('agri-guard-db', 2, {
             upgrade(db, oldVersion, newVersion, transaction) {
@@ -1192,8 +1232,8 @@
                 currentUser = user;
                 updateOnlineStatus();
 
-                // Wait for the address data to be ready
-                await window.addressDataPromise;
+                // Wait for the address and pest/disease data to be ready
+                await Promise.all([window.addressDataPromise, window.pestDiseaseDataPromise]);
 
                 // Now that address data is loaded, populate the dropdowns
                 populateProvinces();
@@ -1944,7 +1984,11 @@
                         <p><strong>Severity:</strong> ${submission.severity}</p>
                     `;
 
-                    document.getElementById('pest-disease').value = '';
+                    // Populate dropdown and reset fields
+                    const pestDiseaseSelect = document.getElementById('pest-disease-select');
+                    populatePestDiseaseDropdown(pestDiseaseSelect);
+                    document.getElementById('pest-disease-info').innerHTML = '';
+                    document.getElementById('pest-disease-info').classList.add('hidden');
                     document.getElementById('diagnosis-notes').value = '';
 
                     document.getElementById('diagnosis-modal').classList.remove('hidden');
@@ -2039,8 +2083,17 @@
                         </div>
                     `;
 
-                    // Reset form fields
-                    document.querySelectorAll('#treatment-actions-checklist input').forEach(cb => cb.checked = false);
+                    // Reset and populate form fields
+                    const finalPestDiseaseSelect = document.getElementById('final-pest-disease-select');
+                    populatePestDiseaseDropdown(finalPestDiseaseSelect);
+
+                    // Pre-fill with data from initial diagnosis
+                    finalPestDiseaseSelect.value = submission.initialDiagnosis.pestDisease;
+                    document.getElementById('final-diagnosis-notes').value = submission.initialDiagnosis.notes || '';
+
+                    // Manually trigger change to populate info and treatment options
+                    finalPestDiseaseSelect.dispatchEvent(new Event('change'));
+
                     document.getElementById('treatment-instructions').value = '';
                     document.getElementById('follow-up-date').value = '';
 
@@ -2060,6 +2113,75 @@
         }
 
         // --- Treatment Modal Logic ---
+        function populateCheckboxes(container, items, category) {
+            container.innerHTML = '';
+            if (!items || items.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No recommendations available.</p>';
+                return;
+            }
+            items.forEach((item, index) => {
+                const checkboxId = `${category}-${index}`;
+                const div = document.createElement('div');
+                div.className = 'flex items-start';
+                div.innerHTML = `
+                    <div class="flex items-center h-5">
+                        <input id="${checkboxId}" name="${category}" value="${item}" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded">
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="${checkboxId}" class="font-medium text-gray-700">${item}</label>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        document.getElementById('final-pest-disease-select').addEventListener('change', (e) => {
+            const selectedName = e.target.value;
+            const infoContainer = document.getElementById('final-pest-disease-info');
+            const preventionContainer = document.getElementById('treatment-prevention-list');
+            const monitoringContainer = document.getElementById('treatment-monitoring-list');
+            const controlContainer = document.getElementById('treatment-control-list');
+
+            // Clear everything first
+            infoContainer.innerHTML = '';
+            infoContainer.classList.add('hidden');
+            preventionContainer.innerHTML = '';
+            monitoringContainer.innerHTML = '';
+            controlContainer.innerHTML = '';
+
+            if (!selectedName) return;
+
+            const allItems = [
+                ...(pestAndDiseaseData.fungal_and_bacterial_diseases || []),
+                ...(pestAndDiseaseData.major_insect_pests || [])
+            ];
+            const selectedItem = allItems.find(item => (item['Disease Name'] || item['Pest Common Name']) === selectedName);
+
+            if (selectedItem) {
+                // Populate info section
+                let infoHTML = '';
+                if (selectedItem['Causal Agents']) { // It's a disease
+                    infoHTML += `<p><strong>Causal Agent:</strong> ${selectedItem['Causal Agents']}</p>`;
+                    infoHTML += `<p class="mt-2"><strong>Symptoms:</strong> ${selectedItem['Primary Visual Symptoms']}</p>`;
+                } else { // It's a pest
+                    infoHTML += `<p><strong>Scientific Name:</strong> ${selectedItem['Scientific Name']}</p>`;
+                    infoHTML += `<p><strong>Feeding Guild:</strong> ${selectedItem['Feeding Guild']}</p>`;
+                    infoHTML += `<p class="mt-2"><strong>Damage:</strong> ${selectedItem['Characteristic Visual Damage']}</p>`;
+                }
+                infoHTML += `<p class="mt-2"><strong>Key Parts Affected:</strong> ${selectedItem['Key Plant Parts Affected'].join(', ')}</p>`;
+                infoContainer.innerHTML = infoHTML;
+                infoContainer.classList.remove('hidden');
+
+                // Populate treatment plan checkboxes
+                const management = selectedItem.management;
+                if (management) {
+                    populateCheckboxes(preventionContainer, management.prevention, 'prevention');
+                    populateCheckboxes(monitoringContainer, management.monitoring, 'monitoring');
+                    populateCheckboxes(controlContainer, management.direct_control, 'control');
+                }
+            }
+        });
+
         document.getElementById('close-treatment-modal-btn').addEventListener('click', () => {
             document.getElementById('treatment-modal').classList.add('hidden');
             document.getElementById('treatment-modal').classList.remove('flex');
@@ -2072,9 +2194,13 @@
                 return;
             }
 
-            const finalPestDisease = document.getElementById('final-pest-disease').value.trim();
+            const finalPestDisease = document.getElementById('final-pest-disease-select').value;
             const finalDiagnosisNotes = document.getElementById('final-diagnosis-notes').value.trim();
-            const actions = Array.from(document.querySelectorAll('#treatment-actions-checklist input:checked')).map(cb => cb.value);
+
+            const prevention = Array.from(document.querySelectorAll('#treatment-prevention-list input:checked')).map(cb => cb.value);
+            const monitoring = Array.from(document.querySelectorAll('#treatment-monitoring-list input:checked')).map(cb => cb.value);
+            const control = Array.from(document.querySelectorAll('#treatment-control-list input:checked')).map(cb => cb.value);
+
             const instructions = document.getElementById('treatment-instructions').value.trim();
             const followUpDate = document.getElementById('follow-up-date').value;
 
@@ -2082,10 +2208,15 @@
                 showToast('Please provide a final diagnosis.', 'error');
                 return;
             }
-             if (actions.length === 0 || !instructions) {
-                showToast('Please select at least one treatment action and provide instructions.', 'error');
+             if (prevention.length === 0 && monitoring.length === 0 && control.length === 0) {
+                showToast('Please select at least one treatment action.', 'error');
                 return;
             }
+             if (!instructions) {
+                showToast('Please provide specific instructions.', 'error');
+                return;
+            }
+
 
             showSavingOverlay('Saving Final Diagnosis & Treatment...');
 
@@ -2098,7 +2229,9 @@
             };
 
             const treatmentData = {
-                actions,
+                prevention,
+                monitoring,
+                control,
                 instructions,
                 followUpDate,
                 createdBy: currentUser.uid,
@@ -2120,7 +2253,8 @@
                 document.getElementById('close-treatment-modal-btn').click();
                 loadReportsForTreatment();
 
-            } catch (error) {
+            } catch (error)
+            {
                 console.error('Error saving treatment plan:', error);
                 showToast('Could not save treatment plan.', 'error');
             } finally {
@@ -2129,6 +2263,78 @@
         });
 
         // --- Diagnosis Modal Logic ---
+
+        function populatePestDiseaseDropdown(selectElement) {
+            if (!pestAndDiseaseData) {
+                console.error("Pest and disease data not loaded.");
+                selectElement.innerHTML = '<option value="">Failed to load data</option>';
+                return;
+            }
+
+            selectElement.innerHTML = '<option value="">Select a pest or disease...</option>';
+
+            const diseases = pestAndDiseaseData.fungal_and_bacterial_diseases || [];
+            const pests = pestAndDiseaseData.major_insect_pests || [];
+
+            // Add diseases
+            const diseaseGroup = document.createElement('optgroup');
+            diseaseGroup.label = 'Fungal & Bacterial Diseases';
+            diseases.forEach(disease => {
+                const option = document.createElement('option');
+                option.value = disease['Disease Name'];
+                option.textContent = disease['Disease Name'];
+                diseaseGroup.appendChild(option);
+            });
+            selectElement.appendChild(diseaseGroup);
+
+            // Add pests
+            const pestGroup = document.createElement('optgroup');
+            pestGroup.label = 'Major Insect Pests';
+            pests.forEach(pest => {
+                const option = document.createElement('option');
+                option.value = pest['Pest Common Name'];
+                option.textContent = pest['Pest Common Name'];
+                pestGroup.appendChild(option);
+            });
+            selectElement.appendChild(pestGroup);
+        }
+
+        document.getElementById('pest-disease-select').addEventListener('change', (e) => {
+            const selectedName = e.target.value;
+            const infoContainer = document.getElementById('pest-disease-info');
+
+            if (!selectedName) {
+                infoContainer.innerHTML = '';
+                infoContainer.classList.add('hidden');
+                return;
+            }
+
+            const allItems = [
+                ...(pestAndDiseaseData.fungal_and_bacterial_diseases || []),
+                ...(pestAndDiseaseData.major_insect_pests || [])
+            ];
+
+            const selectedItem = allItems.find(item => (item['Disease Name'] || item['Pest Common Name']) === selectedName);
+
+            if (selectedItem) {
+                let infoHTML = '';
+                if (selectedItem['Causal Agents']) { // It's a disease
+                    infoHTML += `<p><strong>Causal Agent:</strong> ${selectedItem['Causal Agents']}</p>`;
+                    infoHTML += `<p class="mt-2"><strong>Symptoms:</strong> ${selectedItem['Primary Visual Symptoms']}</p>`;
+                } else { // It's a pest
+                    infoHTML += `<p><strong>Scientific Name:</strong> ${selectedItem['Scientific Name']}</p>`;
+                    infoHTML += `<p><strong>Feeding Guild:</strong> ${selectedItem['Feeding Guild']}</p>`;
+                    infoHTML += `<p class="mt-2"><strong>Damage:</strong> ${selectedItem['Characteristic Visual Damage']}</p>`;
+                }
+                infoHTML += `<p class="mt-2"><strong>Key Parts Affected:</strong> ${selectedItem['Key Plant Parts Affected'].join(', ')}</p>`;
+                infoContainer.innerHTML = infoHTML;
+                infoContainer.classList.remove('hidden');
+            } else {
+                infoContainer.innerHTML = '';
+                infoContainer.classList.add('hidden');
+            }
+        });
+
         document.getElementById('close-diagnosis-modal-btn').addEventListener('click', () => {
             document.getElementById('diagnosis-modal').classList.add('hidden');
             document.getElementById('diagnosis-modal').classList.remove('flex');
@@ -2141,11 +2347,11 @@
                 return;
             }
 
-            const pestDisease = document.getElementById('pest-disease').value.trim();
+            const pestDisease = document.getElementById('pest-disease-select').value;
             const notes = document.getElementById('diagnosis-notes').value.trim();
 
             if (!pestDisease) {
-                showToast('Please identify a pest or disease.', 'error');
+                showToast('Please identify a pest or disease from the dropdown.', 'error');
                 return;
             }
 
