@@ -43,6 +43,7 @@
         }
         #map { height: 400px; }
         #report-map { height: 200px; margin-bottom: 1.5rem; }
+        .force-hidden { display: none !important; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -1127,15 +1128,18 @@
             const bottomNav = document.getElementById('bottom-nav');
             const screenContainer = document.getElementById('screen-container');
             const noNavScreens = ['loading', 'login', 'camera', 'privacyPolicy'];
+            const shouldShowNav = !noNavScreens.includes(screenName);
 
-            if (noNavScreens.includes(screenName)) {
-                sidebar.classList.add('hidden');
-                bottomNav.classList.add('hidden');
-                screenContainer.classList.remove('with-sidebar');
-            } else {
-                sidebar.classList.remove('hidden');
-                bottomNav.classList.remove('hidden');
+            if (shouldShowNav) {
+                // If we should show nav, we want the default responsive behavior
+                sidebar.classList.remove('force-hidden');
+                bottomNav.classList.remove('force-hidden');
                 screenContainer.classList.add('with-sidebar');
+            } else {
+                // If we should NOT show nav, we force them to be hidden
+                sidebar.classList.add('force-hidden');
+                bottomNav.classList.add('force-hidden');
+                screenContainer.classList.remove('with-sidebar');
             }
 
             Object.values(screens).forEach(screen => screen.classList.remove('active'));
@@ -4475,6 +4479,8 @@
         window.addEventListener('offline', updateOnlineStatus);
         updateOnlineStatus();
 
+        // Expose for testing
+        window.showScreen = showScreen;
     </script>
 </body>
 </html>
