@@ -229,12 +229,20 @@
 
             <!-- Farm List Screen (Home) -->
             <div id="farm-list-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
-                <header class="bg-white p-4 shadow-md flex justify-between items-center">
-                    <div>
-                        <h2 class="text-2xl font-bold">My Farm Plots</h2>
-                        <p id="welcome-message" class="text-sm text-gray-600"></p>
+                <header class="bg-white p-4 shadow-md">
+                    <div class="header-nav-container flex items-center mb-2">
+                        <button class="back-button p-2 rounded-full hover:bg-gray-100 mr-2 hidden">
+                            <i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i>
+                        </button>
+                        <div class="breadcrumbs text-sm text-gray-500"></div>
                     </div>
-                    <div id="connection-status" class="text-center py-1 px-3 rounded-full text-sm font-semibold"></div>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold">My Farm Plots</h2>
+                            <p id="welcome-message" class="text-sm text-gray-600"></p>
+                        </div>
+                        <div id="connection-status" class="text-center py-1 px-3 rounded-full text-sm font-semibold"></div>
+                    </div>
                 </header>
                 <main id="farm-list-container" class="flex-1 p-4 overflow-y-auto">
                     <!-- Farm cards will be inserted here by JavaScript -->
@@ -252,6 +260,12 @@
             <!-- Extension Worker Dashboard Screen -->
             <div id="ew-dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
                 <header class="bg-white p-4 shadow-md">
+                    <div class="header-nav-container flex items-center mb-2">
+                        <button class="back-button p-2 rounded-full hover:bg-gray-100 mr-2 hidden">
+                            <i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i>
+                        </button>
+                        <div class="breadcrumbs text-sm text-gray-500"></div>
+                    </div>
                     <h2 class="text-2xl font-bold">Extension Worker Dashboard</h2>
                     <p id="ew-welcome-message" class="text-sm text-gray-600"></p>
                 </header>
@@ -267,6 +281,12 @@
             <!-- Coordinator Dashboard Screen -->
             <div id="coordinator-dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
                 <header class="bg-white p-4 shadow-md">
+                    <div class="header-nav-container flex items-center mb-2">
+                        <button class="back-button p-2 rounded-full hover:bg-gray-100 mr-2 hidden">
+                            <i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i>
+                        </button>
+                        <div class="breadcrumbs text-sm text-gray-500"></div>
+                    </div>
                     <h2 class="text-2xl font-bold">Coordinator Dashboard</h2>
                     <p id="coordinator-welcome-message" class="text-sm text-gray-600"></p>
                 </header>
@@ -281,15 +301,23 @@
 
             <!-- Dashboard Screen -->
             <div id="dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
-                <header class="bg-white p-4 shadow-md flex justify-between items-center">
-                    <div class="flex items-center">
-                        <h2 id="dashboard-farm-name" class="text-2xl font-bold">Farm Health Log</h2>
-                        <p id="dashboard-farm-variety" class="text-sm text-gray-600 ml-4"></p>
+                <header class="bg-white p-4 shadow-md">
+                    <div class="header-nav-container flex items-center mb-2">
+                        <button class="back-button p-2 rounded-full hover:bg-gray-100 mr-2 hidden">
+                            <i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i>
+                        </button>
+                        <div class="breadcrumbs text-sm text-gray-500"></div>
                     </div>
-                    <div>
-                        <button id="edit-farm-details-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Edit Details</button>
-                        <button id="delete-farm-btn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md ml-2">Delete Farm</button>
-                        <button id="new-submission-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md ml-2">New Report</button>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <h2 id="dashboard-farm-name" class="text-2xl font-bold">Farm Health Log</h2>
+                            <p id="dashboard-farm-variety" class="text-sm text-gray-600 ml-4"></p>
+                        </div>
+                        <div>
+                            <button id="edit-farm-details-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Edit Details</button>
+                            <button id="delete-farm-btn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md ml-2">Delete Farm</button>
+                            <button id="new-submission-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md ml-2">New Report</button>
+                        </div>
                     </div>
                 </header>
                 <main id="dashboard-main" class="flex-1 p-4 overflow-y-auto">
@@ -302,10 +330,13 @@
 
             <!-- New Submission Screen -->
             <div id="new-submission-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
-                <header class="bg-white p-4 shadow-md flex items-center">
-                    <button id="back-to-dashboard-btn" class="p-2 rounded-full hover:bg-gray-100 mr-2">
-                        <i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i>
-                    </button>
+                <header class="bg-white p-4 shadow-md">
+                    <div class="header-nav-container flex items-center mb-2">
+                        <button class="back-button p-2 rounded-full hover:bg-gray-100 mr-2 hidden">
+                            <i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i>
+                        </button>
+                        <div class="breadcrumbs text-sm text-gray-500"></div>
+                    </div>
                     <h2 class="text-2xl font-bold">New Scouting Report</h2>
                 </header>
                 <main class="flex-1 p-6 overflow-y-auto">
@@ -679,22 +710,28 @@
         document.getElementById('nav-farm-list').addEventListener('click', () => {
             if (!userProfile) return;
 
-            // Clear any drill-down context when returning to the main dashboard.
-            currentViewContext = {};
+            let screen;
+            const context = {
+                isFreshNavigation: true,
+                userId: currentUser.uid,
+                userName: userProfile.fullName,
+                label: 'Dashboard'
+            };
 
             if (userProfile.role === 'Extension Worker') {
-                showScreen('ewDashboard');
+                screen = 'ewDashboard';
             } else if (userProfile.role === 'Branch Coordinator') {
-                showScreen('coordinatorDashboard');
+                screen = 'coordinatorDashboard';
             } else { // Default to Farmer
-                showScreen('farmList');
+                screen = 'farmList';
             }
+            showScreen(screen, context);
         });
-        document.getElementById('nav-profile').addEventListener('click', () => showScreen('profile'));
-        document.getElementById('nav-reports').addEventListener('click', () => showScreen('reports'));
-        document.getElementById('nav-diagnosis').addEventListener('click', () => showScreen('diagnosis'));
-        document.getElementById('nav-treatment').addEventListener('click', () => showScreen('treatment'));
-        document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic'));
+        document.getElementById('nav-profile').addEventListener('click', () => showScreen('profile', { isFreshNavigation: true, label: 'My Profile' }));
+        document.getElementById('nav-reports').addEventListener('click', () => showScreen('reports', { isFreshNavigation: true, label: 'All Reports' }));
+        document.getElementById('nav-diagnosis').addEventListener('click', () => showScreen('diagnosis', { isFreshNavigation: true, label: 'For Diagnosis' }));
+        document.getElementById('nav-treatment').addEventListener('click', () => showScreen('treatment', { isFreshNavigation: true, label: 'For Treatment' }));
+        document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic', { isFreshNavigation: true, label: 'Online Clinic' }));
         document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
 
         // --- Sidebar is now fixed, toggle logic removed ---
@@ -702,9 +739,97 @@
         let currentUser = null;
         let userProfile = null;
         let selectedRole = 'Farmer';
+        let navigationHistory = [];
+
+        function updateNavigationControls() {
+            const activeScreen = document.querySelector('.screen.active');
+            if (!activeScreen) return;
+
+            const backButton = activeScreen.querySelector('.back-button');
+
+            if (backButton) {
+                if (navigationHistory.length > 1) {
+                    backButton.classList.remove('hidden');
+                } else {
+                    backButton.classList.add('hidden');
+                }
+            }
+
+            updateBreadcrumbs();
+        }
+
+        function updateBreadcrumbs() {
+            const activeScreen = document.querySelector('.screen.active');
+            if (!activeScreen) return;
+            const breadcrumbsContainer = activeScreen.querySelector('.breadcrumbs');
+            if (!breadcrumbsContainer) return;
+
+            breadcrumbsContainer.innerHTML = ''; // Clear old breadcrumbs
+
+            navigationHistory.forEach((state, index) => {
+                const label = state.context.label || state.screenName;
+
+                if (index < navigationHistory.length - 1) {
+                    // It's a link
+                    const link = document.createElement('a');
+                    link.href = '#';
+                    link.textContent = label;
+                    link.dataset.historyIndex = index;
+                    link.className = 'hover:underline';
+                    breadcrumbsContainer.appendChild(link);
+
+                    const separator = document.createElement('span');
+                    separator.textContent = ' / ';
+                    separator.className = 'mx-2';
+                    breadcrumbsContainer.appendChild(separator);
+                } else {
+                    // It's the current page, just text
+                    const current = document.createElement('span');
+                    current.textContent = label;
+                    current.className = 'font-semibold text-gray-700';
+                    breadcrumbsContainer.appendChild(current);
+                }
+            });
+        }
+
+        document.getElementById('screen-container').addEventListener('click', (e) => {
+            const backButton = e.target.closest('.back-button');
+            const breadcrumbLink = e.target.closest('.breadcrumbs a');
+
+            if (backButton) {
+                if (navigationHistory.length > 1) {
+                    navigationHistory.pop(); // Remove the current screen
+                    const lastState = navigationHistory[navigationHistory.length - 1];
+                    showScreen(lastState.screenName, lastState.context, true);
+                }
+            } else if (breadcrumbLink) {
+                e.preventDefault();
+                const historyIndex = parseInt(breadcrumbLink.dataset.historyIndex, 10);
+
+                // Truncate the history to the point we are navigating back to
+                navigationHistory = navigationHistory.slice(0, historyIndex + 1);
+
+                const lastState = navigationHistory[navigationHistory.length - 1];
+                showScreen(lastState.screenName, lastState.context, true);
+            }
+        });
 
         // Function to switch between screens
-        function showScreen(screenName) {
+        function showScreen(screenName, context = {}, isBack = false) {
+            if (!isBack) {
+                if (context.isFreshNavigation) {
+                    navigationHistory = [{ screenName, context }];
+                } else {
+                    const lastState = navigationHistory[navigationHistory.length - 1];
+                    if (!lastState || lastState.screenName !== screenName || JSON.stringify(lastState.context) !== JSON.stringify(context)) {
+                        navigationHistory.push({ screenName, context });
+                    }
+                }
+            }
+
+            // updateBreadcrumbs(); // This will be implemented in a later step
+            updateNavigationControls();
+
             detachAllListeners(); // Clean up listeners from the previous screen
 
             // Stop camera if navigating away from it
@@ -729,13 +854,19 @@
                 screens[screenName].classList.add('active');
             }
 
+            // The context for the current screen is from the last item in history.
+            const currentContext = navigationHistory.length > 0 ? navigationHistory[navigationHistory.length - 1].context : {};
+
             // Attach listeners and load data for the new screen
             switch (screenName) {
                 case 'farmList':
-                    loadFarms();
+                    loadFarms(currentContext);
                     break;
                 case 'dashboard':
-                    loadSubmissions(currentFarmId);
+                    currentFarmId = currentContext.farmId; // Still needed by some functions
+                    loadSubmissions(currentContext.farmId);
+                    document.getElementById('dashboard-farm-name').textContent = currentContext.farmName || 'Farm Health Log';
+                    document.getElementById('dashboard-farm-variety').textContent = currentContext.tobaccoVariety || '';
                     break;
                 case 'reports':
                     loadAllReports();
@@ -744,18 +875,19 @@
                     startCamera();
                     break;
                 case 'diagnosis':
-                    // We need to ensure the user has the correct role to see this.
-                    // This check should ideally be here, but for now we assume it's handled by UI visibility.
                     loadReportsForDiagnosis();
                     break;
                 case 'treatment':
                     loadReportsForTreatment();
                     break;
                 case 'ewDashboard':
-                    loadExtensionWorkerDashboard();
+                    loadExtensionWorkerDashboard(currentContext);
                     break;
                 case 'coordinatorDashboard':
-                    loadCoordinatorDashboard();
+                    loadCoordinatorDashboard(currentContext);
+                    break;
+                case 'newSubmission':
+                    initializeReportMap(currentContext.farmId);
                     break;
             }
 
@@ -1214,23 +1346,32 @@
                         setProfileMode('view');
 
                         // Role-based routing
+                        let screen;
+                        const context = {
+                            isFreshNavigation: true,
+                            userId: currentUser.uid,
+                            userName: userProfile.fullName,
+                            label: 'Dashboard'
+                        };
+
                         if (userProfile.role === 'Extension Worker') {
+                            screen = 'ewDashboard';
                             document.getElementById('ew-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
-                            showScreen('ewDashboard');
                             document.getElementById('add-farm-btn').style.display = 'none';
                         } else if (userProfile.role === 'Branch Coordinator') {
+                            screen = 'coordinatorDashboard';
                             document.getElementById('coordinator-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
-                            showScreen('coordinatorDashboard');
                             document.getElementById('add-farm-btn').style.display = 'none';
                         } else { // Default to Farmer
+                            screen = 'farmList';
                             document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
-                            showScreen('farmList');
                             document.getElementById('add-farm-btn').style.display = 'flex';
                         }
+                        showScreen(screen, context);
                     } else {
                         setProfileMode('new');
                         showToast('Please complete your profile to continue.', 'info');
-                        showScreen('profile');
+                        showScreen('profile', { isFreshNavigation: true, label: 'Complete Profile' });
                         document.getElementById('add-farm-btn').style.display = 'none';
                     }
                 } else {
@@ -1386,7 +1527,6 @@
         const farmModal = document.getElementById('farm-modal');
         document.getElementById('add-farm-btn').addEventListener('click', () => farmModal.style.display = 'flex');
         document.getElementById('close-farm-modal-btn').addEventListener('click', () => farmModal.style.display = 'none');
-        document.getElementById('back-to-dashboard-btn').addEventListener('click', () => showScreen('farmList'));
 
         // --- New Farm Flow ---
         let isEditMode = false; // To track if we are editing or creating a new farm
@@ -1691,11 +1831,10 @@
             document.querySelectorAll('#severity-radios input:checked').forEach(rb => rb.checked = false);
 
             document.getElementById('save-submission-btn').textContent = 'Save Submission';
-            showScreen('newSubmission');
-            // Invalidate map size and load data, needed when map is in a hidden div
-            setTimeout(() => {
-                initializeReportMap(currentFarmId);
-            }, 100);
+
+            const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+            const newContext = { ...lastContext, label: 'New Report' };
+            showScreen('newSubmission', newContext);
         });
 
         function loadSubmissions(farmId) {
@@ -2319,29 +2458,27 @@
             lucide.createIcons();
         }
 
-        function loadFarms() {
-            const viewUserId = currentViewContext.userId;
-            const viewUserName = currentViewContext.userName;
-            currentViewContext = {}; // Reset context after reading it
-
-            const targetUserId = viewUserId || (currentUser ? currentUser.uid : null);
+        function loadFarms(context) {
+            const targetUserId = context.userId || (currentUser ? currentUser.uid : null);
             if (!targetUserId) return;
 
             const welcomeMessage = document.getElementById('welcome-message');
             const farmListTitle = document.querySelector('#farm-list-screen h2');
             const addFarmBtn = document.getElementById('add-farm-btn');
 
-            if (viewUserId) {
+            if (context.userId && context.userId !== currentUser.uid) {
                 // Viewing someone else's farms (drill-down)
-                welcomeMessage.textContent = `Viewing farms for ${viewUserName}`;
-                farmListTitle.textContent = `${viewUserName}'s Farm Plots`;
-                addFarmBtn.style.display = 'none'; // Hide add button when viewing others' farms
+                welcomeMessage.textContent = `Viewing farms for ${context.userName}`;
+                farmListTitle.textContent = `${context.userName}'s Farm Plots`;
+                addFarmBtn.style.display = 'none';
             } else {
                 // Viewing own farms
                 welcomeMessage.textContent = `Welcome, ${userProfile.fullName}`;
                 farmListTitle.textContent = 'My Farm Plots';
                 if (userProfile.role === 'Farmer') {
                     addFarmBtn.style.display = 'flex';
+                } else {
+                    addFarmBtn.style.display = 'none';
                 }
             }
 
@@ -2373,10 +2510,8 @@
                         `;
 
                         farmCard.addEventListener('click', () => {
-                            currentFarmId = farmId;
-                            document.getElementById('dashboard-farm-name').textContent = farm.farmName;
-                            document.getElementById('dashboard-farm-variety').textContent = farm.tobaccoVariety || 'N/A';
-                            showScreen('dashboard');
+                            const newContext = { ...context, farmId: farmId, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: farm.farmName };
+                            showScreen('dashboard', newContext);
                         });
 
                         farmListContainer.appendChild(farmCard);
@@ -2387,19 +2522,15 @@
             activeListeners.push(unsubscribe);
         }
 
-        async function loadExtensionWorkerDashboard() {
-            const viewUserId = currentViewContext.userId;
-            const viewUserName = currentViewContext.userName;
-            currentViewContext = {}; // Reset context
-
+        async function loadExtensionWorkerDashboard(context) {
             const ewDashboardContainer = document.getElementById('ew-dashboard-container');
             const welcomeMessage = document.getElementById('ew-welcome-message');
             const dashboardTitle = document.querySelector('#ew-dashboard-screen h2');
 
-            if (viewUserId) {
+            if (context.userId && context.userId !== currentUser.uid) {
                 // Coordinator viewing a specific EW's list
-                welcomeMessage.textContent = `Viewing farmers for ${viewUserName}`;
-                dashboardTitle.textContent = `${viewUserName}'s Farmer List`;
+                welcomeMessage.textContent = `Viewing farmers for ${context.userName}`;
+                dashboardTitle.textContent = `${context.userName}'s Farmer List`;
             } else {
                 // EW viewing their own dashboard
                 welcomeMessage.textContent = `Welcome, ${userProfile.fullName}`;
@@ -2415,10 +2546,6 @@
             lucide.createIcons();
 
             try {
-                // This is an inefficient query model. A better model would be to have a
-                // subcollection on the EW's document listing their assigned farmers,
-                // or an `assignedEW` field on the farmer document.
-                // For now, we query all farmers.
                 const usersCollection = collection(db, 'users');
                 const q = query(usersCollection, where("role", "==", "Farmer"));
                 const querySnapshot = await getDocs(q);
@@ -2428,12 +2555,9 @@
                     farmers.push({ id: doc.id, ...doc.data() });
                 });
 
-                // For each farmer, get their latest report timestamp. This is also inefficient.
-                // A denormalized `lastReportTimestamp` on the farmer doc would be better.
                 let farmersWithData = [];
                 for (const farmer of farmers) {
                     let latestReportTimestamp = null;
-
                     const farmLotsCollection = collection(db, 'users', farmer.id, 'farmLots');
                     const farmLotsSnapshot = await getDocs(farmLotsCollection);
 
@@ -2453,10 +2577,8 @@
                     farmersWithData.push({ ...farmer, lastReportDate: latestReportTimestamp });
                 }
 
-                // Sort farmers by the last report date, descending. Farmers with no reports are last.
                 farmersWithData.sort((a, b) => (b.lastReportDate || 0) - (a.lastReportDate || 0));
-
-                renderFarmerTable(farmersWithData);
+                renderFarmerTable(farmersWithData, context);
 
             } catch (error) {
                 console.error("Error loading Extension Worker dashboard:", error);
@@ -2464,7 +2586,7 @@
             }
         }
 
-        function renderFarmerTable(farmers) {
+        function renderFarmerTable(farmers, context) {
             const container = document.getElementById('ew-dashboard-container');
             if (!farmers || farmers.length === 0) {
                 container.innerHTML = `
@@ -2486,9 +2608,9 @@
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Report Date</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
+                        <tbody class="bg-white divide-y divide-gray-200" id="farmer-table-body">
                             ${farmers.map(farmer => `
-                                <tr class="hover:bg-gray-50 cursor-pointer" data-farmer-id="${farmer.id}">
+                                <tr class="hover:bg-gray-50 cursor-pointer" data-farmer-id="${farmer.id}" data-farmer-name="${farmer.fullName}">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">${farmer.fullName}</div>
                                     </td>
@@ -2507,7 +2629,7 @@
             container.innerHTML = tableHtml;
         }
 
-        async function loadCoordinatorDashboard() {
+        async function loadCoordinatorDashboard(context) {
             if (!currentUser) return;
 
             const container = document.getElementById('coordinator-dashboard-container');
@@ -2515,8 +2637,6 @@
             lucide.createIcons();
 
             try {
-                // TODO: The current data model doesn't link EWs to a coordinator or branch.
-                // This query fetches ALL extension workers. It should be filtered by branch.
                 const usersCollection = collection(db, 'users');
                 const q = query(usersCollection, where("role", "==", "Extension Worker"));
                 const querySnapshot = await getDocs(q);
@@ -2526,21 +2646,14 @@
                     extensionWorkers.push({ id: doc.id, ...doc.data() });
                 });
 
-                // TODO: Sorting by last report is not possible without a defined relationship
-                // between EWs and Farmers. Sorting by name as a fallback.
                 extensionWorkers.sort((a, b) => a.fullName.localeCompare(b.fullName));
 
-                // This is a placeholder. To implement correctly, we would need to:
-                // 1. Get all farmers for each EW.
-                // 2. Get the latest report for each of those farmers.
-                // 3. Find the max latest report timestamp among the farmers for each EW.
-                // This is too inefficient without a proper data model (e.g., `branchId`).
                 const workersWithData = extensionWorkers.map(worker => ({
                     ...worker,
                     lastReportDate: null // Placeholder
                 }));
 
-                renderExtensionWorkerTable(workersWithData);
+                renderExtensionWorkerTable(workersWithData, context);
 
             } catch (error) {
                 console.error("Error loading Coordinator dashboard:", error);
@@ -2548,7 +2661,7 @@
             }
         }
 
-        function renderExtensionWorkerTable(workers) {
+        function renderExtensionWorkerTable(workers, context) {
             const container = document.getElementById('coordinator-dashboard-container');
             if (!workers || workers.length === 0) {
                 container.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="briefcase" class="w-12 h-12 mx-auto text-gray-400"></i><p class="mt-4">No Extension Workers found.</p></div>`;
@@ -2565,9 +2678,9 @@
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Report Received</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
+                        <tbody class="bg-white divide-y divide-gray-200" id="ew-table-body">
                             ${workers.map(worker => `
-                                <tr class="hover:bg-gray-50 cursor-pointer" data-worker-id="${worker.id}">
+                                <tr class="hover:bg-gray-50 cursor-pointer" data-worker-id="${worker.id}" data-worker-name="${worker.fullName}">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">${worker.fullName}</div>
                                     </td>
@@ -2614,17 +2727,16 @@
         }
 
         // --- 7. DRILL-DOWN NAVIGATION ---
-        let currentViewContext = {}; // Used to pass data between screens
+        let currentViewContext = {}; // Used to pass data between screens. DEPRECATED but kept for safety.
 
         document.getElementById('ew-dashboard-container').addEventListener('click', (e) => {
             const row = e.target.closest('tr[data-farmer-id]');
             if (row) {
                 const farmerId = row.dataset.farmerId;
-                const farmerName = row.querySelector('.text-sm.font-medium.text-gray-900').textContent;
-
-                // Set context for the next screen and navigate
-                currentViewContext = { userId: farmerId, userName: farmerName };
-                showScreen('farmList');
+                const farmerName = row.dataset.farmerName;
+                const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+                const newContext = { ...lastContext, userId: farmerId, userName: farmerName, label: farmerName };
+                showScreen('farmList', newContext);
             }
         });
 
@@ -2632,11 +2744,10 @@
             const row = e.target.closest('tr[data-worker-id]');
             if (row) {
                 const workerId = row.dataset.workerId;
-                const workerName = row.querySelector('.text-sm.font-medium.text-gray-900').textContent;
-
-                // Set context and navigate. This will show the EW's dashboard view.
-                currentViewContext = { userId: workerId, userName: workerName };
-                showScreen('ewDashboard');
+                const workerName = row.dataset.workerName;
+                const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+                const newContext = { ...lastContext, userId: workerId, userName: workerName, label: workerName };
+                showScreen('ewDashboard', newContext);
             }
         });
 
