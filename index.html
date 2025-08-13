@@ -606,6 +606,9 @@
                 case 'farmList':
                     loadFarms();
                     break;
+                case 'dashboard':
+                    loadSubmissions(currentFarmId);
+                    break;
                 case 'reports':
                     loadAllReports();
                     break;
@@ -1681,7 +1684,6 @@
                             currentFarmId = farmId;
                             document.getElementById('dashboard-farm-name').textContent = farm.farmName;
                             document.getElementById('dashboard-farm-variety').textContent = farm.tobaccoVariety || 'N/A';
-                            loadSubmissions(currentFarmId);
                             showScreen('dashboard');
                         });
 
