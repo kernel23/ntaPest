@@ -121,6 +121,7 @@
                     <p class="text-lg text-green-700">Tobacco Pest Monitoring</p>
                     <p class="text-sm text-gray-500 mt-1">Ilocos Region, Philippines</p>
                 </div>
+                <div id="offline-message-container" class="w-full max-w-sm text-center mb-4"></div>
                 <div class="w-full max-w-sm">
                     <button id="google-signin-btn" class="w-full bg-white text-gray-700 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm flex items-center justify-center mb-3">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" class="mr-3"> <!-- Placeholder for Google Icon -->
@@ -1593,7 +1594,19 @@
             updateUIVisibilityBasedOnRole();
         }
 
+        // --- Authentication Flow with Offline Fallback ---
+        const authTimeout = setTimeout(() => {
+            console.log("Authentication timed out. Assuming offline, showing login screen.");
+            // If after the timeout we still don't have a user, show the login screen.
+            // This prevents getting stuck on the loading screen when offline.
+            if (!currentUser) {
+                showScreen('login');
+            }
+        }, 4000); // 4-second timeout for auth state
+
         onAuthStateChanged(auth, async (user) => {
+            clearTimeout(authTimeout); // Auth state resolved, clear the timeout.
+
             if (user) {
                 currentUser = user;
                 updateOnlineStatus();
@@ -4390,8 +4403,30 @@
             const db = await dbPromise;
             const farmOutboxCount = await db.count('outbox');
             const submissionOutboxCount = await db.count('submission_outbox');
+            const offlineMessageContainer = document.getElementById('offline-message-container');
+            const googleBtn = document.getElementById('google-signin-btn');
+            const facebookBtn = document.getElementById('facebook-signin-btn');
+            const guestBtn = document.getElementById('guest-signin-btn');
 
             if (navigator.onLine) {
+                 if (connectionStatusEl) {
+                    connectionStatusEl.textContent = 'Online';
+                    connectionStatusEl.className = 'text-center py-1 px-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-800';
+                }
+                if (offlineMessageContainer) offlineMessageContainer.innerHTML = '';
+                if (googleBtn) {
+                    googleBtn.disabled = false;
+                    googleBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                if (facebookBtn) {
+                    facebookBtn.disabled = false;
+                    facebookBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                if (guestBtn) {
+                    guestBtn.disabled = false;
+                    guestBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+
                 if (farmOutboxCount > 0) {
                     syncOutbox();
                 }
@@ -4399,18 +4434,31 @@
                     syncSubmissionOutbox();
                 }
 
-                if (farmOutboxCount === 0 && submissionOutboxCount === 0) {
-                    connectionStatusEl.textContent = 'Online';
-                    connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-blue-100 text-blue-800';
-                }
             } else {
-                let message = 'Offline Mode';
-                const totalOutboxCount = farmOutboxCount + submissionOutboxCount;
-                if (totalOutboxCount > 0) {
-                    message += ` (${totalOutboxCount} item(s) waiting to sync)`;
+                if (connectionStatusEl) {
+                    let message = 'Offline Mode';
+                    const totalOutboxCount = farmOutboxCount + submissionOutboxCount;
+                    if (totalOutboxCount > 0) {
+                        message += ` (${totalOutboxCount} item(s) waiting to sync)`;
+                    }
+                    connectionStatusEl.textContent = message;
+                    connectionStatusEl.className = 'text-center py-1 px-2 rounded-full text-sm font-semibold bg-gray-200 text-gray-800';
                 }
-                connectionStatusEl.textContent = message;
-                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-gray-200 text-gray-800';
+                if (offlineMessageContainer) {
+                    offlineMessageContainer.innerHTML = `<p class="text-red-600 bg-red-100 p-3 rounded-lg">You are currently offline. Please connect to sign in.</p>`;
+                }
+                if (googleBtn) {
+                    googleBtn.disabled = true;
+                    googleBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                if (facebookBtn) {
+                    facebookBtn.disabled = true;
+                    facebookBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                if (guestBtn) {
+                    guestBtn.disabled = true;
+                    guestBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
             }
         }
         window.addEventListener('online', updateOnlineStatus);
