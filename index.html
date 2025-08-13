@@ -89,6 +89,9 @@
                 <a href="#" id="nav-clinic" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Online Clinic">
                     <i data-lucide="message-square" class="w-6 h-6"></i>
                 </a>
+                 <a href="#" id="nav-admin" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Admin Dashboard">
+                    <i data-lucide="shield-alert" class="w-6 h-6"></i>
+                </a>
             </nav>
 
             <!-- Logout Button -->
@@ -219,6 +222,7 @@
                         <button id="role-worker-btn" class="role-btn p-4 rounded-lg border-2 border-gray-300">Extension Worker</button>
                         <button id="role-coordinator-btn" class="role-btn p-4 rounded-lg border-2 border-gray-300">Branch Coordinator</button>
                         <button id="role-expert-btn" class="role-btn p-4 rounded-lg border-2 border-gray-300">Expert</button>
+                        <button id="role-admin-btn" class="role-btn p-4 rounded-lg border-2 border-gray-300">Administrator</button>
                     </div>
                     <div class="mt-8 space-y-4">
                         <button id="edit-profile-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hidden">Edit Profile</button>
@@ -369,6 +373,40 @@
                                 <!-- Details will be populated here -->
                                 <p class="text-gray-500">Click on a highlighted area on the map to see details.</p>
                             </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
+            <!-- Admin Dashboard Screen -->
+            <div id="admin-dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md">
+                    <h2 class="text-2xl font-bold">Administrator Dashboard</h2>
+                    <p id="admin-welcome-message" class="text-sm text-gray-600"></p>
+                </header>
+                <main class="flex-1 p-4 overflow-y-auto">
+                    <div class="mb-4 border-b border-gray-200">
+                        <nav class="flex space-x-4" aria-label="Tabs">
+                            <button id="admin-users-tab" class="px-3 py-2 font-medium text-sm rounded-t-md border-b-2 border-green-600 text-green-700">
+                                User Management
+                            </button>
+                            <button id="admin-reports-tab" class="px-3 py-2 font-medium text-sm rounded-t-md border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                Report Management
+                            </button>
+                        </nav>
+                    </div>
+                    <div id="admin-users-content">
+                        <!-- User management table will be inserted here -->
+                        <div class="text-center text-gray-500 mt-20">
+                            <i data-lucide="users" class="w-12 h-12 mx-auto text-gray-400"></i>
+                            <p class="mt-4">Loading users...</p>
+                        </div>
+                    </div>
+                    <div id="admin-reports-content" class="hidden">
+                        <!-- Report management table will be inserted here -->
+                        <div class="text-center text-gray-500 mt-20">
+                            <i data-lucide="file-text" class="w-12 h-12 mx-auto text-gray-400"></i>
+                            <p class="mt-4">Loading reports...</p>
                         </div>
                     </div>
                 </main>
@@ -724,6 +762,28 @@
         </div>
     </div>
 
+    <!-- Change Role Modal -->
+    <div id="change-role-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Change Role for <span id="change-role-user-name"></span></h3>
+                <button id="close-change-role-modal-btn" class="p-1"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6">
+                <label for="role-select" class="block text-sm font-medium text-gray-700">New Role</label>
+                <select id="role-select" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                    <option>Farmer</option>
+                    <option>Extension Worker</option>
+                    <option>Branch Coordinator</option>
+                    <option>Expert</option>
+                    <option>Administrator</option>
+                </select>
+                <input type="hidden" id="change-role-user-id">
+                <button id="save-role-change-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Address Data -->
     <script src="address-provider.js"></script>
 
@@ -847,7 +907,8 @@
             farmSetup: document.getElementById('farm-setup-screen'),
             ewDashboard: document.getElementById('ew-dashboard-screen'),
             coordinatorDashboard: document.getElementById('coordinator-dashboard-screen'),
-            expertDashboard: document.getElementById('expert-dashboard-screen')
+            expertDashboard: document.getElementById('expert-dashboard-screen'),
+            adminDashboard: document.getElementById('admin-dashboard-screen')
         };
 
         // --- Privacy Policy Navigation ---
@@ -899,6 +960,7 @@
         document.getElementById('nav-diagnosis').addEventListener('click', () => showScreen('diagnosis', { isFreshNavigation: true, label: 'For Diagnosis' }));
         document.getElementById('nav-treatment').addEventListener('click', () => showScreen('treatment', { isFreshNavigation: true, label: 'For Treatment' }));
         document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic', { isFreshNavigation: true, label: 'Online Clinic' }));
+        document.getElementById('nav-admin').addEventListener('click', () => showScreen('adminDashboard', { isFreshNavigation: true, label: 'Admin Dashboard' }));
         document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
 
         // --- Sidebar is now fixed, toggle logic removed ---
@@ -1059,6 +1121,10 @@
                     loadExpertStats();
                     loadExpertMap();
                     break;
+                case 'adminDashboard':
+                    loadAdminUserManagement(); // Default to users tab
+                    attachAdminTabListeners();
+                    break;
                 case 'newSubmission':
                     await initializeReportMap(currentContext);
                     break;
@@ -1075,15 +1141,21 @@
             const isWorker = userProfile.role === 'Extension Worker';
             const isCoordinator = userProfile.role === 'Branch Coordinator';
             const isExpert = userProfile.role === 'Expert';
+            const isAdmin = userProfile.role === 'Administrator';
 
             const navFarmList = document.getElementById('nav-farm-list');
             const navDiagnosis = document.getElementById('nav-diagnosis');
             const navTreatment = document.getElementById('nav-treatment');
             const navReports = document.getElementById('nav-reports');
             const navClinic = document.getElementById('nav-clinic');
+            const navAdmin = document.getElementById('nav-admin');
 
             // Default visibility
-            [navFarmList, navDiagnosis, navTreatment, navReports, navClinic].forEach(el => el.style.display = 'block');
+            [navFarmList, navDiagnosis, navTreatment, navReports, navClinic, navAdmin].forEach(el => el.style.display = 'block');
+
+            // Hide all role-specific nav items by default, then show based on role
+            [navDiagnosis, navTreatment, navClinic, navAdmin].forEach(el => el.style.display = 'none');
+
 
             if (isFarmer) {
                 navDiagnosis.style.display = 'none';
@@ -1103,6 +1175,8 @@
                 navTreatment.style.display = 'none';
                 navReports.style.display = 'block';
                 navClinic.style.display = 'block';
+            } else if (isAdmin) {
+                navAdmin.style.display = 'block';
             }
         }
 
@@ -1506,6 +1580,9 @@
             } else if (selectedRole === 'Expert') {
                 document.getElementById('role-expert-btn').classList.add('bg-green-600', 'text-white');
             }
+            else if (selectedRole === 'Administrator') {
+                document.getElementById('role-admin-btn').classList.add('bg-green-600', 'text-white');
+            }
             updateUIVisibilityBasedOnRole();
         }
 
@@ -1555,6 +1632,10 @@
                         } else if (userProfile.role === 'Expert') {
                             screen = 'expertDashboard';
                             document.getElementById('expert-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                            document.getElementById('add-farm-btn').style.display = 'none';
+                        } else if (userProfile.role === 'Administrator') {
+                            screen = 'adminDashboard';
+                            document.getElementById('admin-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
                             document.getElementById('add-farm-btn').style.display = 'none';
                         } else { // Default to Farmer
                             screen = 'farmList';
@@ -1628,6 +1709,8 @@
                     selectedRole = 'Branch Coordinator';
                 } else if (btn.id === 'role-expert-btn') {
                     selectedRole = 'Expert';
+                } else if (btn.id === 'role-admin-btn') {
+                    selectedRole = 'Administrator';
                 }
             });
         });
@@ -3812,7 +3895,289 @@
         }
 
         document.getElementById('export-csv-btn').addEventListener('click', exportReportsToCSV);
-        // --- 7. DRILL-DOWN NAVIGATION ---
+
+        // --- 7. ADMIN DASHBOARD LOGIC ---
+        function attachAdminTabListeners() {
+            const usersTab = document.getElementById('admin-users-tab');
+            const reportsTab = document.getElementById('admin-reports-tab');
+            const usersContent = document.getElementById('admin-users-content');
+            const reportsContent = document.getElementById('admin-reports-content');
+
+            usersTab.addEventListener('click', () => {
+                usersTab.classList.add('border-green-600', 'text-green-700');
+                usersTab.classList.remove('border-transparent', 'text-gray-500');
+                reportsTab.classList.remove('border-green-600', 'text-green-700');
+                reportsTab.classList.add('border-transparent', 'text-gray-500');
+
+                usersContent.classList.remove('hidden');
+                reportsContent.classList.add('hidden');
+                loadAdminUserManagement();
+            });
+
+            reportsTab.addEventListener('click', () => {
+                reportsTab.classList.add('border-green-600', 'text-green-700');
+                reportsTab.classList.remove('border-transparent', 'text-gray-500');
+                usersTab.classList.remove('border-green-600', 'text-green-700');
+                usersTab.classList.add('border-transparent', 'text-gray-500');
+
+                reportsContent.classList.remove('hidden');
+                usersContent.classList.add('hidden');
+                loadAdminReportManagement();
+            });
+        }
+
+        async function loadAdminUserManagement() {
+            if (!currentUser || !userProfile || userProfile.role !== 'Administrator') {
+                document.getElementById('admin-users-content').innerHTML = '<p class="text-red-500">You do not have permission to view this page.</p>';
+                return;
+            }
+
+            const usersContent = document.getElementById('admin-users-content');
+            usersContent.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i><p class="mt-4">Loading users...</p></div>`;
+            lucide.createIcons();
+
+            try {
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                const users = [];
+                usersSnapshot.forEach(doc => {
+                    users.push({ id: doc.id, ...doc.data() });
+                });
+
+                renderUserTable(users);
+            } catch (error) {
+                console.error("Error loading users for admin dashboard:", error);
+                usersContent.innerHTML = `<p class="text-red-500">Could not load users.</p>`;
+            }
+        }
+
+        function renderUserTable(users) {
+            const container = document.getElementById('admin-users-content');
+            if (!users || users.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="users" class="w-12 h-12 mx-auto text-gray-400"></i><p class="mt-4">No users found.</p></div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            const tableHtml = `
+                <div class="overflow-x-auto bg-white rounded-lg shadow">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            ${users.map(user => `
+                                <tr id="user-row-${user.id}">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">${user.fullName}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.email || 'N/A'}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${user.role}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button class="text-indigo-600 hover:text-indigo-900 mr-4 change-role-btn" data-user-id="${user.id}" data-user-name="${user.fullName}" data-current-role="${user.role}">Change Role</button>
+                                        <button class="text-red-600 hover:text-red-900 delete-user-btn" data-user-id="${user.id}" data-user-name="${user.fullName}">Delete</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.innerHTML = tableHtml;
+        }
+
+        async function loadAdminReportManagement() {
+            if (!currentUser || !userProfile || userProfile.role !== 'Administrator') {
+                document.getElementById('admin-reports-content').innerHTML = '<p class="text-red-500">You do not have permission to view this page.</p>';
+                return;
+            }
+
+            const reportsContent = document.getElementById('admin-reports-content');
+            reportsContent.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i><p class="mt-4">Loading reports...</p></div>`;
+            lucide.createIcons();
+
+            try {
+                let allSubmissions = [];
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                for (const userDoc of usersSnapshot.docs) {
+                     const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
+                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                    for (const farmDoc of farmLotsSnapshot.docs) {
+                        const farmData = farmDoc.data();
+                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
+                        const submissionsSnapshot = await getDocs(submissionsCollection);
+                        submissionsSnapshot.forEach(submissionDoc => {
+                            allSubmissions.push({
+                                ...submissionDoc.data(),
+                                id: submissionDoc.id,
+                                farmName: farmData.farmName,
+                                userName: userDoc.data().fullName,
+                                userId: userDoc.id,
+                                farmId: farmDoc.id
+                            });
+                        });
+                    }
+                }
+
+                allSubmissions.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
+                renderReportTable(allSubmissions);
+
+            } catch (error) {
+                console.error("Error loading reports for admin:", error);
+                reportsContent.innerHTML = `<p class="text-red-500">Could not load reports.</p>`;
+            }
+        }
+
+        function renderReportTable(submissions) {
+            const container = document.getElementById('admin-reports-content');
+            if (!submissions || submissions.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="file-text" class="w-12 h-12 mx-auto text-gray-400"></i><p class="mt-4">No reports found.</p></div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            const tableHtml = `
+                <div class="overflow-x-auto bg-white rounded-lg shadow">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farm</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report Date</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Symptoms</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            ${submissions.map(sub => `
+                                <tr id="report-row-${sub.id}">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sub.userName}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sub.farmName}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sub.timestamp?.toDate().toLocaleDateString() || 'N/A'}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${sub.symptoms.join(', ')}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button class="text-red-600 hover:text-red-900 delete-report-btn" data-user-id="${sub.userId}" data-farm-id="${sub.farmId}" data-submission-id="${sub.id}" data-farm-name="${sub.farmName}">Delete</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.innerHTML = tableHtml;
+        }
+
+        document.getElementById('admin-users-content').addEventListener('click', (e) => {
+            if (e.target.classList.contains('change-role-btn')) {
+                const userId = e.target.dataset.userId;
+                const userName = e.target.dataset.userName;
+                const currentRole = e.target.dataset.currentRole;
+
+                document.getElementById('change-role-user-name').textContent = userName;
+                document.getElementById('role-select').value = currentRole;
+                document.getElementById('change-role-user-id').value = userId;
+
+                document.getElementById('change-role-modal').classList.remove('hidden');
+                document.getElementById('change-role-modal').classList.add('flex');
+            }
+
+            if (e.target.classList.contains('delete-user-btn')) {
+                const userId = e.target.dataset.userId;
+                const userName = e.target.dataset.userName;
+                if (confirm(`Are you sure you want to delete user: ${userName}? This action cannot be undone.`)) {
+                    deleteUser(userId);
+                }
+            }
+        });
+
+        document.getElementById('close-change-role-modal-btn').addEventListener('click', () => {
+            document.getElementById('change-role-modal').classList.add('hidden');
+        });
+
+        document.getElementById('save-role-change-btn').addEventListener('click', async () => {
+            const newRole = document.getElementById('role-select').value;
+            const userId = document.getElementById('change-role-user-id').value;
+
+            if (!newRole || !userId) {
+                showToast('Could not change role. User ID or new role is missing.', 'error');
+                return;
+            }
+
+            showSavingOverlay('Updating Role...');
+            try {
+                const userDocRef = doc(db, 'users', userId);
+                await updateDoc(userDocRef, { role: newRole });
+                showToast('User role updated successfully!', 'success');
+                document.getElementById('change-role-modal').classList.add('hidden');
+                loadAdminUserManagement(); // Refresh the user list
+            } catch (error) {
+                console.error('Error updating user role:', error);
+                showToast('Failed to update user role.', 'error');
+            } finally {
+                hideSavingOverlay();
+            }
+        });
+
+        async function deleteUser(userId) {
+            if (!userId) {
+                showToast('Cannot delete user. User ID is missing.', 'error');
+                return;
+            }
+
+            showSavingOverlay('Deleting User...');
+            try {
+                // This only deletes the Firestore document, not the Auth user.
+                // Deleting Auth user requires a Cloud Function.
+                const userDocRef = doc(db, 'users', userId);
+                await deleteDoc(userDocRef);
+                showToast('User deleted successfully from the database.', 'success');
+                loadAdminUserManagement(); // Refresh the user list
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showToast('Failed to delete user.', 'error');
+            } finally {
+                hideSavingOverlay();
+            }
+        }
+
+        // --- 8. DRILL-DOWN NAVIGATION ---
+        document.getElementById('admin-reports-content').addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-report-btn')) {
+                const userId = e.target.dataset.userId;
+                const farmId = e.target.dataset.farmId;
+                const submissionId = e.target.dataset.submissionId;
+                const farmName = e.target.dataset.farmName;
+
+                if (confirm(`Are you sure you want to delete this report from ${farmName}? This action cannot be undone.`)) {
+                    deleteReport(userId, farmId, submissionId);
+                }
+            }
+        });
+
+        async function deleteReport(userId, farmId, submissionId) {
+            if (!userId || !farmId || !submissionId) {
+                showToast('Cannot delete report. ID is missing.', 'error');
+                return;
+            }
+
+            showSavingOverlay('Deleting Report...');
+            try {
+                const reportDocRef = doc(db, 'users', userId, 'farmLots', farmId, 'submissions', submissionId);
+                await deleteDoc(reportDocRef);
+                showToast('Report deleted successfully.', 'success');
+                loadAdminReportManagement(); // Refresh the list
+            } catch (error) {
+                console.error('Error deleting report:', error);
+                showToast('Failed to delete report.', 'error');
+            } finally {
+                hideSavingOverlay();
+            }
+        }
+
         let currentViewContext = {}; // Used to pass data between screens. DEPRECATED but kept for safety.
 
         document.getElementById('ew-dashboard-container').addEventListener('click', (e) => {
