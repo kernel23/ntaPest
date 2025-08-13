@@ -1158,46 +1158,46 @@
         function updateUIVisibilityBasedOnRole() {
             if (!userProfile) return;
 
-            const isFarmer = userProfile.role === 'Farmer';
-            const isWorker = userProfile.role === 'Extension Worker';
-            const isCoordinator = userProfile.role === 'Branch Coordinator';
-            const isExpert = userProfile.role === 'Expert';
-            const isAdmin = userProfile.role === 'Administrator';
+            const roles = {
+                isFarmer: userProfile.role === 'Farmer',
+                isWorker: userProfile.role === 'Extension Worker',
+                isCoordinator: userProfile.role === 'Branch Coordinator',
+                isExpert: userProfile.role === 'Expert',
+                isAdmin: userProfile.role === 'Administrator'
+            };
 
-            const navFarmList = document.getElementById('nav-farm-list');
-            const navDiagnosis = document.getElementById('nav-diagnosis');
-            const navTreatment = document.getElementById('nav-treatment');
-            const navReports = document.getElementById('nav-reports');
-            const navClinic = document.getElementById('nav-clinic');
-            const navAdmin = document.getElementById('nav-admin');
+            const nav = {
+                farmList: document.getElementById('nav-farm-list'),
+                profile: document.getElementById('nav-profile'),
+                reports: document.getElementById('nav-reports'),
+                diagnosis: document.getElementById('nav-diagnosis'),
+                treatment: document.getElementById('nav-treatment'),
+                clinic: document.getElementById('nav-clinic'),
+                admin: document.getElementById('nav-admin')
+            };
 
-            // Default visibility
-            [navFarmList, navDiagnosis, navTreatment, navReports, navClinic, navAdmin].forEach(el => el.style.display = 'block');
+            // Hide all role-specific nav items by default
+            Object.values(nav).forEach(item => item.style.display = 'none');
 
-            // Hide all role-specific nav items by default, then show based on role
-            [navDiagnosis, navTreatment, navClinic, navAdmin].forEach(el => el.style.display = 'none');
+            // Show items common to most roles
+            nav.profile.style.display = 'block';
+            nav.reports.style.display = 'block';
 
-
-            if (isFarmer) {
-                navDiagnosis.style.display = 'none';
-                navTreatment.style.display = 'none';
-                navClinic.style.display = 'none';
-            } else if (isWorker) {
-                navDiagnosis.style.display = 'block';
-                navTreatment.style.display = 'none';
-                navClinic.style.display = 'none';
-            } else if (isCoordinator) {
-                navDiagnosis.style.display = 'block';
-                navTreatment.style.display = 'block';
-                navClinic.style.display = 'none'; // Coordinators escalate to the clinic, they don't view it
-            } else if (isExpert) {
-                navFarmList.style.display = 'block'; // Experts should see their dashboard
-                navDiagnosis.style.display = 'none';
-                navTreatment.style.display = 'none';
-                navReports.style.display = 'block';
-                navClinic.style.display = 'block';
-            } else if (isAdmin) {
-                navAdmin.style.display = 'block';
+            if (roles.isFarmer) {
+                nav.farmList.style.display = 'block';
+            } else if (roles.isWorker) {
+                nav.farmList.style.display = 'block';
+                nav.diagnosis.style.display = 'block';
+            } else if (roles.isCoordinator) {
+                nav.farmList.style.display = 'block';
+                nav.diagnosis.style.display = 'block';
+                nav.treatment.style.display = 'block';
+            } else if (roles.isExpert) {
+                nav.farmList.style.display = 'block';
+                nav.clinic.style.display = 'block';
+            } else if (roles.isAdmin) {
+                nav.admin.style.display = 'block';
+                // Farm list is intentionally hidden for admins
             }
         }
 
