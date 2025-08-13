@@ -214,9 +214,10 @@
                         <input type="text" id="rsbsaNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
                     </div>
                     <p class="mt-6 mb-2 font-medium text-gray-700">Select Your Role:</p>
-                    <div class="flex gap-4">
-                        <button id="role-farmer-btn" class="role-btn flex-1 p-4 rounded-lg border-2 border-green-600 bg-green-600 text-white">Farmer</button>
-                        <button id="role-worker-btn" class="role-btn flex-1 p-4 rounded-lg border-2 border-gray-300">Extension Worker</button>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <button id="role-farmer-btn" class="role-btn p-4 rounded-lg border-2 border-green-600 bg-green-600 text-white">Farmer</button>
+                        <button id="role-worker-btn" class="role-btn p-4 rounded-lg border-2 border-gray-300">Extension Worker</button>
+                        <button id="role-coordinator-btn" class="role-btn p-4 rounded-lg border-2 border-gray-300">Branch Coordinator</button>
                     </div>
                     <div class="mt-8 space-y-4">
                         <button id="edit-profile-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hidden">Edit Profile</button>
@@ -364,7 +365,15 @@
             <!-- Reports Screen -->
             <div id="reports-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
                 <header class="bg-white p-4 shadow-md">
-                    <h2 class="text-2xl font-bold">All Pest & Disease Reports</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold">All Pest & Disease Reports</h2>
+                    </div>
+                    <div id="report-filters" class="flex space-x-2">
+                        <button data-filter="all" class="report-filter-btn bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">All</button>
+                        <button data-filter="pending" class="report-filter-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold">Pending Diagnosis</button>
+                        <button data-filter="diagnosed" class="report-filter-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold">Diagnosed</button>
+                        <button data-filter="treated" class="report-filter-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold">Treatment Provided</button>
+                    </div>
                 </header>
                 <main id="reports-container" class="flex-1 p-4 overflow-y-auto">
                     <!-- Report cards will be inserted here by JavaScript -->
@@ -374,20 +383,28 @@
             <!-- Diagnosis Screen -->
             <div id="diagnosis-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
                 <header class="bg-white p-4 shadow-md">
-                    <h2 class="text-2xl font-bold">Diagnosis</h2>
+                    <h2 class="text-2xl font-bold">Reports for Diagnosis</h2>
                 </header>
-                <main class="flex-1 p-4">
-                    <p>Diagnosis tools and information will be available here.</p>
+                <main id="diagnosis-reports-container" class="flex-1 p-4 overflow-y-auto">
+                    <!-- Reports awaiting diagnosis will be loaded here by JavaScript -->
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i>
+                        <p class="mt-4">Loading reports...</p>
+                    </div>
                 </main>
             </div>
 
             <!-- Treatment Screen -->
             <div id="treatment-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
                 <header class="bg-white p-4 shadow-md">
-                    <h2 class="text-2xl font-bold">Treatment</h2>
+                    <h2 class="text-2xl font-bold">Diagnosed Reports Awaiting Treatment</h2>
                 </header>
-                <main class="flex-1 p-4">
-                    <p>Treatment recommendations will be available here.</p>
+                <main id="treatment-reports-container" class="flex-1 p-4 overflow-y-auto">
+                    <!-- Diagnosed reports will be loaded here by JavaScript -->
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i>
+                        <p class="mt-4">Loading reports...</p>
+                    </div>
                 </main>
             </div>
 
@@ -420,6 +437,61 @@
     </div>
 
     <!-- Modals -->
+    <!-- Diagnosis Modal -->
+    <div id="diagnosis-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Diagnose Report</h3>
+                <button id="close-diagnosis-modal-btn" class="p-1"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6">
+                <div id="diagnosis-report-details" class="mb-4">
+                    <!-- Report details will be loaded here -->
+                </div>
+                <h4 class="text-lg font-bold mt-4 mb-2">Add Diagnosis</h4>
+                <label for="pest-disease" class="block text-sm font-medium text-gray-700">Identified Pest/Disease</label>
+                <input type="text" id="pest-disease" placeholder="e.g., Tobacco Hornworm" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                <label for="diagnosis-notes" class="block text-sm font-medium text-gray-700 mt-4">Diagnosis Notes</label>
+                <textarea id="diagnosis-notes" rows="4" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></textarea>
+                <button id="save-diagnosis-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Diagnosis</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Treatment Modal -->
+    <div id="treatment-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Create Treatment Plan</h3>
+                <button id="close-treatment-modal-btn" class="p-1"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[80vh]">
+                <div id="treatment-report-details" class="mb-4">
+                    <!-- Report and diagnosis details will be loaded here -->
+                </div>
+                <h4 class="text-lg font-bold mt-4 mb-2">Add Treatment Plan</h4>
+
+                <fieldset id="treatment-actions-checklist" class="mt-4">
+                    <legend class="text-base font-medium text-gray-900">Recommended Actions</legend>
+                    <div class="mt-2 grid grid-cols-2 gap-2">
+                        <div class="flex items-start"><div class="flex items-center h-5"><input name="treatment-action" value="chemical" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label class="font-medium text-gray-700">Chemical Control</label></div></div>
+                        <div class="flex items-start"><div class="flex items-center h-5"><input name="treatment-action" value="biological" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label class="font-medium text-gray-700">Biological Control</label></div></div>
+                        <div class="flex items-start"><div class="flex items-center h-5"><input name="treatment-action" value="cultural" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label class="font-medium text-gray-700">Cultural Control</label></div></div>
+                        <div class="flex items-start"><div class="flex items-center h-5"><input name="treatment-action" value="physical" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label class="font-medium text-gray-700">Physical/Mechanical</label></div></div>
+                    </div>
+                </fieldset>
+
+                <label for="treatment-instructions" class="block text-sm font-medium text-gray-700 mt-4">Specific Instructions</label>
+                <textarea id="treatment-instructions" rows="4" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></textarea>
+
+                <label for="follow-up-date" class="block text-sm font-medium text-gray-700 mt-4">Follow-up Date</label>
+                <input type="date" id="follow-up-date" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+
+                <button id="save-treatment-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Treatment Plan</button>
+            </div>
+        </div>
+    </div>
+
     <div id="farm-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-40">
          <div class="bg-white rounded-lg shadow-xl w-full max-w-md m-4">
             <div class="p-4 border-b flex justify-between items-center">
@@ -614,6 +686,14 @@
                     break;
                 case 'camera':
                     startCamera();
+                    break;
+                case 'diagnosis':
+                    // We need to ensure the user has the correct role to see this.
+                    // This check should ideally be here, but for now we assume it's handled by UI visibility.
+                    loadReportsForDiagnosis();
+                    break;
+                case 'treatment':
+                    loadReportsForTreatment();
                     break;
             }
 
@@ -1015,8 +1095,10 @@
             });
             if (selectedRole === 'Farmer') {
                 document.getElementById('role-farmer-btn').classList.add('bg-green-600', 'text-white');
-            } else {
+            } else if (selectedRole === 'Extension Worker') {
                 document.getElementById('role-worker-btn').classList.add('bg-green-600', 'text-white');
+            } else if (selectedRole === 'Branch Coordinator') {
+                document.getElementById('role-coordinator-btn').classList.add('bg-green-600', 'text-white');
             }
         }
 
@@ -1105,7 +1187,14 @@
                 });
                 btn.classList.add('bg-green-600', 'text-white');
                 btn.classList.remove('border-gray-300');
-                selectedRole = btn.id === 'role-farmer-btn' ? 'Farmer' : 'Extension Worker';
+
+                if (btn.id === 'role-farmer-btn') {
+                    selectedRole = 'Farmer';
+                } else if (btn.id === 'role-worker-btn') {
+                    selectedRole = 'Extension Worker';
+                } else if (btn.id === 'role-coordinator-btn') {
+                    selectedRole = 'Branch Coordinator';
+                }
             });
         });
 
@@ -1564,64 +1653,418 @@
             activeListeners.push(unsubscribe);
         }
 
+        let currentReportFilter = 'all';
+
+        document.getElementById('report-filters').addEventListener('click', (e) => {
+            if (e.target.classList.contains('report-filter-btn')) {
+                const filter = e.target.getAttribute('data-filter');
+                currentReportFilter = filter;
+
+                document.querySelectorAll('.report-filter-btn').forEach(b => {
+                    b.classList.remove('bg-green-600', 'text-white');
+                    b.classList.add('bg-gray-200', 'text-gray-800');
+                });
+                e.target.classList.add('bg-green-600', 'text-white');
+                e.target.classList.remove('bg-gray-200', 'text-gray-800');
+
+                loadAllReports();
+            }
+        });
+
         async function loadAllReports() {
             if (!currentUser) return;
 
             const reportsContainer = document.getElementById('reports-container');
-            reportsContainer.innerHTML = ''; // Clear previous content before doing anything else.
+            reportsContainer.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i><p class="mt-4">Loading reports...</p></div>`;
+            lucide.createIcons();
 
             try {
-                const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
-                const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                // For coordinators, fetch all reports. For farmers, fetch only their own.
                 let allSubmissions = [];
-
-                for (const farmDoc of farmLotsSnapshot.docs) {
-                    const farmData = farmDoc.data();
-                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmDoc.id, 'submissions');
-                    const submissionsSnapshot = await getDocs(submissionsCollection);
-
-                    submissionsSnapshot.forEach(submissionDoc => {
-                        allSubmissions.push({
-                            ...submissionDoc.data(),
-                            id: submissionDoc.id,
-                            farmName: farmData.farmName
+                if (userProfile.role === 'Farmer') {
+                    const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                    for (const farmDoc of farmLotsSnapshot.docs) {
+                        const farmData = farmDoc.data();
+                        const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmDoc.id, 'submissions');
+                        const submissionsSnapshot = await getDocs(submissionsCollection);
+                        submissionsSnapshot.forEach(submissionDoc => {
+                            allSubmissions.push({ ...submissionDoc.data(), id: submissionDoc.id, farmName: farmData.farmName });
                         });
-                    });
+                    }
+                } else { // For Extension Worker or Branch Coordinator
+                    const usersSnapshot = await getDocs(collection(db, 'users'));
+                    for (const userDoc of usersSnapshot.docs) {
+                         const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
+                        const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                        for (const farmDoc of farmLotsSnapshot.docs) {
+                            const farmData = farmDoc.data();
+                            const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
+                            const submissionsSnapshot = await getDocs(submissionsCollection);
+                            submissionsSnapshot.forEach(submissionDoc => {
+                                allSubmissions.push({ ...submissionDoc.data(), id: submissionDoc.id, farmName: farmData.farmName, userName: userDoc.data().fullName });
+                            });
+                        }
+                    }
                 }
 
-                if (allSubmissions.length > 0) {
-                    allSubmissions.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
-                    renderAllReports(allSubmissions);
-                } else {
-                    // Dynamically create and append the 'no reports' message
-                    const noReportsMessage = document.createElement('div');
-                    noReportsMessage.className = 'text-center text-gray-500 mt-20';
-                    noReportsMessage.innerHTML = `
-                        <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
-                        <p class="mt-4">No reports found across all your farms.</p>
-                        <p>Submissions you create will appear here.</p>
-                    `;
-                    reportsContainer.appendChild(noReportsMessage);
-                    lucide.createIcons();
+                // Client-side filtering
+                let filteredSubmissions = allSubmissions;
+                if (currentReportFilter === 'pending') {
+                    filteredSubmissions = allSubmissions.filter(s => !s.diagnosis);
+                } else if (currentReportFilter === 'diagnosed') {
+                    filteredSubmissions = allSubmissions.filter(s => s.diagnosis && !s.treatment);
+                } else if (currentReportFilter === 'treated') {
+                    filteredSubmissions = allSubmissions.filter(s => s.treatment);
                 }
+
+                filteredSubmissions.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
+                renderAllReports(filteredSubmissions);
 
             } catch (error) {
                 console.error("Error loading all reports:", error);
-                showToast("Could not load reports. Please try again.", 'error');
-                 // Display a user-friendly error message in the container
-                reportsContainer.innerHTML = `
-                    <div class="text-center text-red-500 mt-20">
-                        <i data-lucide="alert-triangle" class="w-12 h-12 mx-auto text-red-400"></i>
-                        <p class="mt-4">Sorry, we couldn't load the reports.</p>
-                        <p>Please check your connection and try again.</p>
-                    </div>
-                `;
-                lucide.createIcons();
+                showToast("Could not load reports. Please try again.", "error");
+                reportsContainer.innerHTML = `<div class="text-center text-red-500 mt-20"><p>Could not load reports.</p></div>`;
             }
         }
 
+        let currentDiagnosisTarget = null; // Holds { userId, farmId, submissionId }
+
+        async function loadReportsForDiagnosis() {
+            if (!currentUser) return;
+
+            // This is a placeholder for role checking. In a real app, you'd secure this.
+            // For now, we assume if you can see the button, you have access.
+
+            const diagnosisContainer = document.getElementById('diagnosis-reports-container');
+            diagnosisContainer.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i><p class="mt-4">Loading reports...</p></div>`;
+            lucide.createIcons();
+
+            try {
+                // Inefficient Query: This iterates through all users and their farms.
+                // A better DB structure would be a single top-level 'submissions' collection
+                // that could be queried directly.
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                let submissionsForDiagnosis = [];
+
+                for (const userDoc of usersSnapshot.docs) {
+                    const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
+                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+
+                    for (const farmDoc of farmLotsSnapshot.docs) {
+                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
+                        const submissionsSnapshot = await getDocs(submissionsCollection);
+
+                        submissionsSnapshot.forEach(submissionDoc => {
+                            const submissionData = submissionDoc.data();
+                            // We only want reports that do NOT have a diagnosis object.
+                            if (!submissionData.diagnosis) {
+                                submissionsForDiagnosis.push({
+                                    ...submissionData,
+                                    userId: userDoc.id,
+                                    farmId: farmDoc.id,
+                                    submissionId: submissionDoc.id,
+                                    farmName: farmDoc.data().farmName // Include farm name for context
+                                });
+                            }
+                        });
+                    }
+                }
+
+                renderReportsForDiagnosis(submissionsForDiagnosis);
+
+            } catch (error) {
+                console.error("Error loading reports for diagnosis:", error);
+                diagnosisContainer.innerHTML = `<div class="text-center text-red-500 mt-20"><p>Error loading reports. You may not have the required permissions.</p></div>`;
+                showToast("Could not load reports for diagnosis.", "error");
+            }
+        }
+
+        function renderReportsForDiagnosis(submissions) {
+            const diagnosisContainer = document.getElementById('diagnosis-reports-container');
+            diagnosisContainer.innerHTML = '';
+
+            if (submissions.length === 0) {
+                diagnosisContainer.innerHTML = `
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="check-circle-2" class="w-12 h-12 mx-auto text-green-500"></i>
+                        <p class="mt-4">No reports are currently awaiting diagnosis.</p>
+                        <p>Good job!</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            submissions.forEach(submission => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow';
+                card.setAttribute('data-user-id', submission.userId);
+                card.setAttribute('data-farm-id', submission.farmId);
+                card.setAttribute('data-submission-id', submission.submissionId);
+
+                const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date();
+                const dateString = submissionDate.toLocaleDateString();
+
+                card.innerHTML = `
+                    <div class="flex items-start">
+                        <img src="${submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image'}" class="w-24 h-24 rounded-md mr-4 object-cover">
+                        <div class="flex-grow">
+                            <p class="font-bold text-lg">${submission.farmName}</p>
+                            <p class="text-sm text-gray-500 mb-2">Reported on ${dateString}</p>
+                            <p class="text-sm"><strong>Symptoms:</strong> <span class="capitalize">${submission.symptoms.join(', ')}</span></p>
+                            <p class="text-sm"><strong>Severity:</strong> <span class="capitalize">${submission.severity}</span></p>
+                        </div>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    currentDiagnosisTarget = {
+                        userId: submission.userId,
+                        farmId: submission.farmId,
+                        submissionId: submission.submissionId
+                    };
+
+                    // Populate and show the modal
+                    const detailsContainer = document.getElementById('diagnosis-report-details');
+                    detailsContainer.innerHTML = `
+                        <p><strong>Farm:</strong> ${submission.farmName}</p>
+                        <img src="${submission.imageDataUrl}" class="rounded-lg my-2 max-h-64 w-auto mx-auto">
+                        <p><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
+                        <p><strong>Distribution:</strong> ${submission.distribution}</p>
+                        <p><strong>Severity:</strong> ${submission.severity}</p>
+                    `;
+
+                    document.getElementById('pest-disease').value = '';
+                    document.getElementById('diagnosis-notes').value = '';
+
+                    document.getElementById('diagnosis-modal').classList.remove('hidden');
+                    document.getElementById('diagnosis-modal').classList.add('flex');
+                    lucide.createIcons();
+                });
+
+                diagnosisContainer.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        let currentTreatmentTarget = null; // Holds { userId, farmId, submissionId }
+
+        async function loadReportsForTreatment() {
+            if (!currentUser) return;
+
+            const treatmentContainer = document.getElementById('treatment-reports-container');
+            treatmentContainer.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i><p class="mt-4">Loading reports...</p></div>`;
+            lucide.createIcons();
+
+            try {
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                let submissionsForTreatment = [];
+
+                for (const userDoc of usersSnapshot.docs) {
+                    const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
+                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+
+                    for (const farmDoc of farmLotsSnapshot.docs) {
+                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
+                        const submissionsSnapshot = await getDocs(submissionsCollection);
+
+                        submissionsSnapshot.forEach(submissionDoc => {
+                            const submissionData = submissionDoc.data();
+                            // We want reports that HAVE a diagnosis but do NOT have a treatment.
+                            if (submissionData.diagnosis && !submissionData.treatment) {
+                                submissionsForTreatment.push({
+                                    ...submissionData,
+                                    userId: userDoc.id,
+                                    farmId: farmDoc.id,
+                                    submissionId: submissionDoc.id,
+                                    farmName: farmDoc.data().farmName
+                                });
+                            }
+                        });
+                    }
+                }
+
+                renderReportsForTreatment(submissionsForTreatment);
+
+            } catch (error) {
+                console.error("Error loading reports for treatment:", error);
+                treatmentContainer.innerHTML = `<div class="text-center text-red-500 mt-20"><p>Error loading reports.</p></div>`;
+                showToast("Could not load reports for treatment.", "error");
+            }
+        }
+
+        function renderReportsForTreatment(submissions) {
+            const treatmentContainer = document.getElementById('treatment-reports-container');
+            treatmentContainer.innerHTML = '';
+
+            if (submissions.length === 0) {
+                treatmentContainer.innerHTML = `
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="check-circle-2" class="w-12 h-12 mx-auto text-green-500"></i>
+                        <p class="mt-4">No reports are currently awaiting a treatment plan.</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            submissions.forEach(submission => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow';
+
+                card.addEventListener('click', () => {
+                    currentTreatmentTarget = {
+                        userId: submission.userId,
+                        farmId: submission.farmId,
+                        submissionId: submission.submissionId
+                    };
+
+                    const detailsContainer = document.getElementById('treatment-report-details');
+                    detailsContainer.innerHTML = `
+                        <p class="font-bold text-lg">${submission.farmName}</p>
+                        <p><strong>Diagnosis:</strong> ${submission.diagnosis.pestDisease}</p>
+                        <p class="text-sm text-gray-600"><strong>Notes:</strong> ${submission.diagnosis.notes || 'N/A'}</p>
+                        <p class="text-sm text-gray-600"><strong>Diagnosed by:</strong> ${submission.diagnosis.diagnosedByName || 'N/A'}</p>
+                    `;
+
+                    // Reset form fields
+                    document.querySelectorAll('#treatment-actions-checklist input').forEach(cb => cb.checked = false);
+                    document.getElementById('treatment-instructions').value = '';
+                    document.getElementById('follow-up-date').value = '';
+
+                    document.getElementById('treatment-modal').classList.remove('hidden');
+                    document.getElementById('treatment-modal').classList.add('flex');
+                    lucide.createIcons();
+                });
+
+                card.innerHTML = `
+                    <p class="font-bold text-lg">${submission.farmName}</p>
+                    <p><strong>Diagnosis:</strong> ${submission.diagnosis.pestDisease}</p>
+                    <p class="text-sm text-gray-600">Diagnosed by ${submission.diagnosis.diagnosedByName || 'an expert'}</p>
+                `;
+                treatmentContainer.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // --- Treatment Modal Logic ---
+        document.getElementById('close-treatment-modal-btn').addEventListener('click', () => {
+            document.getElementById('treatment-modal').classList.add('hidden');
+            document.getElementById('treatment-modal').classList.remove('flex');
+            currentTreatmentTarget = null;
+        });
+
+        document.getElementById('save-treatment-btn').addEventListener('click', async () => {
+            if (!currentTreatmentTarget) {
+                showToast('No report selected for treatment.', 'error');
+                return;
+            }
+
+            const actions = Array.from(document.querySelectorAll('#treatment-actions-checklist input:checked')).map(cb => cb.value);
+            const instructions = document.getElementById('treatment-instructions').value.trim();
+            const followUpDate = document.getElementById('follow-up-date').value;
+
+            if (actions.length === 0 || !instructions) {
+                showToast('Please select at least one action and provide instructions.', 'error');
+                return;
+            }
+
+            showSavingOverlay('Saving Treatment Plan...');
+
+            const treatmentData = {
+                actions,
+                instructions,
+                followUpDate,
+                createdBy: currentUser.uid,
+                createdByName: userProfile.fullName,
+                createdAt: serverTimestamp()
+            };
+
+            try {
+                const { userId, farmId, submissionId } = currentTreatmentTarget;
+                const submissionDocRef = doc(db, 'users', userId, 'farmLots', farmId, 'submissions', submissionId);
+
+                await updateDoc(submissionDocRef, {
+                    treatment: treatmentData,
+                    status: 'Treatment Provided'
+                });
+
+                showToast('Treatment plan saved successfully!', 'success');
+                document.getElementById('close-treatment-modal-btn').click();
+                loadReportsForTreatment();
+
+            } catch (error) {
+                console.error('Error saving treatment plan:', error);
+                showToast('Could not save treatment plan.', 'error');
+            } finally {
+                hideSavingOverlay();
+            }
+        });
+
+        // --- Diagnosis Modal Logic ---
+        document.getElementById('close-diagnosis-modal-btn').addEventListener('click', () => {
+            document.getElementById('diagnosis-modal').classList.add('hidden');
+            document.getElementById('diagnosis-modal').classList.remove('flex');
+            currentDiagnosisTarget = null;
+        });
+
+        document.getElementById('save-diagnosis-btn').addEventListener('click', async () => {
+            if (!currentDiagnosisTarget) {
+                showToast('No report selected for diagnosis.', 'error');
+                return;
+            }
+
+            const pestDisease = document.getElementById('pest-disease').value.trim();
+            const notes = document.getElementById('diagnosis-notes').value.trim();
+
+            if (!pestDisease) {
+                showToast('Please identify a pest or disease.', 'error');
+                return;
+            }
+
+            showSavingOverlay('Saving Diagnosis...');
+
+            const diagnosisData = {
+                pestDisease,
+                notes,
+                diagnosedBy: currentUser.uid,
+                diagnosedByName: userProfile.fullName,
+                diagnosedAt: serverTimestamp()
+            };
+
+            try {
+                const { userId, farmId, submissionId } = currentDiagnosisTarget;
+                const submissionDocRef = doc(db, 'users', userId, 'farmLots', farmId, 'submissions', submissionId);
+
+                await updateDoc(submissionDocRef, {
+                    diagnosis: diagnosisData,
+                    status: 'Diagnosed' // Update status for future filtering
+                });
+
+                showToast('Diagnosis saved successfully!', 'success');
+                document.getElementById('close-diagnosis-modal-btn').click(); // Close modal
+                loadReportsForDiagnosis(); // Refresh the list
+
+            } catch (error) {
+                console.error('Error saving diagnosis:', error);
+                showToast('Could not save diagnosis. Please try again.', 'error');
+            } finally {
+                hideSavingOverlay();
+            }
+        });
+
         function renderAllReports(submissions) {
             const reportsContainer = document.getElementById('reports-container');
+            reportsContainer.innerHTML = '';
+
+            if (submissions.length === 0) {
+                reportsContainer.innerHTML = `
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">No reports found for the selected filter.</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
 
             submissions.forEach(submission => {
                 const card = document.createElement('div');
@@ -1631,20 +2074,52 @@
                 const dateString = submissionDate.toLocaleDateString();
                 const timeString = submissionDate.toLocaleTimeString();
 
+                let statusHTML = '';
+                if (submission.status === 'Treatment Provided') {
+                    statusHTML = `<span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-white bg-blue-500">Treated</span>`;
+                } else if (submission.status === 'Diagnosed') {
+                    statusHTML = `<span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-yellow-800 bg-yellow-200">Diagnosed</span>`;
+                } else {
+                    statusHTML = `<span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-red-800 bg-red-200">Pending</span>`;
+                }
+
+                let diagnosisHTML = '';
+                if (submission.diagnosis) {
+                    diagnosisHTML = `
+                        <div class="mt-2 pt-2 border-t border-gray-200">
+                            <p class="text-sm font-bold">Diagnosis: <span class="font-normal">${submission.diagnosis.pestDisease}</span></p>
+                        </div>`;
+                }
+
+                let treatmentHTML = '';
+                if (submission.treatment) {
+                    treatmentHTML = `
+                        <div class="mt-2 pt-2 border-t border-gray-200">
+                            <p class="text-sm font-bold">Treatment: <span class="font-normal">${submission.treatment.actions.join(', ')}</span></p>
+                        </div>`;
+                }
+
+                let farmerNameHTML = '';
+                if (submission.userName && userProfile.role !== 'Farmer') {
+                    farmerNameHTML = `<p class="text-sm text-gray-500">Farmer: ${submission.userName}</p>`;
+                }
+
+
                 card.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div class="flex w-full">
-                            <img src="${submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image'}" class="w-24 h-24 rounded-md mr-4 object-cover">
-                            <div class="flex-grow">
+                    <div class="flex items-start">
+                        <img src="${submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image'}" class="w-24 h-24 rounded-md mr-4 object-cover">
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-center mb-1">
                                 <p class="font-bold text-lg">${submission.farmName}</p>
-                                <p class="text-sm text-gray-500 mb-2">Reported on ${dateString} at ${timeString}</p>
-                                <p class="text-sm"><strong>Symptoms:</strong> <span class="capitalize">${submission.symptoms.join(', ')}</span></p>
-                                <p class="text-sm"><strong>Distribution:</strong> <span class="capitalize">${submission.distribution}</span></p>
-                                <p class="text-sm"><strong>Severity:</strong> <span class="capitalize">${submission.severity}</span></p>
+                                ${statusHTML}
                             </div>
+                            <p class="text-sm text-gray-500 mb-2">Reported on ${dateString} at ${timeString}</p>
+                            ${farmerNameHTML}
+                            <p class="text-sm"><strong>Symptoms:</strong> <span class="capitalize">${submission.symptoms.join(', ')}</span></p>
+                            ${diagnosisHTML}
+                            ${treatmentHTML}
                         </div>
-                    </div>
-                `;
+                    </div>`;
                 reportsContainer.appendChild(card);
             });
             lucide.createIcons();
