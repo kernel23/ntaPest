@@ -249,6 +249,36 @@
                 </button>
             </div>
 
+            <!-- Extension Worker Dashboard Screen -->
+            <div id="ew-dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md">
+                    <h2 class="text-2xl font-bold">Extension Worker Dashboard</h2>
+                    <p id="ew-welcome-message" class="text-sm text-gray-600"></p>
+                </header>
+                <main id="ew-dashboard-container" class="flex-1 p-4 overflow-y-auto">
+                    <!-- Farmer list table will be inserted here -->
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="users" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">Loading assigned farmers...</p>
+                    </div>
+                </main>
+            </div>
+
+            <!-- Coordinator Dashboard Screen -->
+            <div id="coordinator-dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md">
+                    <h2 class="text-2xl font-bold">Coordinator Dashboard</h2>
+                    <p id="coordinator-welcome-message" class="text-sm text-gray-600"></p>
+                </header>
+                <main id="coordinator-dashboard-container" class="flex-1 p-4 overflow-y-auto">
+                    <!-- Extension Worker list table will be inserted here -->
+                     <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="briefcase" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">Loading extension workers...</p>
+                    </div>
+                </main>
+            </div>
+
             <!-- Dashboard Screen -->
             <div id="dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
                 <header class="bg-white p-4 shadow-md flex justify-between items-center">
@@ -551,7 +581,11 @@
             addDoc,
             onSnapshot,
             serverTimestamp,
-            getDocs
+            getDocs,
+            query,
+            where,
+            orderBy,
+            limit
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // --- 1. FIREBASE CONFIGURATION ---
@@ -615,7 +649,9 @@
             treatment: document.getElementById('treatment-screen'),
             onlineClinic: document.getElementById('online-clinic-screen'),
             privacyPolicy: document.getElementById('privacy-policy-screen'),
-            farmSetup: document.getElementById('farm-setup-screen')
+            farmSetup: document.getElementById('farm-setup-screen'),
+            ewDashboard: document.getElementById('ew-dashboard-screen'),
+            coordinatorDashboard: document.getElementById('coordinator-dashboard-screen')
         };
 
         // --- Privacy Policy Navigation ---
@@ -701,6 +737,12 @@
                     break;
                 case 'treatment':
                     loadReportsForTreatment();
+                    break;
+                case 'ewDashboard':
+                    loadExtensionWorkerDashboard();
+                    break;
+                case 'coordinatorDashboard':
+                    loadCoordinatorDashboard();
                     break;
             }
 
@@ -1157,9 +1199,21 @@
 
                     if (isProfileComplete) {
                         setProfileMode('view');
-                        document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
-                        showScreen('farmList');
-                        document.getElementById('add-farm-btn').style.display = 'flex';
+
+                        // Role-based routing
+                        if (userProfile.role === 'Extension Worker') {
+                            document.getElementById('ew-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                            showScreen('ewDashboard');
+                            document.getElementById('add-farm-btn').style.display = 'none';
+                        } else if (userProfile.role === 'Branch Coordinator') {
+                            document.getElementById('coordinator-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                            showScreen('coordinatorDashboard');
+                            document.getElementById('add-farm-btn').style.display = 'none';
+                        } else { // Default to Farmer
+                            document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                            showScreen('farmList');
+                            document.getElementById('add-farm-btn').style.display = 'flex';
+                        }
                     } else {
                         setProfileMode('new');
                         showToast('Please complete your profile to continue.', 'info');
@@ -2253,8 +2307,32 @@
         }
 
         function loadFarms() {
-            if (!currentUser) return;
-            const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+            const viewUserId = currentViewContext.userId;
+            const viewUserName = currentViewContext.userName;
+            currentViewContext = {}; // Reset context after reading it
+
+            const targetUserId = viewUserId || (currentUser ? currentUser.uid : null);
+            if (!targetUserId) return;
+
+            const welcomeMessage = document.getElementById('welcome-message');
+            const farmListTitle = document.querySelector('#farm-list-screen h2');
+            const addFarmBtn = document.getElementById('add-farm-btn');
+
+            if (viewUserId) {
+                // Viewing someone else's farms (drill-down)
+                welcomeMessage.textContent = `Viewing farms for ${viewUserName}`;
+                farmListTitle.textContent = `${viewUserName}'s Farm Plots`;
+                addFarmBtn.style.display = 'none'; // Hide add button when viewing others' farms
+            } else {
+                // Viewing own farms
+                welcomeMessage.textContent = `Welcome, ${userProfile.fullName}`;
+                farmListTitle.textContent = 'My Farm Plots';
+                if (userProfile.role === 'Farmer') {
+                    addFarmBtn.style.display = 'flex';
+                }
+            }
+
+            const farmLotsCollection = collection(db, 'users', targetUserId, 'farmLots');
             const unsubscribe = onSnapshot(farmLotsCollection, (querySnapshot) => {
                 const farmListContainer = document.getElementById('farm-list-container');
                 farmListContainer.innerHTML = ''; // Clear existing list
@@ -2263,8 +2341,7 @@
                     farmListContainer.innerHTML = `
                         <div class="text-center text-gray-500 mt-20">
                             <i data-lucide="map-pin" class="w-12 h-12 mx-auto text-gray-400"></i>
-                            <p class="mt-4">No farm plots found.</p>
-                            <p>Click the '+' button to add your first plot and map its location.</p>
+                            <p class="mt-4">No farm plots found for this user.</p>
                         </div>`;
                 } else {
                     querySnapshot.forEach((doc) => {
@@ -2295,6 +2372,202 @@
                 lucide.createIcons();
             });
             activeListeners.push(unsubscribe);
+        }
+
+        async function loadExtensionWorkerDashboard() {
+            const viewUserId = currentViewContext.userId;
+            const viewUserName = currentViewContext.userName;
+            currentViewContext = {}; // Reset context
+
+            const ewDashboardContainer = document.getElementById('ew-dashboard-container');
+            const welcomeMessage = document.getElementById('ew-welcome-message');
+            const dashboardTitle = document.querySelector('#ew-dashboard-screen h2');
+
+            if (viewUserId) {
+                // Coordinator viewing a specific EW's list
+                welcomeMessage.textContent = `Viewing farmers for ${viewUserName}`;
+                dashboardTitle.textContent = `${viewUserName}'s Farmer List`;
+            } else {
+                // EW viewing their own dashboard
+                welcomeMessage.textContent = `Welcome, ${userProfile.fullName}`;
+                dashboardTitle.textContent = 'Extension Worker Dashboard';
+            }
+
+            if (!currentUser) return;
+            ewDashboardContainer.innerHTML = `
+                <div class="text-center text-gray-500 mt-20">
+                    <i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i>
+                    <p class="mt-4">Loading assigned farmers...</p>
+                </div>`;
+            lucide.createIcons();
+
+            try {
+                // This is an inefficient query model. A better model would be to have a
+                // subcollection on the EW's document listing their assigned farmers,
+                // or an `assignedEW` field on the farmer document.
+                // For now, we query all farmers.
+                const usersCollection = collection(db, 'users');
+                const q = query(usersCollection, where("role", "==", "Farmer"));
+                const querySnapshot = await getDocs(q);
+
+                let farmers = [];
+                querySnapshot.forEach(doc => {
+                    farmers.push({ id: doc.id, ...doc.data() });
+                });
+
+                // For each farmer, get their latest report timestamp. This is also inefficient.
+                // A denormalized `lastReportTimestamp` on the farmer doc would be better.
+                let farmersWithData = [];
+                for (const farmer of farmers) {
+                    let latestReportTimestamp = null;
+
+                    const farmLotsCollection = collection(db, 'users', farmer.id, 'farmLots');
+                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+
+                    for (const farmDoc of farmLotsSnapshot.docs) {
+                        const submissionsCollection = collection(db, 'users', farmer.id, 'farmLots', farmDoc.id, 'submissions');
+                        const subQuery = query(submissionsCollection, orderBy("timestamp", "desc"), limit(1));
+                        const submissionsSnapshot = await getDocs(subQuery);
+
+                        if (!submissionsSnapshot.empty) {
+                            const latestSubmission = submissionsSnapshot.docs[0].data();
+                            const currentTimestamp = latestSubmission.timestamp.toDate();
+                            if (!latestReportTimestamp || currentTimestamp > latestReportTimestamp) {
+                                latestReportTimestamp = currentTimestamp;
+                            }
+                        }
+                    }
+                    farmersWithData.push({ ...farmer, lastReportDate: latestReportTimestamp });
+                }
+
+                // Sort farmers by the last report date, descending. Farmers with no reports are last.
+                farmersWithData.sort((a, b) => (b.lastReportDate || 0) - (a.lastReportDate || 0));
+
+                renderFarmerTable(farmersWithData);
+
+            } catch (error) {
+                console.error("Error loading Extension Worker dashboard:", error);
+                ewDashboardContainer.innerHTML = `<div class="text-center text-red-500 mt-20"><p>Could not load farmer data. Check console for details.</p></div>`;
+            }
+        }
+
+        function renderFarmerTable(farmers) {
+            const container = document.getElementById('ew-dashboard-container');
+            if (!farmers || farmers.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="users" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">No farmers found or assigned.</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            const tableHtml = `
+                <div class="overflow-x-auto bg-white rounded-lg shadow">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Report Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            ${farmers.map(farmer => `
+                                <tr class="hover:bg-gray-50 cursor-pointer" data-farmer-id="${farmer.id}">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">${farmer.fullName}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        ${farmer.barangay}, ${farmer.municipality}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        ${farmer.lastReportDate ? farmer.lastReportDate.toLocaleDateString() : 'No reports yet'}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.innerHTML = tableHtml;
+        }
+
+        async function loadCoordinatorDashboard() {
+            if (!currentUser) return;
+
+            const container = document.getElementById('coordinator-dashboard-container');
+            container.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i><p class="mt-4">Loading extension workers...</p></div>`;
+            lucide.createIcons();
+
+            try {
+                // TODO: The current data model doesn't link EWs to a coordinator or branch.
+                // This query fetches ALL extension workers. It should be filtered by branch.
+                const usersCollection = collection(db, 'users');
+                const q = query(usersCollection, where("role", "==", "Extension Worker"));
+                const querySnapshot = await getDocs(q);
+
+                let extensionWorkers = [];
+                querySnapshot.forEach(doc => {
+                    extensionWorkers.push({ id: doc.id, ...doc.data() });
+                });
+
+                // TODO: Sorting by last report is not possible without a defined relationship
+                // between EWs and Farmers. Sorting by name as a fallback.
+                extensionWorkers.sort((a, b) => a.fullName.localeCompare(b.fullName));
+
+                // This is a placeholder. To implement correctly, we would need to:
+                // 1. Get all farmers for each EW.
+                // 2. Get the latest report for each of those farmers.
+                // 3. Find the max latest report timestamp among the farmers for each EW.
+                // This is too inefficient without a proper data model (e.g., `branchId`).
+                const workersWithData = extensionWorkers.map(worker => ({
+                    ...worker,
+                    lastReportDate: null // Placeholder
+                }));
+
+                renderExtensionWorkerTable(workersWithData);
+
+            } catch (error) {
+                console.error("Error loading Coordinator dashboard:", error);
+                container.innerHTML = `<div class="text-center text-red-500 mt-20"><p>Could not load worker data. Check console for details.</p></div>`;
+            }
+        }
+
+        function renderExtensionWorkerTable(workers) {
+            const container = document.getElementById('coordinator-dashboard-container');
+            if (!workers || workers.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="briefcase" class="w-12 h-12 mx-auto text-gray-400"></i><p class="mt-4">No Extension Workers found.</p></div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            const tableHtml = `
+                <div class="overflow-x-auto bg-white rounded-lg shadow">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Worker Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Report Received</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            ${workers.map(worker => `
+                                <tr class="hover:bg-gray-50 cursor-pointer" data-worker-id="${worker.id}">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">${worker.fullName}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        ${worker.lastReportDate ? worker.lastReportDate.toLocaleDateString() : 'Data unavailable'}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.innerHTML = tableHtml;
         }
         
         // Removed old syncOutbox function as it's now obsolete with the new online-only farm setup flow.
@@ -2327,7 +2600,34 @@
             }
         }
 
-        // --- 7. CONNECTION STATUS UI ---
+        // --- 7. DRILL-DOWN NAVIGATION ---
+        let currentViewContext = {}; // Used to pass data between screens
+
+        document.getElementById('ew-dashboard-container').addEventListener('click', (e) => {
+            const row = e.target.closest('tr[data-farmer-id]');
+            if (row) {
+                const farmerId = row.dataset.farmerId;
+                const farmerName = row.querySelector('.text-sm.font-medium.text-gray-900').textContent;
+
+                // Set context for the next screen and navigate
+                currentViewContext = { userId: farmerId, userName: farmerName };
+                showScreen('farmList');
+            }
+        });
+
+        document.getElementById('coordinator-dashboard-container').addEventListener('click', (e) => {
+            const row = e.target.closest('tr[data-worker-id]');
+            if (row) {
+                const workerId = row.dataset.workerId;
+                const workerName = row.querySelector('.text-sm.font-medium.text-gray-900').textContent;
+
+                // Set context and navigate. This will show the EW's dashboard view.
+                currentViewContext = { userId: workerId, userName: workerName };
+                showScreen('ewDashboard');
+            }
+        });
+
+        // --- 8. CONNECTION STATUS UI ---
         const connectionStatusEl = document.getElementById('connection-status');
         async function updateOnlineStatus() {
             const db = await dbPromise;
