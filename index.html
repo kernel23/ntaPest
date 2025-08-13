@@ -2308,7 +2308,9 @@
                     infoHTML += `<p><strong>Feeding Guild:</strong> ${selectedItem['Feeding Guild']}</p>`;
                     infoHTML += `<p class="mt-2"><strong>Damage:</strong> ${selectedItem['Characteristic Visual Damage']}</p>`;
                 }
-                infoHTML += `<p class="mt-2"><strong>Key Parts Affected:</strong> ${selectedItem['Key Plant Parts Affected'].join(', ')}</p>`;
+                if (selectedItem['Key Plant Parts Affected']) {
+                    infoHTML += `<p class="mt-2"><strong>Key Parts Affected:</strong> ${selectedItem['Key Plant Parts Affected'].join(', ')}</p>`;
+                }
                 infoContainer.innerHTML = infoHTML;
                 infoContainer.classList.remove('hidden');
 
@@ -2466,7 +2468,9 @@
                     infoHTML += `<p><strong>Feeding Guild:</strong> ${selectedItem['Feeding Guild']}</p>`;
                     infoHTML += `<p class="mt-2"><strong>Damage:</strong> ${selectedItem['Characteristic Visual Damage']}</p>`;
                 }
-                infoHTML += `<p class="mt-2"><strong>Key Parts Affected:</strong> ${selectedItem['Key Plant Parts Affected'].join(', ')}</p>`;
+                if (selectedItem['Key Plant Parts Affected']) {
+                    infoHTML += `<p class="mt-2"><strong>Key Parts Affected:</strong> ${selectedItem['Key Plant Parts Affected'].join(', ')}</p>`;
+                }
                 infoContainer.innerHTML = infoHTML;
                 infoContainer.classList.remove('hidden');
             } else {
@@ -2615,11 +2619,18 @@
 
                         let treatmentHTML = '';
                         if (submission.treatment) {
+                            const allActions = [
+                                ...(submission.treatment.prevention || []),
+                                ...(submission.treatment.monitoring || []),
+                                ...(submission.treatment.control || [])
+                            ];
+
                             treatmentHTML = `
                                 <div class="mt-4 pt-4 border-t">
                                     <h4 class="font-bold">Treatment Plan</h4>
-                                    <p><strong>Actions:</strong> ${submission.treatment.actions.join(', ')}</p>
-                                    <p><strong>Instructions:</strong> ${submission.treatment.instructions}</p>
+                                    ${allActions.length > 0 ? `<p><strong>Actions:</strong> ${allActions.join(', ')}</p>` : ''}
+                                    <p><strong>Instructions:</strong> ${submission.treatment.instructions || 'N/A'}</p>
+                                    ${submission.treatment.followUpDate ? `<p><strong>Follow-up Date:</strong> ${submission.treatment.followUpDate}</p>` : ''}
                                 </div>`;
                         }
 
