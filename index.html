@@ -827,9 +827,6 @@
                 }
             }
 
-            // updateBreadcrumbs(); // This will be implemented in a later step
-            updateNavigationControls();
-
             detachAllListeners(); // Clean up listeners from the previous screen
 
             // Stop camera if navigating away from it
@@ -892,6 +889,7 @@
             }
 
             lucide.createIcons();
+            updateNavigationControls();
         }
 
         function updateUIVisibilityBasedOnRole() {
