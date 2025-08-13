@@ -1515,7 +1515,7 @@
             const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmId, 'submissions');
             const dashboardMain = document.getElementById('dashboard-main');
 
-            onSnapshot(submissionsCollection, (querySnapshot) => {
+            const unsubscribe = onSnapshot(submissionsCollection, (querySnapshot) => {
                 dashboardMain.innerHTML = ''; // Clear existing content
 
                 if (querySnapshot.empty) {
@@ -1690,6 +1690,7 @@
                 }
                 lucide.createIcons();
             });
+            activeListeners.push(unsubscribe);
         }
         
         // Removed old syncOutbox function as it's now obsolete with the new online-only farm setup flow.
@@ -1697,8 +1698,8 @@
         async function syncSubmissionOutbox() {
             if (!navigator.onLine || !currentUser) return;
 
-            const db = await dbPromise;
-            const allSubmissions = await db.getAll('submission_outbox');
+            const idb = await dbPromise;
+            const allSubmissions = await idb.getAll('submission_outbox');
             if (allSubmissions.length === 0) return;
 
             const connectionStatusEl = document.getElementById('connection-status');
@@ -1714,7 +1715,7 @@
                     await addDoc(submissionsCollection, dataToSync);
                 }
 
-                await db.clear('submission_outbox');
+                await idb.clear('submission_outbox');
             } catch (error) {
                 console.error('Error syncing submission outbox:', error);
                 connectionStatusEl.textContent = 'Sync Failed';
