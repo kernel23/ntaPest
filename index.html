@@ -83,7 +83,7 @@
                 <a href="#" id="nav-diagnosis" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Diagnosis">
                     <i data-lucide="stethoscope" class="w-6 h-6"></i>
                 </a>
-                <a href="#" id="nav-treatment" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Treatment">
+                <a href="#" id="nav-treatment" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Final Diagnosis">
                     <i data-lucide="syringe" class="w-6 h-6"></i>
                 </a>
                 <a href="#" id="nav-clinic" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Online Clinic">
@@ -397,7 +397,7 @@
             <!-- Treatment Screen -->
             <div id="treatment-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
                 <header class="bg-white p-4 shadow-md">
-                    <h2 class="text-2xl font-bold">Diagnosed Reports Awaiting Treatment</h2>
+                    <h2 class="text-2xl font-bold">Reports for Final Diagnosis & Treatment</h2>
                 </header>
                 <main id="treatment-reports-container" class="flex-1 p-4 overflow-y-auto">
                     <!-- Diagnosed reports will be loaded here by JavaScript -->
@@ -462,14 +462,21 @@
     <div id="treatment-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg m-4">
             <div class="p-4 border-b flex justify-between items-center">
-                <h3 class="text-xl font-bold">Create Treatment Plan</h3>
+                <h3 class="text-xl font-bold">Final Diagnosis & Treatment Plan</h3>
                 <button id="close-treatment-modal-btn" class="p-1"><i data-lucide="x"></i></button>
             </div>
             <div class="p-6 overflow-y-auto max-h-[80vh]">
                 <div id="treatment-report-details" class="mb-4">
                     <!-- Report and diagnosis details will be loaded here -->
                 </div>
-                <h4 class="text-lg font-bold mt-4 mb-2">Add Treatment Plan</h4>
+
+                <h4 class="text-lg font-bold mt-4 mb-2">Final Diagnosis</h4>
+                <label for="final-pest-disease" class="block text-sm font-medium text-gray-700">Identified Pest/Disease</label>
+                <input type="text" id="final-pest-disease" placeholder="e.g., Tobacco Hornworm" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                <label for="final-diagnosis-notes" class="block text-sm font-medium text-gray-700 mt-4">Final Diagnosis Notes</label>
+                <textarea id="final-diagnosis-notes" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></textarea>
+
+                <h4 class="text-lg font-bold mt-6 mb-2">Add Treatment Plan</h4>
 
                 <fieldset id="treatment-actions-checklist" class="mt-4">
                     <legend class="text-base font-medium text-gray-900">Recommended Actions</legend>
@@ -698,6 +705,28 @@
             }
 
             lucide.createIcons();
+        }
+
+        function updateUIVisibilityBasedOnRole() {
+            if (!userProfile) return;
+
+            const isFarmer = userProfile.role === 'Farmer';
+            const isWorker = userProfile.role === 'Extension Worker';
+
+            const navDiagnosis = document.getElementById('nav-diagnosis');
+            const navTreatment = document.getElementById('nav-treatment');
+
+            if (isFarmer) {
+                navDiagnosis.style.display = 'none';
+                navTreatment.style.display = 'none';
+            } else if (isWorker) {
+                navDiagnosis.style.display = 'block';
+                navTreatment.style.display = 'none'; // Workers only do initial diagnosis
+            }
+            else { // Covers Coordinator and any other non-farmer roles
+                navDiagnosis.style.display = 'block';
+                navTreatment.style.display = 'block';
+            }
         }
 
         let toastTimeout;
@@ -1100,6 +1129,7 @@
             } else if (selectedRole === 'Branch Coordinator') {
                 document.getElementById('role-coordinator-btn').classList.add('bg-green-600', 'text-white');
             }
+            updateUIVisibilityBasedOnRole();
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -1689,7 +1719,13 @@
                         const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmDoc.id, 'submissions');
                         const submissionsSnapshot = await getDocs(submissionsCollection);
                         submissionsSnapshot.forEach(submissionDoc => {
-                            allSubmissions.push({ ...submissionDoc.data(), id: submissionDoc.id, farmName: farmData.farmName });
+                            allSubmissions.push({
+                                ...submissionDoc.data(),
+                                id: submissionDoc.id,
+                                farmName: farmData.farmName,
+                                userId: currentUser.uid,
+                                farmId: farmDoc.id
+                            });
                         });
                     }
                 } else { // For Extension Worker or Branch Coordinator
@@ -1702,7 +1738,14 @@
                             const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
                             const submissionsSnapshot = await getDocs(submissionsCollection);
                             submissionsSnapshot.forEach(submissionDoc => {
-                                allSubmissions.push({ ...submissionDoc.data(), id: submissionDoc.id, farmName: farmData.farmName, userName: userDoc.data().fullName });
+                                allSubmissions.push({
+                                    ...submissionDoc.data(),
+                                    id: submissionDoc.id,
+                                    farmName: farmData.farmName,
+                                    userName: userDoc.data().fullName,
+                                    userId: userDoc.id,
+                                    farmId: farmDoc.id
+                                });
                             });
                         }
                     }
@@ -1711,11 +1754,11 @@
                 // Client-side filtering
                 let filteredSubmissions = allSubmissions;
                 if (currentReportFilter === 'pending') {
-                    filteredSubmissions = allSubmissions.filter(s => !s.diagnosis);
+                    filteredSubmissions = allSubmissions.filter(s => !s.initialDiagnosis);
                 } else if (currentReportFilter === 'diagnosed') {
-                    filteredSubmissions = allSubmissions.filter(s => s.diagnosis && !s.treatment);
+                    filteredSubmissions = allSubmissions.filter(s => s.initialDiagnosis && !s.finalDiagnosis);
                 } else if (currentReportFilter === 'treated') {
-                    filteredSubmissions = allSubmissions.filter(s => s.treatment);
+                    filteredSubmissions = allSubmissions.filter(s => s.finalDiagnosis && s.treatment);
                 }
 
                 filteredSubmissions.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
@@ -1757,8 +1800,8 @@
 
                         submissionsSnapshot.forEach(submissionDoc => {
                             const submissionData = submissionDoc.data();
-                            // We only want reports that do NOT have a diagnosis object.
-                            if (!submissionData.diagnosis) {
+                            // Show reports that don't have an initial diagnosis yet.
+                            if (!submissionData.initialDiagnosis) {
                                 submissionsForDiagnosis.push({
                                     ...submissionData,
                                     userId: userDoc.id,
@@ -1870,8 +1913,8 @@
 
                         submissionsSnapshot.forEach(submissionDoc => {
                             const submissionData = submissionDoc.data();
-                            // We want reports that HAVE a diagnosis but do NOT have a treatment.
-                            if (submissionData.diagnosis && !submissionData.treatment) {
+                            // We want reports that HAVE an initial diagnosis but do NOT have a final diagnosis.
+                            if (submissionData.initialDiagnosis && !submissionData.finalDiagnosis) {
                                 submissionsForTreatment.push({
                                     ...submissionData,
                                     userId: userDoc.id,
@@ -1921,9 +1964,12 @@
                     const detailsContainer = document.getElementById('treatment-report-details');
                     detailsContainer.innerHTML = `
                         <p class="font-bold text-lg">${submission.farmName}</p>
-                        <p><strong>Diagnosis:</strong> ${submission.diagnosis.pestDisease}</p>
-                        <p class="text-sm text-gray-600"><strong>Notes:</strong> ${submission.diagnosis.notes || 'N/A'}</p>
-                        <p class="text-sm text-gray-600"><strong>Diagnosed by:</strong> ${submission.diagnosis.diagnosedByName || 'N/A'}</p>
+                        <p class="font-semibold text-gray-800 mt-2">Initial Diagnosis:</p>
+                        <div class="pl-2 border-l-2 border-gray-200">
+                            <p><strong>Pest/Disease:</strong> ${submission.initialDiagnosis.pestDisease}</p>
+                            <p class="text-sm text-gray-600"><strong>Notes:</strong> ${submission.initialDiagnosis.notes || 'N/A'}</p>
+                            <p class="text-sm text-gray-600"><strong>Diagnosed by:</strong> ${submission.initialDiagnosis.diagnosedByName || 'N/A'}</p>
+                        </div>
                     `;
 
                     // Reset form fields
@@ -1938,8 +1984,8 @@
 
                 card.innerHTML = `
                     <p class="font-bold text-lg">${submission.farmName}</p>
-                    <p><strong>Diagnosis:</strong> ${submission.diagnosis.pestDisease}</p>
-                    <p class="text-sm text-gray-600">Diagnosed by ${submission.diagnosis.diagnosedByName || 'an expert'}</p>
+                    <p><strong>Initial Diagnosis:</strong> ${submission.initialDiagnosis.pestDisease}</p>
+                    <p class="text-sm text-gray-600">Diagnosed by ${submission.initialDiagnosis.diagnosedByName || 'an expert'}</p>
                 `;
                 treatmentContainer.appendChild(card);
             });
@@ -1959,16 +2005,30 @@
                 return;
             }
 
+            const finalPestDisease = document.getElementById('final-pest-disease').value.trim();
+            const finalDiagnosisNotes = document.getElementById('final-diagnosis-notes').value.trim();
             const actions = Array.from(document.querySelectorAll('#treatment-actions-checklist input:checked')).map(cb => cb.value);
             const instructions = document.getElementById('treatment-instructions').value.trim();
             const followUpDate = document.getElementById('follow-up-date').value;
 
-            if (actions.length === 0 || !instructions) {
-                showToast('Please select at least one action and provide instructions.', 'error');
+            if (!finalPestDisease) {
+                showToast('Please provide a final diagnosis.', 'error');
+                return;
+            }
+             if (actions.length === 0 || !instructions) {
+                showToast('Please select at least one treatment action and provide instructions.', 'error');
                 return;
             }
 
-            showSavingOverlay('Saving Treatment Plan...');
+            showSavingOverlay('Saving Final Diagnosis & Treatment...');
+
+            const finalDiagnosisData = {
+                pestDisease: finalPestDisease,
+                notes: finalDiagnosisNotes,
+                diagnosedBy: currentUser.uid,
+                diagnosedByName: userProfile.fullName,
+                diagnosedAt: serverTimestamp()
+            };
 
             const treatmentData = {
                 actions,
@@ -1984,11 +2044,12 @@
                 const submissionDocRef = doc(db, 'users', userId, 'farmLots', farmId, 'submissions', submissionId);
 
                 await updateDoc(submissionDocRef, {
+                    finalDiagnosis: finalDiagnosisData,
                     treatment: treatmentData,
                     status: 'Treatment Provided'
                 });
 
-                showToast('Treatment plan saved successfully!', 'success');
+                showToast('Final diagnosis and treatment plan saved!', 'success');
                 document.getElementById('close-treatment-modal-btn').click();
                 loadReportsForTreatment();
 
@@ -2023,7 +2084,7 @@
 
             showSavingOverlay('Saving Diagnosis...');
 
-            const diagnosisData = {
+            const initialDiagnosisData = {
                 pestDisease,
                 notes,
                 diagnosedBy: currentUser.uid,
@@ -2036,11 +2097,11 @@
                 const submissionDocRef = doc(db, 'users', userId, 'farmLots', farmId, 'submissions', submissionId);
 
                 await updateDoc(submissionDocRef, {
-                    diagnosis: diagnosisData,
-                    status: 'Diagnosed' // Update status for future filtering
+                    initialDiagnosis: initialDiagnosisData,
+                    status: 'Pending Final Diagnosis'
                 });
 
-                showToast('Diagnosis saved successfully!', 'success');
+                showToast('Initial diagnosis submitted successfully!', 'success');
                 document.getElementById('close-diagnosis-modal-btn').click(); // Close modal
                 loadReportsForDiagnosis(); // Refresh the list
 
@@ -2067,8 +2128,15 @@
             }
 
             submissions.forEach(submission => {
-                const card = document.createElement('div');
-                card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
+                const reportWrapper = document.createElement('div');
+                reportWrapper.className = 'bg-white rounded-xl mb-4 shadow-sm border border-gray-200 overflow-hidden';
+
+                const summaryCard = document.createElement('div');
+                summaryCard.className = 'p-4 cursor-pointer hover:bg-gray-50';
+
+                const detailsCard = document.createElement('div');
+                detailsCard.className = 'p-4 border-t border-gray-200 hidden';
+                detailsCard.innerHTML = `<div class="text-center text-gray-500"><i data-lucide="loader" class="animate-spin inline-block"></i> Loading details...</div>`;
 
                 const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date();
                 const dateString = submissionDate.toLocaleDateString();
@@ -2077,26 +2145,10 @@
                 let statusHTML = '';
                 if (submission.status === 'Treatment Provided') {
                     statusHTML = `<span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-white bg-blue-500">Treated</span>`;
-                } else if (submission.status === 'Diagnosed') {
+                } else if (submission.status === 'Pending Final Diagnosis') {
                     statusHTML = `<span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-yellow-800 bg-yellow-200">Diagnosed</span>`;
                 } else {
                     statusHTML = `<span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-red-800 bg-red-200">Pending</span>`;
-                }
-
-                let diagnosisHTML = '';
-                if (submission.diagnosis) {
-                    diagnosisHTML = `
-                        <div class="mt-2 pt-2 border-t border-gray-200">
-                            <p class="text-sm font-bold">Diagnosis: <span class="font-normal">${submission.diagnosis.pestDisease}</span></p>
-                        </div>`;
-                }
-
-                let treatmentHTML = '';
-                if (submission.treatment) {
-                    treatmentHTML = `
-                        <div class="mt-2 pt-2 border-t border-gray-200">
-                            <p class="text-sm font-bold">Treatment: <span class="font-normal">${submission.treatment.actions.join(', ')}</span></p>
-                        </div>`;
                 }
 
                 let farmerNameHTML = '';
@@ -2104,8 +2156,7 @@
                     farmerNameHTML = `<p class="text-sm text-gray-500">Farmer: ${submission.userName}</p>`;
                 }
 
-
-                card.innerHTML = `
+                summaryCard.innerHTML = `
                     <div class="flex items-start">
                         <img src="${submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image'}" class="w-24 h-24 rounded-md mr-4 object-cover">
                         <div class="flex-grow">
@@ -2116,11 +2167,87 @@
                             <p class="text-sm text-gray-500 mb-2">Reported on ${dateString} at ${timeString}</p>
                             ${farmerNameHTML}
                             <p class="text-sm"><strong>Symptoms:</strong> <span class="capitalize">${submission.symptoms.join(', ')}</span></p>
-                            ${diagnosisHTML}
-                            ${treatmentHTML}
+                            <p class="text-sm text-blue-600 mt-2">Click to expand for more details</p>
                         </div>
                     </div>`;
-                reportsContainer.appendChild(card);
+
+                summaryCard.addEventListener('click', async () => {
+                    const isHidden = detailsCard.classList.toggle('hidden');
+                    if (!isHidden && !detailsCard.dataset.loaded) {
+                        detailsCard.dataset.loaded = 'true'; // Prevent reloading
+
+                        const mapId = `report-map-${submission.id}`;
+
+                        let initialDiagnosisHTML = '';
+                        if (submission.initialDiagnosis) {
+                            initialDiagnosisHTML = `
+                                <div class="mt-4 pt-4 border-t">
+                                    <h4 class="font-bold">Initial Diagnosis</h4>
+                                    <p><strong>Pest/Disease:</strong> ${submission.initialDiagnosis.pestDisease}</p>
+                                    <p><strong>Notes:</strong> ${submission.initialDiagnosis.notes || 'N/A'}</p>
+                                    <p class="text-sm text-gray-500">by ${submission.initialDiagnosis.diagnosedByName}</p>
+                                </div>`;
+                        }
+
+                        let finalDiagnosisHTML = '';
+                        if (submission.finalDiagnosis) {
+                            finalDiagnosisHTML = `
+                                <div class="mt-4 pt-4 border-t">
+                                    <h4 class="font-bold">Final Diagnosis</h4>
+                                    <p><strong>Pest/Disease:</strong> ${submission.finalDiagnosis.pestDisease}</p>
+                                    <p><strong>Notes:</strong> ${submission.finalDiagnosis.notes || 'N/A'}</p>
+                                    <p class="text-sm text-gray-500">by ${submission.finalDiagnosis.diagnosedByName}</p>
+                                </div>`;
+                        }
+
+                        let treatmentHTML = '';
+                        if (submission.treatment) {
+                            treatmentHTML = `
+                                <div class="mt-4 pt-4 border-t">
+                                    <h4 class="font-bold">Treatment Plan</h4>
+                                    <p><strong>Actions:</strong> ${submission.treatment.actions.join(', ')}</p>
+                                    <p><strong>Instructions:</strong> ${submission.treatment.instructions}</p>
+                                </div>`;
+                        }
+
+                        detailsCard.innerHTML = `
+                            <h3 class="text-lg font-bold mb-2">Full Report Details</h3>
+                            <div id="${mapId}" class="w-full h-48 bg-gray-200 rounded-md shadow-inner mb-4"></div>
+                            <img src="${submission.imageDataUrl}" class="rounded-lg my-2 max-h-96 w-auto">
+                            ${initialDiagnosisHTML}
+                            ${finalDiagnosisHTML}
+                            ${treatmentHTML}
+                        `;
+
+                        try {
+                            const farmDocRef = doc(db, 'users', submission.userId, 'farmLots', submission.farmId);
+                            const farmDocSnap = await getDoc(farmDocRef);
+                            if (farmDocSnap.exists()) {
+                                const farmData = farmDocSnap.data();
+                                const coordinates = farmData.polygonCoordinates;
+
+                                const detailMap = L.map(mapId, { scrollWheelZoom: false, dragging: false, zoomControl: false });
+                                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                                    attribution: 'Tiles &copy; Esri'
+                                }).addTo(detailMap);
+
+                                if (coordinates && coordinates.length > 0) {
+                                    const latLngs = coordinates.map(c => [c.lat, c.lng]);
+                                    const polygon = L.polygon(latLngs, {color: '#22c55e'}).addTo(detailMap);
+                                    detailMap.fitBounds(polygon.getBounds());
+                                }
+                                setTimeout(() => detailMap.invalidateSize(), 0);
+                            }
+                        } catch (e) {
+                            console.error("Could not load map for report", e);
+                            document.getElementById(mapId).innerHTML = '<p class="text-red-500">Could not load map.</p>';
+                        }
+                    }
+                });
+
+                reportWrapper.appendChild(summaryCard);
+                reportWrapper.appendChild(detailsCard);
+                reportsContainer.appendChild(reportWrapper);
             });
             lucide.createIcons();
         }
