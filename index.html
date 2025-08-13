@@ -306,16 +306,16 @@
                     <h2 class="text-2xl font-bold">Expert Dashboard</h2>
                     <p id="expert-welcome-message" class="text-sm text-gray-600"></p>
                 </header>
-                <main class="flex-1 p-4 overflow-y-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Left Column: Map -->
-                    <div class="lg:col-span-2 bg-white p-4 rounded-lg shadow">
+                <main class="flex-1 p-4 overflow-y-auto flex flex-col gap-6">
+                    <!-- Map Container -->
+                    <div class="bg-white p-4 rounded-lg shadow">
                         <h3 class="text-lg font-bold mb-2">Pest & Disease Distribution Map</h3>
-                        <div id="expert-map" class="w-full h-96 bg-gray-200 rounded-md shadow-inner"></div>
+                        <div id="expert-map" class="w-full h-[60vh] bg-gray-200 rounded-md shadow-inner"></div>
                         <div id="expert-map-legend" class="mt-4"></div>
                     </div>
 
-                    <!-- Right Column: Stats and Data Extraction -->
-                    <div class="lg:col-span-1 space-y-6">
+                    <!-- Stats and Data Extraction Container -->
+                    <div class="space-y-6">
                         <!-- Stats -->
                         <div class="bg-white p-4 rounded-lg shadow">
                             <h3 class="text-lg font-bold mb-4">Key Statistics</h3>
@@ -399,20 +399,23 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Farm Location</label>
                     <div id="report-map" class="w-full h-48 bg-gray-200 rounded-md shadow-inner"></div>
 
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Upload Image of Affected Plant</label>
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                        <div class="space-y-1 text-center">
-                            <i id="image-placeholder-icon" data-lucide="image" class="mx-auto h-12 w-12 text-gray-400"></i>
-                            <img id="submission-image-preview" src="" class="hidden mx-auto max-h-48 rounded-md">
-                            <div class="flex text-sm text-gray-600">
-                                <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none">
-                                    <span>Upload a file</span>
-                                    <input id="image-upload" name="image-upload" type="file" class="sr-only" accept="image/*">
-                                </label>
-                                <p class="pl-1">or drag and drop</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Upload Image(s) of Affected Plant</p></label>
+                    <div class="mt-1 p-4 border-2 border-gray-300 border-dashed rounded-md">
+                        <div id="submission-image-preview-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mb-4">
+                             <div id="image-placeholder-icon" class="col-span-full text-center text-gray-400 py-4">
+                                <i data-lucide="image" class="mx-auto h-12 w-12"></i>
+                                <p>No images selected</p>
                             </div>
-                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                             <div class="mt-4">
+                        </div>
+                        <div class="text-center">
+                            <div class="flex text-sm text-gray-600 justify-center">
+                                <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none">
+                                    <span>Upload files</span>
+                                    <input id="image-upload" name="image-upload" type="file" class="sr-only" accept="image/*" multiple>
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 10MB</p>
+                            <div class="mt-4">
                                 <button id="open-camera-btn" type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                                     <i data-lucide="camera" class="mr-2 h-5 w-5"></i>
                                     Capture with Camera
@@ -676,7 +679,10 @@
                 <label for="follow-up-date" class="block text-sm font-medium text-gray-700 mt-4">Follow-up Date</label>
                 <input type="date" id="follow-up-date" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
 
-                <button id="save-treatment-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Treatment Plan</button>
+                <div class="mt-6 flex flex-col sm:flex-row gap-4">
+                    <button id="save-treatment-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md order-1 sm:order-2">Save Treatment Plan</button>
+                    <button id="escalate-from-treatment-btn" class="w-full bg-orange-500 text-white font-bold py-3 px-4 rounded-lg shadow-md order-2 sm:order-1">Escalate to Expert</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1167,14 +1173,9 @@
             photoCanvas.height = cameraFeed.videoHeight;
             context.drawImage(cameraFeed, 0, 0, photoCanvas.width, photoCanvas.height);
 
-            const imageDataUrl = photoCanvas.toDataURL('image/jpeg', 0.9); // 90% quality
-
-            // Set the captured image on the submission form
-            const imagePreview = document.getElementById('submission-image-preview');
-            const imagePlaceholder = document.getElementById('image-placeholder-icon');
-            imagePreview.src = imageDataUrl;
-            imagePreview.classList.remove('hidden');
-            imagePlaceholder.classList.add('hidden');
+            photoCanvas.toBlob(blob => {
+                handleFiles([blob]);
+            }, 'image/jpeg', 0.9);
 
             // Stop the camera and go back to the form
             stopCamera();
@@ -1864,30 +1865,54 @@
         
         // --- 8. NEW SUBMISSION LOGIC ---
         const imageUploadInput = document.getElementById('image-upload');
-        const imagePreview = document.getElementById('submission-image-preview');
+        const imagePreviewContainer = document.getElementById('submission-image-preview-container');
         const imagePlaceholder = document.getElementById('image-placeholder-icon');
 
         imageUploadInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    imagePreview.src = e.target.result;
-                    imagePreview.classList.remove('hidden');
-                    imagePlaceholder.classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
-            }
+            handleFiles(event.target.files);
         });
 
+        function handleFiles(files) {
+            if (!files || files.length === 0) return;
+
+            const placeholder = imagePreviewContainer.querySelector('#image-placeholder-icon');
+            if (placeholder) {
+                placeholder.classList.add('hidden');
+            }
+
+            for (const file of files) {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const imgContainer = document.createElement('div');
+                        imgContainer.className = 'relative aspect-square group';
+                        imgContainer.innerHTML = `
+                            <img src="${e.target.result}" class="w-full h-full object-cover rounded-md">
+                            <button class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">&times;</button>
+                        `;
+                        imgContainer.querySelector('button').addEventListener('click', (btnEvent) => {
+                            btnEvent.stopPropagation();
+                            imgContainer.remove();
+                             if (imagePreviewContainer.querySelectorAll('img').length === 0) {
+                                if(placeholder) placeholder.classList.remove('hidden');
+                            }
+                        });
+                        imagePreviewContainer.appendChild(imgContainer);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+
         document.getElementById('save-submission-btn').addEventListener('click', async () => {
-            const imageSrc = document.getElementById('submission-image-preview').src;
+            const imagePreviews = imagePreviewContainer.querySelectorAll('img');
+            const imageDataUrls = Array.from(imagePreviews).map(img => img.src);
             const symptoms = Array.from(document.querySelectorAll('#symptoms-checklist input:checked')).map(cb => cb.value);
             const distribution = document.querySelector('#distribution-radios input:checked')?.value;
             const severity = document.querySelector('#severity-radios input:checked')?.value;
 
-            if (!imageSrc.startsWith('data:image') || symptoms.length === 0 || !distribution || !severity) {
-                showToast('Please fill out all fields and select an image.', 'error');
+            if (imageDataUrls.length === 0 || symptoms.length === 0 || !distribution || !severity) {
+                showToast('Please fill out all fields and select at least one image.', 'error');
                 return;
             }
 
@@ -1899,7 +1924,7 @@
             showSavingOverlay('Saving Report...');
 
             const submissionData = {
-                imageDataUrl: imageSrc,
+                imageDataUrls: imageDataUrls,
                 symptoms,
                 distribution,
                 severity,
@@ -1925,9 +1950,11 @@
                 // Reset state and form
                 isEditSubmissionMode = false;
                 currentSubmissionId = null;
-                document.getElementById('new-submission-btn').click(); // Programmatically click to reset the form
 
-                showScreen('dashboard');
+                // Go back to the dashboard, which will be re-rendered
+                const lastContext = navigationHistory[navigationHistory.length - 2] || { screenName: 'farmList', context: {} };
+                showScreen(lastContext.screenName, lastContext.context);
+
             } catch (error) {
                 console.error('Failed to save submission:', error);
                 showToast('Could not save report. Please try again.', 'error');
@@ -1958,9 +1985,19 @@
                         const sub = submissionDocSnap.data();
 
                         // Pre-fill the form
-                        document.getElementById('submission-image-preview').src = sub.imageDataUrl || '';
-                        document.getElementById('submission-image-preview').classList.remove('hidden');
-                        document.getElementById('image-placeholder-icon').classList.add('hidden');
+                        // Clear existing previews before adding new ones
+                        const placeholder = imagePreviewContainer.querySelector('#image-placeholder-icon');
+                        imagePreviewContainer.innerHTML = '';
+                        if(placeholder) imagePreviewContainer.appendChild(placeholder);
+
+                        const imageUrls = sub.imageDataUrls || (sub.imageDataUrl ? [sub.imageDataUrl] : []);
+
+                        if (imageUrls.length > 0) {
+                             // This is a simplified way to handle blobs. A real app might need more robust handling.
+                            const files = imageUrls.map(url => fetch(url).then(res => res.blob()));
+                            Promise.all(files).then(blobs => handleFiles(blobs));
+                        }
+
 
                         // Reset checkboxes before setting new state
                         document.querySelectorAll('#symptoms-checklist input[type="checkbox"]').forEach(cb => cb.checked = false);
@@ -1980,7 +2017,9 @@
 
                         // Update button and show screen
                         document.getElementById('save-submission-btn').textContent = 'Update Report';
-                        showScreen('newSubmission');
+                        const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+                        const newContext = { ...lastContext, label: 'Edit Report' };
+                        showScreen('newSubmission', newContext);
                         initializeReportMap(currentFarmId);
 
                     } else {
@@ -1998,10 +2037,14 @@
             currentSubmissionId = null;
 
             // Reset the form for a new entry
-            document.getElementById('submission-image-preview').src = '';
-            document.getElementById('submission-image-preview').classList.add('hidden');
-            document.getElementById('image-placeholder-icon').classList.remove('hidden');
-            document.getElementById('image-upload').value = '';
+            const placeholder = imagePreviewContainer.querySelector('#image-placeholder-icon');
+            imagePreviewContainer.innerHTML = ''; // Clear all previews
+            if (placeholder) {
+                placeholder.classList.remove('hidden');
+                imagePreviewContainer.appendChild(placeholder);
+            }
+            imageUploadInput.value = '';
+
             document.querySelectorAll('#symptoms-checklist input:checked').forEach(cb => cb.checked = false);
             document.querySelectorAll('#distribution-radios input:checked').forEach(rb => rb.checked = false);
             document.querySelectorAll('#severity-radios input:checked').forEach(rb => rb.checked = false);
@@ -2041,10 +2084,15 @@
                         const dateString = submissionDate.toLocaleDateString();
                         const timeString = submissionDate.toLocaleTimeString();
 
+                        const thumbnailUrl = (submission.imageDataUrls && submission.imageDataUrls.length > 0)
+                            ? submission.imageDataUrls[0]
+                            : (submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image');
+
+
                         card.innerHTML = `
                             <div class="flex justify-between items-start">
                                 <div class="flex">
-                                    <img src="${submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image'}" class="w-24 h-24 rounded-md mr-4 object-cover">
+                                    <img src="${thumbnailUrl}" class="w-24 h-24 rounded-md mr-4 object-cover">
                                     <div>
                                         <p class="font-bold">Report from ${dateString} at ${timeString}</p>
                                         <p class="text-sm"><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
@@ -2231,9 +2279,14 @@
                 const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date();
                 const dateString = submissionDate.toLocaleDateString();
 
+                const thumbnailUrl = (submission.imageDataUrls && submission.imageDataUrls.length > 0)
+                    ? submission.imageDataUrls[0]
+                    : (submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image');
+
+
                 card.innerHTML = `
                     <div class="flex items-start">
-                        <img src="${submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image'}" class="w-24 h-24 rounded-md mr-4 object-cover">
+                        <img src="${thumbnailUrl}" class="w-24 h-24 rounded-md mr-4 object-cover">
                         <div class="flex-grow">
                             <p class="font-bold text-lg">${submission.farmName}</p>
                             <p class="text-sm text-gray-500 mb-2">Reported on ${dateString}</p>
@@ -2250,11 +2303,16 @@
                         submissionId: submission.submissionId
                     };
 
+                    const imageUrls = submission.imageDataUrls || (submission.imageDataUrl ? [submission.imageDataUrl] : []);
+                    const imageGridHTML = imageUrls.length > 0
+                        ? `<div class="grid grid-cols-2 md:grid-cols-3 gap-2 my-2">${imageUrls.map(url => `<a href="${url}" target="_blank"><img src="${url}" class="rounded-lg w-full aspect-square object-cover"></a>`).join('')}</div>`
+                        : `<p class="text-sm text-gray-500">No image submitted.</p>`;
+
                     // Populate and show the modal
                     const detailsContainer = document.getElementById('diagnosis-report-details');
                     detailsContainer.innerHTML = `
                         <p><strong>Farm:</strong> ${submission.farmName}</p>
-                        <img src="${submission.imageDataUrl}" class="rounded-lg my-2 max-h-64 w-auto mx-auto">
+                        ${imageGridHTML}
                         <p><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
                         <p><strong>Distribution:</strong> ${submission.distribution}</p>
                         <p><strong>Severity:</strong> ${submission.severity}</p>
@@ -2373,6 +2431,13 @@
                     document.getElementById('treatment-instructions').value = '';
                     document.getElementById('follow-up-date').value = '';
 
+                    const escalateBtn = document.getElementById('escalate-from-treatment-btn');
+                    if (userProfile.role === 'Branch Coordinator' && !submission.isEscalated) {
+                        escalateBtn.classList.remove('hidden');
+                    } else {
+                        escalateBtn.classList.add('hidden');
+                    }
+
                     document.getElementById('treatment-modal').classList.remove('hidden');
                     document.getElementById('treatment-modal').classList.add('flex');
                     lucide.createIcons();
@@ -2470,6 +2535,16 @@
             document.getElementById('escalation-modal').classList.add('hidden');
             document.getElementById('escalation-modal').classList.remove('flex');
             currentEscalationTarget = null;
+        });
+
+        document.getElementById('escalate-from-treatment-btn').addEventListener('click', () => {
+            if (!currentTreatmentTarget) return;
+
+            currentEscalationTarget = { ...currentTreatmentTarget };
+
+            document.getElementById('treatment-modal').classList.add('hidden');
+            document.getElementById('escalation-modal').classList.remove('hidden');
+            document.getElementById('escalation-modal').classList.add('flex');
         });
 
         document.getElementById('confirm-escalate-btn').addEventListener('click', async () => {
@@ -2764,9 +2839,13 @@
                     farmerNameHTML = `<p class="text-sm text-gray-500">Farmer: ${submission.userName}</p>`;
                 }
 
+                const thumbnailUrl = (submission.imageDataUrls && submission.imageDataUrls.length > 0)
+                    ? submission.imageDataUrls[0]
+                    : (submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image');
+
                 summaryCard.innerHTML = `
                     <div class="flex items-start">
-                        <img src="${submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image'}" class="w-24 h-24 rounded-md mr-4 object-cover">
+                        <img src="${thumbnailUrl}" class="w-24 h-24 rounded-md mr-4 object-cover">
                         <div class="flex-grow">
                             <div class="flex justify-between items-center mb-1">
                                 <p class="font-bold text-lg">${submission.farmName}</p>
@@ -2852,11 +2931,18 @@
                             </div>`;
                     }
 
+                    const imageUrls = submission.imageDataUrls || (submission.imageDataUrl ? [submission.imageDataUrl] : []);
+                    const imageGridHTML = imageUrls.length > 0
+                        ? `<div class="grid grid-cols-2 md:grid-cols-3 gap-2">${imageUrls.map(url => `<a href="${url}" target="_blank"><img src="${url}" class="rounded-lg w-full aspect-square object-cover"></a>`).join('')}</div>`
+                        : `<p class="text-sm text-gray-500">No images submitted.</p>`;
+
+
                     modalContent.innerHTML = `
                         <div id="${mapId}" class="w-full h-48 bg-gray-200 rounded-md shadow-inner mb-4"></div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <img src="${submission.imageDataUrl}" class="rounded-lg w-full object-cover">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <div>
+                                <h4 class="font-bold text-gray-800 mb-2">Uploaded Images</h4>
+                                ${imageGridHTML}
                             </div>
                             <div>
                                 <h4 class="font-bold text-gray-800">Report Information</h4>
@@ -2870,29 +2956,7 @@
                         ${treatmentHTML}
                     `;
 
-                    // Add escalate button for coordinators if appropriate
-                    if (userProfile.role === 'Branch Coordinator' && submission.initialDiagnosis && !submission.finalDiagnosis && !submission.isEscalated) {
-                        const escalateBtn = document.createElement('button');
-                        escalateBtn.id = 'escalate-report-btn';
-                        escalateBtn.className = 'bg-orange-500 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-orange-600';
-                        escalateBtn.innerHTML = '<i data-lucide="chevrons-up" class="inline-block mr-2"></i>Escalate to Expert';
-                        modalActions.appendChild(escalateBtn);
-                        lucide.createIcons();
-
-                        escalateBtn.addEventListener('click', () => {
-                            // Store the current report's context for the escalation modal
-                            currentEscalationTarget = {
-                                userId: submission.userId,
-                                farmId: submission.farmId,
-                                submissionId: submission.id
-                            };
-                            // Hide details modal, show escalation modal
-                            modal.classList.add('hidden');
-                            modal.classList.remove('flex');
-                            document.getElementById('escalation-modal').classList.remove('hidden');
-                            document.getElementById('escalation-modal').classList.add('flex');
-                        });
-                    }
+                    // Escalation button logic has been moved to the treatment modal.
 
                     try {
                         const farmDocRef = doc(db, 'users', submission.userId, 'farmLots', submission.farmId);
@@ -3216,8 +3280,10 @@
             try {
                 const usersSnapshot = await getDocs(collection(db, 'users'));
                 let escalatedSubmissions = [];
+                const userProfilesCache = {}; // Cache to avoid re-fetching user profiles
 
                 for (const userDoc of usersSnapshot.docs) {
+                    userProfilesCache[userDoc.id] = userDoc.data(); // Pre-populate cache
                     const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
                     const farmLotsSnapshot = await getDocs(farmLotsCollection);
 
@@ -3226,16 +3292,34 @@
                         const q = query(submissionsCollection, where("isEscalated", "==", true));
                         const submissionsSnapshot = await getDocs(q);
 
-                        submissionsSnapshot.forEach(submissionDoc => {
+                        for (const submissionDoc of submissionsSnapshot.docs) {
+                             const submissionData = submissionDoc.data();
+
+                            // Fetch coordinator details if not already in cache
+                            const coordinatorId = submissionData.escalatedBy;
+                            let coordinatorProfile = null;
+                            if (coordinatorId) {
+                                if (userProfilesCache[coordinatorId]) {
+                                    coordinatorProfile = userProfilesCache[coordinatorId];
+                                } else {
+                                    const coordinatorDoc = await getDoc(doc(db, 'users', coordinatorId));
+                                    if (coordinatorDoc.exists()) {
+                                        coordinatorProfile = coordinatorDoc.data();
+                                        userProfilesCache[coordinatorId] = coordinatorProfile;
+                                    }
+                                }
+                            }
+
                             escalatedSubmissions.push({
-                                ...submissionDoc.data(),
+                                ...submissionData,
                                 userId: userDoc.id,
                                 farmId: farmDoc.id,
                                 submissionId: submissionDoc.id,
                                 farmName: farmDoc.data().farmName,
-                                farmerName: userDoc.data().fullName
+                                farmerProfile: userDoc.data(),
+                                coordinatorProfile: coordinatorProfile
                             });
-                        });
+                        }
                     }
                 }
 
@@ -3325,8 +3409,8 @@
                 expertMap.remove();
             }
             expertMap = L.map('expert-map').setView([12.8797, 121.7740], 5);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri'
             }).addTo(expertMap);
 
             const colorPalette = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF'];
@@ -3335,7 +3419,7 @@
 
             try {
                 const usersSnapshot = await getDocs(collection(db, 'users'));
-                const markers = [];
+                const layers = [];
 
                 for (const userDoc of usersSnapshot.docs) {
                     const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
@@ -3346,17 +3430,27 @@
                         if (!farmData.polygonCoordinates || farmData.polygonCoordinates.length === 0) continue;
 
                         const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
-                        const q = query(submissionsCollection, where("finalDiagnosis", "!=", null));
+                        const q = query(submissionsCollection, where("initialDiagnosis", "!=", null));
                         const submissionsSnapshot = await getDocs(q);
 
                         submissionsSnapshot.forEach(submissionDoc => {
                             const submissionData = submissionDoc.data();
-                            const pestDisease = submissionData.finalDiagnosis.pestDisease;
+                            const pestDisease = submissionData.finalDiagnosis?.pestDisease || submissionData.initialDiagnosis?.pestDisease;
+
+                            if (!pestDisease) return;
 
                             if (!pestDiseaseColors[pestDisease]) {
                                 pestDiseaseColors[pestDisease] = colorPalette[colorIndex % colorPalette.length];
                                 colorIndex++;
                             }
+
+                            const latLngs = farmData.polygonCoordinates.map(c => [c.lat, c.lng]);
+                            const polygon = L.polygon(latLngs, {
+                                color: pestDiseaseColors[pestDisease],
+                                weight: 2,
+                                fillOpacity: 0.5
+                            }).bindPopup(`<b>${pestDisease}</b><br>Farm: ${farmData.farmName}`);
+                            layers.push(polygon);
 
                             const center = L.polygon(farmData.polygonCoordinates.map(c => [c.lat, c.lng])).getBounds().getCenter();
                             const marker = L.marker(center, {
@@ -3367,17 +3461,18 @@
                                     iconAnchor: [15, 42]
                                 })
                             }).bindPopup(`<b>${pestDisease}</b><br>Farm: ${farmData.farmName}`);
-                            markers.push(marker);
+                            layers.push(marker);
                         });
                     }
                 }
 
-                if (markers.length > 0) {
-                    const featureGroup = L.featureGroup(markers).addTo(expertMap);
+                if (layers.length > 0) {
+                    const featureGroup = L.featureGroup(layers).addTo(expertMap);
                     expertMap.fitBounds(featureGroup.getBounds().pad(0.1));
                 }
 
                 // Build legend
+                legendContainer.innerHTML = ' <h3 class="text-sm font-bold mb-2">Legend</h3>';
                 for (const [name, color] of Object.entries(pestDiseaseColors)) {
                     legendContainer.innerHTML += `<div class="flex items-center mb-1"><div class="w-4 h-4 rounded-full mr-2" style="background-color:${color};"></div><span>${name}</span></div>`;
                 }
@@ -3416,12 +3511,20 @@
                     finalDiagnosisHTML = `<p class="text-sm text-orange-600 font-semibold mt-2">Status: Awaiting Final Diagnosis</p>`;
                 }
 
+                const farmer = submission.farmerProfile;
+                const coordinator = submission.coordinatorProfile;
+
+                const farmerHTML = farmer ? `<p class="text-sm"><strong>Farmer:</strong> ${farmer.fullName} (${farmer.municipality}, ${farmer.province})</p>` : '';
+                const coordinatorHTML = coordinator ? `<p class="text-sm"><strong>Escalated by:</strong> ${coordinator.fullName}</p>` : `<p class="text-sm"><strong>Escalated by:</strong> ${submission.escalatedByName || 'Unknown'}</p>`;
+
+
                 card.innerHTML = `
                     <div class="flex justify-between items-start">
                         <div>
                             <p class="font-bold text-lg">${submission.farmName}</p>
-                            <p class="text-sm text-gray-600">Farmer: ${submission.farmerName}</p>
-                            <p class="text-sm text-gray-500 mb-2">Escalated on ${escalatedDate} by ${submission.escalatedByName}</p>
+                            ${farmerHTML}
+                            ${coordinatorHTML}
+                            <p class="text-sm text-gray-500">Escalated on ${escalatedDate}</p>
                         </div>
                         <button class="view-clinic-report-btn bg-blue-500 text-white text-sm font-bold py-2 px-3 rounded-lg" data-submission='${JSON.stringify(submission)}'>
                             Review Case
