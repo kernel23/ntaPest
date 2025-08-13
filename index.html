@@ -218,6 +218,7 @@
                         <button id="role-farmer-btn" class="role-btn p-4 rounded-lg border-2 border-green-600 bg-green-600 text-white">Farmer</button>
                         <button id="role-worker-btn" class="role-btn p-4 rounded-lg border-2 border-gray-300">Extension Worker</button>
                         <button id="role-coordinator-btn" class="role-btn p-4 rounded-lg border-2 border-gray-300">Branch Coordinator</button>
+                        <button id="role-expert-btn" class="role-btn p-4 rounded-lg border-2 border-gray-300">Expert</button>
                     </div>
                     <div class="mt-8 space-y-4">
                         <button id="edit-profile-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hidden">Edit Profile</button>
@@ -295,6 +296,61 @@
                      <div class="text-center text-gray-500 mt-20">
                         <i data-lucide="briefcase" class="w-12 h-12 mx-auto text-gray-400"></i>
                         <p class="mt-4">Loading extension workers...</p>
+                    </div>
+                </main>
+            </div>
+
+            <!-- Expert Dashboard Screen -->
+            <div id="expert-dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+                <header class="bg-white p-4 shadow-md">
+                    <h2 class="text-2xl font-bold">Expert Dashboard</h2>
+                    <p id="expert-welcome-message" class="text-sm text-gray-600"></p>
+                </header>
+                <main class="flex-1 p-4 overflow-y-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left Column: Map -->
+                    <div class="lg:col-span-2 bg-white p-4 rounded-lg shadow">
+                        <h3 class="text-lg font-bold mb-2">Pest & Disease Distribution Map</h3>
+                        <div id="expert-map" class="w-full h-96 bg-gray-200 rounded-md shadow-inner"></div>
+                        <div id="expert-map-legend" class="mt-4"></div>
+                    </div>
+
+                    <!-- Right Column: Stats and Data Extraction -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <!-- Stats -->
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h3 class="text-lg font-bold mb-4">Key Statistics</h3>
+                            <div id="expert-stats-container" class="grid grid-cols-2 gap-4">
+                                <div class="text-center p-2 rounded-lg bg-gray-100">
+                                    <p class="text-2xl font-bold" id="stat-reports-count">0</p>
+                                    <p class="text-sm text-gray-600">Total Reports</p>
+                                </div>
+                                <div class="text-center p-2 rounded-lg bg-gray-100">
+                                    <p class="text-2xl font-bold" id="stat-diagnosed-count">0</p>
+                                    <p class="text-sm text-gray-600">Diagnosed</p>
+                                </div>
+                                <div class="text-center p-2 rounded-lg bg-gray-100">
+                                    <p class="text-2xl font-bold" id="stat-treated-count">0</p>
+                                    <p class="text-sm text-gray-600">Treated</p>
+                                </div>
+                                <div class="text-center p-2 rounded-lg bg-gray-100">
+                                    <p class="text-2xl font-bold" id="stat-pests-count">0</p>
+                                    <p class="text-sm text-gray-600">Unique Pests</p>
+                                </div>
+                                <div class="text-center p-2 rounded-lg bg-gray-100">
+                                    <p class="text-2xl font-bold" id="stat-diseases-count">0</p>
+                                    <p class="text-sm text-gray-600">Unique Diseases</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Data Extraction -->
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h3 class="text-lg font-bold mb-2">Data Extraction</h3>
+                            <p class="text-sm text-gray-600 mb-4">Download a CSV file of all reports, diagnoses, and treatments.</p>
+                            <button id="export-csv-btn" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-700">
+                                Export All Data to CSV
+                            </button>
+                        </div>
                     </div>
                 </main>
             </div>
@@ -534,6 +590,36 @@
             <div id="report-details-content" class="p-6 max-h-[80vh] overflow-y-auto">
                 <!-- Report details will be loaded here dynamically -->
             </div>
+            <div id="report-details-actions" class="p-4 border-t text-right">
+                <!-- Action buttons like "Escalate" will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Escalation Modal -->
+    <div id="escalation-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Escalate Report to Expert</h3>
+                <button id="close-escalation-modal-btn" class="p-1"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 max-h-[80vh] overflow-y-auto">
+                <p class="text-sm text-gray-600 mb-4">Please provide the following additional details before escalating this report to an expert for final diagnosis.</p>
+
+                <label for="infestation-percentage" class="block text-sm font-medium text-gray-700">Percentage of Infestation (%)</label>
+                <input type="number" id="infestation-percentage" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+
+                <label for="samples-collected-date" class="block text-sm font-medium text-gray-700 mt-4">Date Samples Collected</label>
+                <input type="date" id="samples-collected-date" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+
+                <label for="farmer-contact" class="block text-sm font-medium text-gray-700 mt-4">Farmer's Contact Number</label>
+                <input type="tel" id="farmer-contact" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+
+                <label for="samples-notes" class="block text-sm font-medium text-gray-700 mt-4">Notes on Samples Collected (e.g., leaves, soil, roots)</label>
+                <textarea id="samples-notes" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></textarea>
+
+                <button id="confirm-escalate-btn" class="w-full bg-orange-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Confirm and Escalate</button>
+            </div>
         </div>
     </div>
 
@@ -735,7 +821,8 @@
             privacyPolicy: document.getElementById('privacy-policy-screen'),
             farmSetup: document.getElementById('farm-setup-screen'),
             ewDashboard: document.getElementById('ew-dashboard-screen'),
-            coordinatorDashboard: document.getElementById('coordinator-dashboard-screen')
+            coordinatorDashboard: document.getElementById('coordinator-dashboard-screen'),
+            expertDashboard: document.getElementById('expert-dashboard-screen')
         };
 
         // --- Privacy Policy Navigation ---
@@ -775,6 +862,8 @@
                 screen = 'ewDashboard';
             } else if (userProfile.role === 'Branch Coordinator') {
                 screen = 'coordinatorDashboard';
+            } else if (userProfile.role === 'Expert') {
+                screen = 'expertDashboard';
             } else { // Default to Farmer
                 screen = 'farmList';
             }
@@ -930,11 +1019,20 @@
                 case 'treatment':
                     loadReportsForTreatment();
                     break;
+                case 'onlineClinic':
+                    if (userProfile && userProfile.role === 'Expert') {
+                        loadOnlineClinicReports();
+                    }
+                    break;
                 case 'ewDashboard':
                     loadExtensionWorkerDashboard(currentContext);
                     break;
                 case 'coordinatorDashboard':
                     loadCoordinatorDashboard(currentContext);
+                    break;
+                case 'expertDashboard':
+                    loadExpertStats();
+                    loadExpertMap();
                     break;
                 case 'newSubmission':
                     await initializeReportMap(currentContext);
@@ -950,20 +1048,36 @@
 
             const isFarmer = userProfile.role === 'Farmer';
             const isWorker = userProfile.role === 'Extension Worker';
+            const isCoordinator = userProfile.role === 'Branch Coordinator';
+            const isExpert = userProfile.role === 'Expert';
 
+            const navFarmList = document.getElementById('nav-farm-list');
             const navDiagnosis = document.getElementById('nav-diagnosis');
             const navTreatment = document.getElementById('nav-treatment');
+            const navReports = document.getElementById('nav-reports');
+            const navClinic = document.getElementById('nav-clinic');
+
+            // Default visibility
+            [navFarmList, navDiagnosis, navTreatment, navReports, navClinic].forEach(el => el.style.display = 'block');
 
             if (isFarmer) {
                 navDiagnosis.style.display = 'none';
                 navTreatment.style.display = 'none';
+                navClinic.style.display = 'none';
             } else if (isWorker) {
                 navDiagnosis.style.display = 'block';
-                navTreatment.style.display = 'none'; // Workers only do initial diagnosis
-            }
-            else { // Covers Coordinator and any other non-farmer roles
+                navTreatment.style.display = 'none';
+                navClinic.style.display = 'none';
+            } else if (isCoordinator) {
                 navDiagnosis.style.display = 'block';
                 navTreatment.style.display = 'block';
+                navClinic.style.display = 'none'; // Coordinators escalate to the clinic, they don't view it
+            } else if (isExpert) {
+                navFarmList.style.display = 'block'; // Experts should see their dashboard
+                navDiagnosis.style.display = 'none';
+                navTreatment.style.display = 'none';
+                navReports.style.display = 'block';
+                navClinic.style.display = 'block';
             }
         }
 
@@ -1369,6 +1483,8 @@
                 document.getElementById('role-worker-btn').classList.add('bg-green-600', 'text-white');
             } else if (selectedRole === 'Branch Coordinator') {
                 document.getElementById('role-coordinator-btn').classList.add('bg-green-600', 'text-white');
+            } else if (selectedRole === 'Expert') {
+                document.getElementById('role-expert-btn').classList.add('bg-green-600', 'text-white');
             }
             updateUIVisibilityBasedOnRole();
         }
@@ -1415,6 +1531,10 @@
                         } else if (userProfile.role === 'Branch Coordinator') {
                             screen = 'coordinatorDashboard';
                             document.getElementById('coordinator-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                            document.getElementById('add-farm-btn').style.display = 'none';
+                        } else if (userProfile.role === 'Expert') {
+                            screen = 'expertDashboard';
+                            document.getElementById('expert-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
                             document.getElementById('add-farm-btn').style.display = 'none';
                         } else { // Default to Farmer
                             screen = 'farmList';
@@ -1486,6 +1606,8 @@
                     selectedRole = 'Extension Worker';
                 } else if (btn.id === 'role-coordinator-btn') {
                     selectedRole = 'Branch Coordinator';
+                } else if (btn.id === 'role-expert-btn') {
+                    selectedRole = 'Expert';
                 }
             });
         });
@@ -2032,6 +2154,7 @@
         }
 
         let currentDiagnosisTarget = null; // Holds { userId, farmId, submissionId }
+        let currentEscalationTarget = null; // Holds { userId, farmId, submissionId }
 
         async function loadReportsForDiagnosis() {
             if (!currentUser) return;
@@ -2343,6 +2466,61 @@
             currentTreatmentTarget = null;
         });
 
+        document.getElementById('close-escalation-modal-btn').addEventListener('click', () => {
+            document.getElementById('escalation-modal').classList.add('hidden');
+            document.getElementById('escalation-modal').classList.remove('flex');
+            currentEscalationTarget = null;
+        });
+
+        document.getElementById('confirm-escalate-btn').addEventListener('click', async () => {
+            if (!currentEscalationTarget) {
+                showToast('No report targeted for escalation.', 'error');
+                return;
+            }
+
+            const infestationPercentage = document.getElementById('infestation-percentage').value;
+            const samplesCollectedDate = document.getElementById('samples-collected-date').value;
+            const farmerContact = document.getElementById('farmer-contact').value;
+            const samplesNotes = document.getElementById('samples-notes').value.trim();
+
+            if (!infestationPercentage || !samplesCollectedDate || !farmerContact || !samplesNotes) {
+                showToast('Please fill out all escalation fields.', 'error');
+                return;
+            }
+
+            showSavingOverlay('Escalating Report...');
+
+            const escalationData = {
+                isEscalated: true,
+                escalatedAt: serverTimestamp(),
+                escalatedBy: currentUser.uid,
+                escalatedByName: userProfile.fullName,
+                escalationDetails: {
+                    infestationPercentage: Number(infestationPercentage),
+                    samplesCollectedDate,
+                    farmerContact,
+                    samplesNotes
+                }
+            };
+
+            try {
+                const { userId, farmId, submissionId } = currentEscalationTarget;
+                const submissionDocRef = doc(db, 'users', userId, 'farmLots', farmId, 'submissions', submissionId);
+
+                await updateDoc(submissionDocRef, escalationData);
+
+                showToast('Report escalated to expert successfully!', 'success');
+                document.getElementById('close-escalation-modal-btn').click();
+                loadAllReports(); // Refresh the reports list
+
+            } catch (error) {
+                console.error('Error escalating report:', error);
+                showToast('Could not escalate report. Please try again.', 'error');
+            } finally {
+                hideSavingOverlay();
+            }
+        });
+
         document.getElementById('save-treatment-btn').addEventListener('click', async () => {
             if (!currentTreatmentTarget) {
                 showToast('No report selected for treatment.', 'error');
@@ -2604,11 +2782,13 @@
                 summaryCard.addEventListener('click', async () => {
                     const modal = document.getElementById('report-details-modal');
                     const modalContent = document.getElementById('report-details-content');
+                    const modalActions = document.getElementById('report-details-actions');
                     const closeModalBtn = document.getElementById('close-report-details-modal-btn');
                     let detailMap = null;
 
                     // Start with a loading state
                     modalContent.innerHTML = `<div class="text-center text-gray-500 p-8"><i data-lucide="loader" class="animate-spin inline-block"></i> Loading details...</div>`;
+                    modalActions.innerHTML = ''; // Clear previous actions
                     lucide.createIcons();
 
                     modal.classList.remove('hidden');
@@ -2689,6 +2869,30 @@
                         ${finalDiagnosisHTML}
                         ${treatmentHTML}
                     `;
+
+                    // Add escalate button for coordinators if appropriate
+                    if (userProfile.role === 'Branch Coordinator' && submission.initialDiagnosis && !submission.finalDiagnosis && !submission.isEscalated) {
+                        const escalateBtn = document.createElement('button');
+                        escalateBtn.id = 'escalate-report-btn';
+                        escalateBtn.className = 'bg-orange-500 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-orange-600';
+                        escalateBtn.innerHTML = '<i data-lucide="chevrons-up" class="inline-block mr-2"></i>Escalate to Expert';
+                        modalActions.appendChild(escalateBtn);
+                        lucide.createIcons();
+
+                        escalateBtn.addEventListener('click', () => {
+                            // Store the current report's context for the escalation modal
+                            currentEscalationTarget = {
+                                userId: submission.userId,
+                                farmId: submission.farmId,
+                                submissionId: submission.id
+                            };
+                            // Hide details modal, show escalation modal
+                            modal.classList.add('hidden');
+                            modal.classList.remove('flex');
+                            document.getElementById('escalation-modal').classList.remove('hidden');
+                            document.getElementById('escalation-modal').classList.add('flex');
+                        });
+                    }
 
                     try {
                         const farmDocRef = doc(db, 'users', submission.userId, 'farmLots', submission.farmId);
@@ -3002,6 +3206,376 @@
             }
         }
 
+        async function loadOnlineClinicReports() {
+            if (!currentUser || !userProfile || userProfile.role !== 'Expert') return;
+
+            const clinicContainer = document.getElementById('online-clinic-screen').querySelector('main');
+            clinicContainer.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i><p class="mt-4">Loading escalated reports...</p></div>`;
+            lucide.createIcons();
+
+            try {
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                let escalatedSubmissions = [];
+
+                for (const userDoc of usersSnapshot.docs) {
+                    const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
+                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+
+                    for (const farmDoc of farmLotsSnapshot.docs) {
+                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
+                        const q = query(submissionsCollection, where("isEscalated", "==", true));
+                        const submissionsSnapshot = await getDocs(q);
+
+                        submissionsSnapshot.forEach(submissionDoc => {
+                            escalatedSubmissions.push({
+                                ...submissionDoc.data(),
+                                userId: userDoc.id,
+                                farmId: farmDoc.id,
+                                submissionId: submissionDoc.id,
+                                farmName: farmDoc.data().farmName,
+                                farmerName: userDoc.data().fullName
+                            });
+                        });
+                    }
+                }
+
+                escalatedSubmissions.sort((a, b) => (b.escalatedAt?.toDate() || 0) - (a.escalatedAt?.toDate() || 0));
+                renderOnlineClinicReports(escalatedSubmissions);
+
+            } catch (error) {
+                console.error("Error loading online clinic reports:", error);
+                clinicContainer.innerHTML = `<div class="text-center text-red-500 mt-20"><p>Error loading reports.</p></div>`;
+                showToast("Could not load clinic reports.", "error");
+            }
+        }
+
+        async function loadExpertStats() {
+            const statsContainer = document.getElementById('expert-stats-container');
+            const fields = {
+                reports: document.getElementById('stat-reports-count'),
+                diagnosed: document.getElementById('stat-diagnosed-count'),
+                treated: document.getElementById('stat-treated-count'),
+                pests: document.getElementById('stat-pests-count'),
+                diseases: document.getElementById('stat-diseases-count'),
+            };
+
+            // Reset to loading state
+            Object.values(fields).forEach(field => field.textContent = '...');
+
+            try {
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                let reportCount = 0;
+                let diagnosedCount = 0;
+                let treatedCount = 0;
+                const pestSet = new Set();
+                const diseaseSet = new Set();
+
+                for (const userDoc of usersSnapshot.docs) {
+                    const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
+                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+
+                    for (const farmDoc of farmLotsSnapshot.docs) {
+                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
+                        const submissionsSnapshot = await getDocs(submissionsCollection);
+
+                        reportCount += submissionsSnapshot.size;
+
+                        submissionsSnapshot.forEach(submissionDoc => {
+                            const data = submissionDoc.data();
+                            if (data.initialDiagnosis) {
+                                diagnosedCount++;
+                            }
+                            if (data.treatment) {
+                                treatedCount++;
+                            }
+                            if (data.finalDiagnosis && data.finalDiagnosis.pestDisease) {
+                                // Check if it's a pest or disease from our master list
+                                const allPests = pestAndDiseaseData.major_insect_pests.map(p => p['Pest Common Name']);
+                                if (allPests.includes(data.finalDiagnosis.pestDisease)) {
+                                    pestSet.add(data.finalDiagnosis.pestDisease);
+                                } else {
+                                    diseaseSet.add(data.finalDiagnosis.pestDisease);
+                                }
+                            }
+                        });
+                    }
+                }
+
+                fields.reports.textContent = reportCount;
+                fields.diagnosed.textContent = diagnosedCount;
+                fields.treated.textContent = treatedCount;
+                fields.pests.textContent = pestSet.size;
+                fields.diseases.textContent = diseaseSet.size;
+
+            } catch (error) {
+                console.error("Error loading expert statistics:", error);
+                Object.values(fields).forEach(field => field.textContent = 'Err');
+                showToast("Could not load statistics.", "error");
+            }
+        }
+
+        let expertMap = null;
+        async function loadExpertMap() {
+            const mapContainer = document.getElementById('expert-map');
+            const legendContainer = document.getElementById('expert-map-legend');
+            mapContainer.innerHTML = ''; // Clear previous map
+            legendContainer.innerHTML = '';
+
+            if (expertMap) {
+                expertMap.remove();
+            }
+            expertMap = L.map('expert-map').setView([12.8797, 121.7740], 5);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(expertMap);
+
+            const colorPalette = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF'];
+            let colorIndex = 0;
+            const pestDiseaseColors = {};
+
+            try {
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                const markers = [];
+
+                for (const userDoc of usersSnapshot.docs) {
+                    const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
+                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+
+                    for (const farmDoc of farmLotsSnapshot.docs) {
+                        const farmData = farmDoc.data();
+                        if (!farmData.polygonCoordinates || farmData.polygonCoordinates.length === 0) continue;
+
+                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
+                        const q = query(submissionsCollection, where("finalDiagnosis", "!=", null));
+                        const submissionsSnapshot = await getDocs(q);
+
+                        submissionsSnapshot.forEach(submissionDoc => {
+                            const submissionData = submissionDoc.data();
+                            const pestDisease = submissionData.finalDiagnosis.pestDisease;
+
+                            if (!pestDiseaseColors[pestDisease]) {
+                                pestDiseaseColors[pestDisease] = colorPalette[colorIndex % colorPalette.length];
+                                colorIndex++;
+                            }
+
+                            const center = L.polygon(farmData.polygonCoordinates.map(c => [c.lat, c.lng])).getBounds().getCenter();
+                            const marker = L.marker(center, {
+                                icon: L.divIcon({
+                                    className: 'custom-div-icon',
+                                    html: `<div style='background-color:${pestDiseaseColors[pestDisease]};' class='marker-pin'></div>`,
+                                    iconSize: [30, 42],
+                                    iconAnchor: [15, 42]
+                                })
+                            }).bindPopup(`<b>${pestDisease}</b><br>Farm: ${farmData.farmName}`);
+                            markers.push(marker);
+                        });
+                    }
+                }
+
+                if (markers.length > 0) {
+                    const featureGroup = L.featureGroup(markers).addTo(expertMap);
+                    expertMap.fitBounds(featureGroup.getBounds().pad(0.1));
+                }
+
+                // Build legend
+                for (const [name, color] of Object.entries(pestDiseaseColors)) {
+                    legendContainer.innerHTML += `<div class="flex items-center mb-1"><div class="w-4 h-4 rounded-full mr-2" style="background-color:${color};"></div><span>${name}</span></div>`;
+                }
+
+            } catch (error) {
+                console.error("Error loading expert map:", error);
+                mapContainer.innerHTML = '<p class="text-red-500">Could not load map.</p>';
+                showToast("Could not load map data.", "error");
+            }
+        }
+
+        function renderOnlineClinicReports(submissions) {
+            const clinicContainer = document.getElementById('online-clinic-screen').querySelector('main');
+            clinicContainer.innerHTML = '';
+
+            if (submissions.length === 0) {
+                clinicContainer.innerHTML = `
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="check-circle-2" class="w-12 h-12 mx-auto text-green-500"></i>
+                        <p class="mt-4">No reports are currently escalated to the clinic.</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            submissions.forEach(submission => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
+
+                const escalatedDate = submission.escalatedAt?.toDate ? submission.escalatedAt.toDate().toLocaleDateString() : 'N/A';
+
+                let finalDiagnosisHTML = '';
+                if (submission.finalDiagnosis) {
+                    finalDiagnosisHTML = `<p class="text-sm text-green-600 font-semibold mt-2">Status: Final Diagnosis Provided</p>`;
+                } else {
+                    finalDiagnosisHTML = `<p class="text-sm text-orange-600 font-semibold mt-2">Status: Awaiting Final Diagnosis</p>`;
+                }
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-bold text-lg">${submission.farmName}</p>
+                            <p class="text-sm text-gray-600">Farmer: ${submission.farmerName}</p>
+                            <p class="text-sm text-gray-500 mb-2">Escalated on ${escalatedDate} by ${submission.escalatedByName}</p>
+                        </div>
+                        <button class="view-clinic-report-btn bg-blue-500 text-white text-sm font-bold py-2 px-3 rounded-lg" data-submission='${JSON.stringify(submission)}'>
+                            Review Case
+                        </button>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-100">
+                        <p class="font-semibold">Escalation Details</p>
+                        <p class="text-sm"><strong>Infestation:</strong> ${submission.escalationDetails.infestationPercentage}%</p>
+                        <p class="text-sm"><strong>Samples Collected:</strong> ${submission.escalationDetails.samplesCollectedDate}</p>
+                        <p class="text-sm"><strong>Farmer Contact:</strong> ${submission.escalationDetails.farmerContact}</p>
+                        <p class="text-sm"><strong>Sample Notes:</strong> ${submission.escalationDetails.samplesNotes}</p>
+                        ${finalDiagnosisHTML}
+                    </div>
+                `;
+
+                card.querySelector('.view-clinic-report-btn').addEventListener('click', (e) => {
+                    const submissionData = JSON.parse(e.currentTarget.getAttribute('data-submission'));
+
+                    // Set the target for the treatment modal
+                    currentTreatmentTarget = {
+                        userId: submissionData.userId,
+                        farmId: submissionData.farmId,
+                        submissionId: submissionData.submissionId
+                    };
+
+                    // Populate and show the treatment modal
+                    const detailsContainer = document.getElementById('treatment-report-details');
+                    detailsContainer.innerHTML = `
+                        <p class="font-bold text-lg">${submissionData.farmName}</p>
+                        <p class="font-semibold text-gray-800 mt-2">Initial Diagnosis:</p>
+                        <div class="pl-2 border-l-2 border-gray-200">
+                            <p><strong>Pest/Disease:</strong> ${submissionData.initialDiagnosis.pestDisease}</p>
+                            <p class="text-sm text-gray-600"><strong>Notes:</strong> ${submissionData.initialDiagnosis.notes || 'N/A'}</p>
+                            <p class="text-sm text-gray-600"><strong>Diagnosed by:</strong> ${submissionData.initialDiagnosis.diagnosedByName || 'N/A'}</p>
+                        </div>
+                    `;
+
+                    const finalPestDiseaseSelect = document.getElementById('final-pest-disease-select');
+                    populatePestDiseaseDropdown(finalPestDiseaseSelect);
+                    finalPestDiseaseSelect.value = submissionData.initialDiagnosis.pestDisease;
+                    document.getElementById('final-diagnosis-notes').value = submissionData.initialDiagnosis.notes || '';
+                    finalPestDiseaseSelect.dispatchEvent(new Event('change'));
+                    document.getElementById('treatment-instructions').value = '';
+                    document.getElementById('follow-up-date').value = '';
+
+                    document.getElementById('treatment-modal').classList.remove('hidden');
+                    document.getElementById('treatment-modal').classList.add('flex');
+                    lucide.createIcons();
+                });
+
+                clinicContainer.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function escapeCsvCell(cell) {
+            if (cell === null || cell === undefined) {
+                return '';
+            }
+            let str = String(cell);
+            // If the cell contains a comma, a quote, or a newline, wrap it in double quotes.
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                // Escape any existing double quotes by doubling them up.
+                str = str.replace(/"/g, '""');
+                return `"${str}"`;
+            }
+            return str;
+        }
+
+        async function exportReportsToCSV() {
+            showSavingOverlay('Exporting Data...');
+            try {
+                const headers = [
+                    'Report ID', 'Farmer Name', 'Farmer Contact', 'Farm Name', 'Farm Location (Lat)', 'Farm Location (Lng)',
+                    'Report Date', 'Symptoms', 'Distribution', 'Severity',
+                    'Initial Diagnosis By', 'Initial Diagnosis Date', 'Initial Pest/Disease', 'Initial Diagnosis Notes',
+                    'Is Escalated', 'Escalated By', 'Escalated Date', 'Infestation %', 'Samples Collected Date', 'Escalation Notes',
+                    'Final Diagnosis By', 'Final Diagnosis Date', 'Final Pest/Disease', 'Final Diagnosis Notes',
+                    'Treatment By', 'Treatment Date', 'Treatment Prevention', 'Treatment Monitoring', 'Treatment Control', 'Treatment Instructions', 'Follow-up Date'
+                ];
+
+                let csvContent = headers.map(escapeCsvCell).join(',') + '\r\n';
+
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                for (const userDoc of usersSnapshot.docs) {
+                    const userData = userDoc.data();
+                    const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
+                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+
+                    for (const farmDoc of farmLotsSnapshot.docs) {
+                        const farmData = farmDoc.data();
+                        const center = L.polygon(farmData.polygonCoordinates.map(c => [c.lat, c.lng])).getBounds().getCenter();
+
+                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
+                        const submissionsSnapshot = await getDocs(submissionsCollection);
+
+                        submissionsSnapshot.forEach(submissionDoc => {
+                            const s = submissionDoc.data();
+                            const row = [
+                                submissionDoc.id,
+                                userData.fullName,
+                                s.escalationDetails?.farmerContact || userData.contactNumber || '',
+                                farmData.farmName,
+                                center.lat,
+                                center.lng,
+                                s.timestamp?.toDate ? s.timestamp.toDate().toISOString() : '',
+                                Array.isArray(s.symptoms) ? s.symptoms.join('; ') : '',
+                                s.distribution,
+                                s.severity,
+                                s.initialDiagnosis?.diagnosedByName || '',
+                                s.initialDiagnosis?.diagnosedAt?.toDate ? s.initialDiagnosis.diagnosedAt.toDate().toISOString() : '',
+                                s.initialDiagnosis?.pestDisease || '',
+                                s.initialDiagnosis?.notes || '',
+                                s.isEscalated || false,
+                                s.escalatedByName || '',
+                                s.escalatedAt?.toDate ? s.escalatedAt.toDate().toISOString() : '',
+                                s.escalationDetails?.infestationPercentage || '',
+                                s.escalationDetails?.samplesCollectedDate || '',
+                                s.escalationDetails?.samplesNotes || '',
+                                s.finalDiagnosis?.diagnosedByName || '',
+                                s.finalDiagnosis?.diagnosedAt?.toDate ? s.finalDiagnosis.diagnosedAt.toDate().toISOString() : '',
+                                s.finalDiagnosis?.pestDisease || '',
+                                s.finalDiagnosis?.notes || '',
+                                s.treatment?.createdByName || '',
+                                s.treatment?.createdAt?.toDate ? s.treatment.createdAt.toDate().toISOString() : '',
+                                Array.isArray(s.treatment?.prevention) ? s.treatment.prevention.join('; ') : '',
+                                Array.isArray(s.treatment?.monitoring) ? s.treatment.monitoring.join('; ') : '',
+                                Array.isArray(s.treatment?.control) ? s.treatment.control.join('; ') : '',
+                                s.treatment?.instructions || '',
+                                s.treatment?.followUpDate || ''
+                            ];
+                            csvContent += row.map(escapeCsvCell).join(',') + '\r\n';
+                        });
+                    }
+                }
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `agri_guard_export_${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+            } catch (error) {
+                console.error("Error exporting data:", error);
+                showToast("Could not export data.", "error");
+            } finally {
+                hideSavingOverlay();
+            }
+        }
+
+        document.getElementById('export-csv-btn').addEventListener('click', exportReportsToCSV);
         // --- 7. DRILL-DOWN NAVIGATION ---
         let currentViewContext = {}; // Used to pass data between screens. DEPRECATED but kept for safety.
 
