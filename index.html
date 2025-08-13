@@ -216,13 +216,24 @@
                         <label for="rsbsaNumber" class="block text-sm font-medium text-gray-700">RSBSA Number (Optional)</label>
                         <input type="text" id="rsbsaNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
                     </div>
-                    <p class="mt-6 mb-2 font-medium text-gray-700">Select Your Role:</p>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <button id="role-farmer-btn" class="role-btn p-4 rounded-lg border-2 border-green-600 bg-green-600 text-white">Farmer</button>
-                        <button id="role-worker-btn" class="role-btn p-4 rounded-lg border-2 border-gray-300">Extension Worker</button>
-                        <button id="role-coordinator-btn" class="role-btn p-4 rounded-lg border-2 border-gray-300">Branch Coordinator</button>
-                        <button id="role-expert-btn" class="role-btn p-4 rounded-lg border-2 border-gray-300">Expert</button>
-                        <button id="role-admin-btn" class="role-btn p-4 rounded-lg border-2 border-gray-300">Administrator</button>
+                    <div id="role-management-section" class="mt-6">
+                        <h3 class="text-lg font-medium text-gray-800">Your Role</h3>
+                        <p class="mt-1 text-sm text-gray-600">Your current role is: <span id="current-role-display" class="font-semibold"></span></p>
+
+                        <div id="role-request-section" class="mt-4">
+                            <label for="request-role-select" class="block text-sm font-medium text-gray-700">Request a different role:</label>
+                            <div class="mt-1 flex rounded-md shadow-sm">
+                                <select id="request-role-select" class="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                                    <option>Extension Worker</option>
+                                    <option>Branch Coordinator</option>
+                                    <option>Expert</option>
+                                </select>
+                                <button id="request-role-change-btn" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                                    Request Change
+                                </button>
+                            </div>
+                            <p id="role-request-status" class="mt-2 text-sm text-gray-500"></p>
+                        </div>
                     </div>
                     <div class="mt-8 space-y-4">
                         <button id="edit-profile-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hidden">Edit Profile</button>
@@ -362,7 +373,7 @@
                         </div>
 
                         <!-- Case Details Side Panel -->
-                        <div id="expert-case-details-panel" class="hidden w-full lg:w-1/3 bg-white rounded-lg shadow-lg p-4 flex flex-col h-full">
+                        <div id="expert-case-details-panel" class="hidden w-full lg:w-1/3 bg-white rounded-lg shadow-lg p-4 flex-col h-full">
                             <div class="flex justify-between items-center mb-4 border-b pb-2">
                                 <h3 class="text-xl font-bold">Case Details</h3>
                                 <button id="close-expert-panel-btn" class="p-1 rounded-full hover:bg-gray-200">
@@ -393,6 +404,9 @@
                             <button id="admin-reports-tab" class="px-3 py-2 font-medium text-sm rounded-t-md border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                                 Report Management
                             </button>
+                            <button id="admin-role-requests-tab" class="px-3 py-2 font-medium text-sm rounded-t-md border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                Role Requests
+                            </button>
                         </nav>
                     </div>
                     <div id="admin-users-content">
@@ -407,6 +421,13 @@
                         <div class="text-center text-gray-500 mt-20">
                             <i data-lucide="file-text" class="w-12 h-12 mx-auto text-gray-400"></i>
                             <p class="mt-4">Loading reports...</p>
+                        </div>
+                    </div>
+                    <div id="admin-role-requests-content" class="hidden">
+                        <!-- Role requests table will be inserted here -->
+                        <div class="text-center text-gray-500 mt-20">
+                            <i data-lucide="user-check" class="w-12 h-12 mx-auto text-gray-400"></i>
+                            <p class="mt-4">Loading role requests...</p>
                         </div>
                     </div>
                 </main>
@@ -1567,22 +1588,8 @@
             document.getElementById('education').value = profile.education || 'No formal education';
 
             selectedRole = profile.role || 'Farmer';
-            document.querySelectorAll('.role-btn').forEach(btn => {
-                btn.classList.remove('bg-green-600', 'text-white');
-                btn.classList.add('border-gray-300');
-            });
-            if (selectedRole === 'Farmer') {
-                document.getElementById('role-farmer-btn').classList.add('bg-green-600', 'text-white');
-            } else if (selectedRole === 'Extension Worker') {
-                document.getElementById('role-worker-btn').classList.add('bg-green-600', 'text-white');
-            } else if (selectedRole === 'Branch Coordinator') {
-                document.getElementById('role-coordinator-btn').classList.add('bg-green-600', 'text-white');
-            } else if (selectedRole === 'Expert') {
-                document.getElementById('role-expert-btn').classList.add('bg-green-600', 'text-white');
-            }
-            else if (selectedRole === 'Administrator') {
-                document.getElementById('role-admin-btn').classList.add('bg-green-600', 'text-white');
-            }
+            document.getElementById('current-role-display').textContent = selectedRole;
+            updateRoleRequestStatus();
             updateUIVisibilityBasedOnRole();
         }
 
@@ -1691,29 +1698,79 @@
             setProfileMode('view');
         });
 
-        document.querySelectorAll('.role-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (btn.disabled) return;
-                document.querySelectorAll('.role-btn').forEach(b => {
-                    b.classList.remove('bg-green-600', 'text-white');
-                    b.classList.add('border-gray-300');
-                });
-                btn.classList.add('bg-green-600', 'text-white');
-                btn.classList.remove('border-gray-300');
-
-                if (btn.id === 'role-farmer-btn') {
-                    selectedRole = 'Farmer';
-                } else if (btn.id === 'role-worker-btn') {
-                    selectedRole = 'Extension Worker';
-                } else if (btn.id === 'role-coordinator-btn') {
-                    selectedRole = 'Branch Coordinator';
-                } else if (btn.id === 'role-expert-btn') {
-                    selectedRole = 'Expert';
-                } else if (btn.id === 'role-admin-btn') {
-                    selectedRole = 'Administrator';
-                }
-            });
+        document.getElementById('request-role-change-btn').addEventListener('click', () => {
+            const requestedRole = document.getElementById('request-role-select').value;
+            if (confirm(`Are you sure you want to request the role: ${requestedRole}?`)) {
+                requestRoleChange(requestedRole);
+            }
         });
+
+        async function requestRoleChange(requestedRole) {
+            if (!currentUser) {
+                showToast('You must be logged in to request a role change.', 'error');
+                return;
+            }
+
+            // Check for existing pending request first
+            const q = query(collection(db, "roleRequests"), where("userId", "==", currentUser.uid), where("status", "==", "pending"));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                showToast('You already have a pending role change request.', 'error');
+                return;
+            }
+
+            showSavingOverlay('Submitting Request...');
+            try {
+                const roleRequestsCollection = collection(db, 'roleRequests');
+                await addDoc(roleRequestsCollection, {
+                    userId: currentUser.uid,
+                    userName: userProfile.fullName,
+                    currentRole: userProfile.role,
+                    requestedRole: requestedRole,
+                    status: 'pending',
+                    timestamp: serverTimestamp()
+                });
+
+                showToast('Your role change request has been submitted for review.', 'success');
+                updateRoleRequestStatus();
+            } catch (error) {
+                console.error("Error submitting role change request:", error);
+                showToast('Could not submit your request. Please try again.', 'error');
+            } finally {
+                hideSavingOverlay();
+            }
+        }
+
+        async function updateRoleRequestStatus() {
+            if (!currentUser) return;
+            const requestBtn = document.getElementById('request-role-change-btn');
+            const requestStatusEl = document.getElementById('role-request-status');
+            const requestRoleSelect = document.getElementById('request-role-select');
+            const roleRequestSection = document.getElementById('role-request-section');
+
+            if (userProfile.role === 'Administrator' || userProfile.role === 'Expert') {
+                roleRequestSection.classList.add('hidden');
+                return;
+            } else {
+                 roleRequestSection.classList.remove('hidden');
+            }
+
+            requestBtn.disabled = true;
+            requestStatusEl.textContent = 'Checking for pending requests...';
+
+            const q = query(collection(db, "roleRequests"), where("userId", "==", currentUser.uid), where("status", "==", "pending"));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const pendingRequest = querySnapshot.docs[0].data();
+                requestStatusEl.textContent = `You have a pending request for the role: ${pendingRequest.requestedRole}.`;
+                requestRoleSelect.disabled = true;
+            } else {
+                requestStatusEl.textContent = 'You can request a role change if needed.';
+                requestBtn.disabled = false;
+                requestRoleSelect.disabled = false;
+            }
+        }
 
         document.getElementById('save-profile-btn').addEventListener('click', async () => {
             const fullName = document.getElementById('fullName').value;
@@ -1746,7 +1803,6 @@
                 yearsFarming: parseInt(yearsFarming),
                 familyMembers: parseInt(familyMembers),
                 education: education,
-                role: selectedRole,
                 email: currentUser.email || '',
                 photoURL: currentUser.photoURL || '',
                 rsbsaNumber: rsbsaNumber.trim()
@@ -1760,8 +1816,9 @@
                     // For existing profiles, set updatedAt
                     profileData.updatedAt = serverTimestamp();
                 } else {
-                    // For new profiles, set createdAt
+                    // For new profiles, set createdAt and default role
                     profileData.createdAt = serverTimestamp();
+                    profileData.role = 'Farmer';
                 }
 
                 await setDoc(userDocRef, profileData, { merge: true });
@@ -3563,52 +3620,6 @@
                 `;
             }
 
-            // --- New logic for Management Plan ---
-            let managementPlanHTML = '';
-            const createManagementSection = (title, items) => {
-                if (!items || items.length === 0) return '';
-                return `
-                    <div class="mt-2">
-                        <h6 class="font-semibold text-gray-600">${title}</h6>
-                        <ul class="list-disc list-inside text-sm text-gray-600 mt-1 space-y-1">
-                            ${items.map(item => `<li>${item}</li>`).join('')}
-                        </ul>
-                    </div>
-                `;
-            };
-
-            if (submission.treatment) {
-                // Case 1: A treatment plan has been applied
-                managementPlanHTML = `
-                    <div class="border-t pt-3">
-                        <h5 class="font-semibold text-gray-800 mb-1">Applied Treatment Plan</h5>
-                        <p class="text-xs text-gray-500 mb-2">Prescribed by ${submission.treatment.createdByName || 'N/A'} on ${submission.treatment.createdAt?.toDate ? submission.treatment.createdAt.toDate().toLocaleDateString() : 'N/A'}</p>
-                        ${createManagementSection('Prevention', submission.treatment.prevention)}
-                        ${createManagementSection('Monitoring', submission.treatment.monitoring)}
-                        ${createManagementSection('Direct Control', submission.treatment.control)}
-                        <h6 class="font-semibold text-gray-600 mt-2">Instructions</h6>
-                        <p class="text-sm italic text-gray-700 bg-gray-50 p-2 rounded">${submission.treatment.instructions || 'No specific instructions provided.'}</p>
-                    </div>
-                `;
-            } else if (submission.finalDiagnosis && submission.finalDiagnosis.pestDisease) {
-                // Case 2: No treatment applied, but final diagnosis exists. Show recommendations.
-                const allItems = [...(pestAndDiseaseData.fungal_and_bacterial_diseases || []), ...(pestAndDiseaseData.major_insect_pests || [])];
-                const itemDetails = allItems.find(item => (item['Disease Name'] || item['Pest Common Name']) === submission.finalDiagnosis.pestDisease);
-
-                if (itemDetails && itemDetails.management) {
-                    managementPlanHTML = `
-                        <div class="border-t pt-3">
-                            <h5 class="font-semibold text-gray-800 mb-1">Recommended Management Plan</h5>
-                             <p class="text-xs text-gray-500 mb-2">Based on final diagnosis. No treatment has been applied yet.</p>
-                            ${createManagementSection('Prevention', itemDetails.management.prevention)}
-                            ${createManagementSection('Monitoring', itemDetails.management.monitoring)}
-                            ${createManagementSection('Direct Control', itemDetails.management.direct_control)}
-                        </div>
-                    `;
-                }
-            }
-
-
             const contentHTML = `
                 <div class="space-y-4 text-sm">
                     <div>
@@ -3635,8 +3646,6 @@
                         <h5 class="font-semibold text-gray-800 mb-1">Diagnosis</h5>
                         ${diagnosisHTML}
                     </div>` : ''}
-
-                    ${managementPlanHTML}
                 </div>
             `;
 
@@ -3946,32 +3955,42 @@
 
         // --- 7. ADMIN DASHBOARD LOGIC ---
         function attachAdminTabListeners() {
-            const usersTab = document.getElementById('admin-users-tab');
-            const reportsTab = document.getElementById('admin-reports-tab');
-            const usersContent = document.getElementById('admin-users-content');
-            const reportsContent = document.getElementById('admin-reports-content');
+            const tabs = {
+                users: document.getElementById('admin-users-tab'),
+                reports: document.getElementById('admin-reports-tab'),
+                requests: document.getElementById('admin-role-requests-tab')
+            };
+            const contents = {
+                users: document.getElementById('admin-users-content'),
+                reports: document.getElementById('admin-reports-content'),
+                requests: document.getElementById('admin-role-requests-content')
+            };
+            const loaders = {
+                users: loadAdminUserManagement,
+                reports: loadAdminReportManagement,
+                requests: loadRoleRequests
+            };
 
-            usersTab.addEventListener('click', () => {
-                usersTab.classList.add('border-green-600', 'text-green-700');
-                usersTab.classList.remove('border-transparent', 'text-gray-500');
-                reportsTab.classList.remove('border-green-600', 'text-green-700');
-                reportsTab.classList.add('border-transparent', 'text-gray-500');
+            function switchTab(activeTab) {
+                Object.keys(tabs).forEach(key => {
+                    const tab = tabs[key];
+                    const content = contents[key];
+                    if (key === activeTab) {
+                        tab.classList.add('border-green-600', 'text-green-700');
+                        tab.classList.remove('border-transparent', 'text-gray-500');
+                        content.classList.remove('hidden');
+                        if(loaders[key]) loaders[key]();
+                    } else {
+                        tab.classList.remove('border-green-600', 'text-green-700');
+                        tab.classList.add('border-transparent', 'text-gray-500');
+                        content.classList.add('hidden');
+                    }
+                });
+            }
 
-                usersContent.classList.remove('hidden');
-                reportsContent.classList.add('hidden');
-                loadAdminUserManagement();
-            });
-
-            reportsTab.addEventListener('click', () => {
-                reportsTab.classList.add('border-green-600', 'text-green-700');
-                reportsTab.classList.remove('border-transparent', 'text-gray-500');
-                usersTab.classList.remove('border-green-600', 'text-green-700');
-                usersTab.classList.add('border-transparent', 'text-gray-500');
-
-                reportsContent.classList.remove('hidden');
-                usersContent.classList.add('hidden');
-                loadAdminReportManagement();
-            });
+            tabs.users.addEventListener('click', () => switchTab('users'));
+            tabs.reports.addEventListener('click', () => switchTab('reports'));
+            tabs.requests.addEventListener('click', () => switchTab('requests'));
         }
 
         async function loadAdminUserManagement() {
@@ -4192,7 +4211,122 @@
             }
         }
 
+        async function loadRoleRequests() {
+            if (!currentUser || !userProfile || userProfile.role !== 'Administrator') {
+                document.getElementById('admin-role-requests-content').innerHTML = '<p class="text-red-500">You do not have permission to view this page.</p>';
+                return;
+            }
+
+            const requestsContent = document.getElementById('admin-role-requests-content');
+            requestsContent.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i><p class="mt-4">Loading pending requests...</p></div>`;
+            lucide.createIcons();
+
+            try {
+                const q = query(collection(db, "roleRequests"), where("status", "==", "pending"));
+                const querySnapshot = await getDocs(q);
+                const requests = [];
+                querySnapshot.forEach(doc => {
+                    requests.push({ id: doc.id, ...doc.data() });
+                });
+
+                renderRoleRequestsTable(requests);
+            } catch (error) {
+                console.error("Error loading role requests:", error);
+                requestsContent.innerHTML = `<p class="text-red-500">Could not load role requests.</p>`;
+            }
+        }
+
+        function renderRoleRequestsTable(requests) {
+            const container = document.getElementById('admin-role-requests-content');
+            if (!requests || requests.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="check-circle" class="w-12 h-12 mx-auto text-gray-400"></i><p class="mt-4">No pending role requests.</p></div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            const tableHtml = `
+                <div class="overflow-x-auto bg-white rounded-lg shadow">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Role</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested Role</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            ${requests.map(req => `
+                                <tr id="request-row-${req.id}">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${req.userName}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${req.currentRole}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-700">${req.requestedRole}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${req.timestamp?.toDate().toLocaleDateString() || 'N/A'}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button class="text-green-600 hover:text-green-900 mr-4 approve-role-btn" data-request-id="${req.id}" data-user-id="${req.userId}" data-new-role="${req.requestedRole}">Approve</button>
+                                        <button class="text-red-600 hover:text-red-900 deny-role-btn" data-request-id="${req.id}">Deny</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.innerHTML = tableHtml;
+        }
         // --- 8. DRILL-DOWN NAVIGATION ---
+        document.getElementById('admin-role-requests-content').addEventListener('click', (e) => {
+            if (e.target.classList.contains('approve-role-btn')) {
+                const requestId = e.target.dataset.requestId;
+                const userId = e.target.dataset.userId;
+                const newRole = e.target.dataset.newRole;
+                if (confirm(`Are you sure you want to approve this request and set the user's role to ${newRole}?`)) {
+                    approveRoleRequest(requestId, userId, newRole);
+                }
+            }
+            if (e.target.classList.contains('deny-role-btn')) {
+                const requestId = e.target.dataset.requestId;
+                if (confirm('Are you sure you want to deny this role request?')) {
+                    denyRoleRequest(requestId);
+                }
+            }
+        });
+
+        async function approveRoleRequest(requestId, userId, newRole) {
+            showSavingOverlay('Approving Request...');
+            try {
+                const userDocRef = doc(db, 'users', userId);
+                const requestDocRef = doc(db, 'roleRequests', requestId);
+
+                await updateDoc(userDocRef, { role: newRole });
+                await updateDoc(requestDocRef, { status: 'approved', reviewedBy: userProfile.fullName, reviewedAt: serverTimestamp() });
+
+                showToast('Role request approved successfully!', 'success');
+                loadRoleRequests(); // Refresh the list
+            } catch (error) {
+                console.error("Error approving role request:", error);
+                showToast('Failed to approve role request.', 'error');
+            } finally {
+                hideSavingOverlay();
+            }
+        }
+
+        async function denyRoleRequest(requestId) {
+            showSavingOverlay('Denying Request...');
+            try {
+                const requestDocRef = doc(db, 'roleRequests', requestId);
+                await updateDoc(requestDocRef, { status: 'denied', reviewedBy: userProfile.fullName, reviewedAt: serverTimestamp() });
+
+                showToast('Role request denied.', 'success');
+                loadRoleRequests(); // Refresh the list
+            } catch (error) {
+                console.error("Error denying role request:", error);
+                showToast('Failed to deny role request.', 'error');
+            } finally {
+                hideSavingOverlay();
+            }
+        }
         document.getElementById('admin-reports-content').addEventListener('click', (e) => {
             if (e.target.classList.contains('delete-report-btn')) {
                 const userId = e.target.dataset.userId;
