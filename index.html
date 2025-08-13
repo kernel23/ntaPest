@@ -815,7 +815,7 @@
         });
 
         // Function to switch between screens
-        function showScreen(screenName, context = {}, isBack = false) {
+        async function showScreen(screenName, context = {}, isBack = false) {
             if (!isBack) {
                 if (context.isFreshNavigation) {
                     navigationHistory = [{ screenName, context }];
@@ -884,7 +884,7 @@
                     loadCoordinatorDashboard(currentContext);
                     break;
                 case 'newSubmission':
-                    initializeReportMap(currentContext.farmId);
+                    await initializeReportMap(currentContext);
                     break;
             }
 
@@ -1052,11 +1052,14 @@
             }
         }
 
-        async function initializeReportMap(farmId) {
+        async function initializeReportMap(context) {
+            const farmId = context.farmId;
+            const targetUserId = context.userId || currentUser.uid;
+
             if (!currentUser || !farmId) return;
 
             try {
-                const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', farmId);
+                const farmDocRef = doc(db, 'users', targetUserId, 'farmLots', farmId);
                 const farmDocSnap = await getDoc(farmDocRef);
 
                 if (farmDocSnap.exists()) {
