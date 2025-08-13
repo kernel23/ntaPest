@@ -524,6 +524,19 @@
         </div>
     </div>
 
+    <!-- Report Details Modal -->
+    <div id="report-details-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Full Report Details</h3>
+                <button id="close-report-details-modal-btn" class="p-1"><i data-lucide="x"></i></button>
+            </div>
+            <div id="report-details-content" class="p-6 max-h-[80vh] overflow-y-auto">
+                <!-- Report details will be loaded here dynamically -->
+            </div>
+        </div>
+    </div>
+
     <!-- Treatment Modal -->
     <div id="treatment-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg m-4">
@@ -2589,88 +2602,133 @@
                     </div>`;
 
                 summaryCard.addEventListener('click', async () => {
-                    const isHidden = detailsCard.classList.toggle('hidden');
-                    if (!isHidden && !detailsCard.dataset.loaded) {
-                        detailsCard.dataset.loaded = 'true'; // Prevent reloading
+                    const modal = document.getElementById('report-details-modal');
+                    const modalContent = document.getElementById('report-details-content');
+                    const closeModalBtn = document.getElementById('close-report-details-modal-btn');
+                    let detailMap = null;
 
-                        const mapId = `report-map-${submission.id}`;
+                    // Start with a loading state
+                    modalContent.innerHTML = `<div class="text-center text-gray-500 p-8"><i data-lucide="loader" class="animate-spin inline-block"></i> Loading details...</div>`;
+                    lucide.createIcons();
 
-                        let initialDiagnosisHTML = '';
-                        if (submission.initialDiagnosis) {
-                            initialDiagnosisHTML = `
-                                <div class="mt-4 pt-4 border-t">
-                                    <h4 class="font-bold">Initial Diagnosis</h4>
-                                    <p><strong>Pest/Disease:</strong> ${submission.initialDiagnosis.pestDisease}</p>
-                                    <p><strong>Notes:</strong> ${submission.initialDiagnosis.notes || 'N/A'}</p>
-                                    <p class="text-sm text-gray-500">by ${submission.initialDiagnosis.diagnosedByName}</p>
-                                </div>`;
-                        }
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
 
-                        let finalDiagnosisHTML = '';
-                        if (submission.finalDiagnosis) {
-                            finalDiagnosisHTML = `
-                                <div class="mt-4 pt-4 border-t">
-                                    <h4 class="font-bold">Final Diagnosis</h4>
-                                    <p><strong>Pest/Disease:</strong> ${submission.finalDiagnosis.pestDisease}</p>
-                                    <p><strong>Notes:</strong> ${submission.finalDiagnosis.notes || 'N/A'}</p>
-                                    <p class="text-sm text-gray-500">by ${submission.finalDiagnosis.diagnosedByName}</p>
-                                </div>`;
-                        }
+                    const mapId = `report-map-${submission.id}`;
 
-                        let treatmentHTML = '';
-                        if (submission.treatment) {
-                            const allActions = [
-                                ...(submission.treatment.prevention || []),
-                                ...(submission.treatment.monitoring || []),
-                                ...(submission.treatment.control || [])
-                            ];
-
-                            treatmentHTML = `
-                                <div class="mt-4 pt-4 border-t">
-                                    <h4 class="font-bold">Treatment Plan</h4>
-                                    ${allActions.length > 0 ? `<p><strong>Actions:</strong> ${allActions.join(', ')}</p>` : ''}
-                                    <p><strong>Instructions:</strong> ${submission.treatment.instructions || 'N/A'}</p>
-                                    ${submission.treatment.followUpDate ? `<p><strong>Follow-up Date:</strong> ${submission.treatment.followUpDate}</p>` : ''}
-                                </div>`;
-                        }
-
-                        detailsCard.innerHTML = `
-                            <h3 class="text-lg font-bold mb-2">Full Report Details</h3>
-                            <div id="${mapId}" class="w-full h-48 bg-gray-200 rounded-md shadow-inner mb-4"></div>
-                            <img src="${submission.imageDataUrl}" class="rounded-lg my-2 max-h-96 w-auto">
-                            ${initialDiagnosisHTML}
-                            ${finalDiagnosisHTML}
-                            ${treatmentHTML}
-                        `;
-
-                        try {
-                            const farmDocRef = doc(db, 'users', submission.userId, 'farmLots', submission.farmId);
-                            const farmDocSnap = await getDoc(farmDocRef);
-                            if (farmDocSnap.exists()) {
-                                const farmData = farmDocSnap.data();
-                                const coordinates = farmData.polygonCoordinates;
-
-                                const detailMap = L.map(mapId, { scrollWheelZoom: false, dragging: false, zoomControl: false });
-                                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                                    attribution: 'Tiles &copy; Esri'
-                                }).addTo(detailMap);
-
-                                if (coordinates && coordinates.length > 0) {
-                                    const latLngs = coordinates.map(c => [c.lat, c.lng]);
-                                    const polygon = L.polygon(latLngs, {color: '#22c55e'}).addTo(detailMap);
-                                    detailMap.fitBounds(polygon.getBounds());
-                                }
-                                setTimeout(() => detailMap.invalidateSize(), 0);
-                            }
-                        } catch (e) {
-                            console.error("Could not load map for report", e);
-                            document.getElementById(mapId).innerHTML = '<p class="text-red-500">Could not load map.</p>';
-                        }
+                    let initialDiagnosisHTML = '';
+                    if (submission.initialDiagnosis) {
+                        initialDiagnosisHTML = `
+                            <div class="mt-4 pt-4 border-t">
+                                <h4 class="font-bold text-gray-800">Initial Diagnosis</h4>
+                                <p class="text-sm"><strong>Pest/Disease:</strong> ${submission.initialDiagnosis.pestDisease}</p>
+                                <p class="text-sm"><strong>Notes:</strong> ${submission.initialDiagnosis.notes || 'N/A'}</p>
+                                <p class="text-xs text-gray-500 mt-1">by ${submission.initialDiagnosis.diagnosedByName}</p>
+                            </div>`;
                     }
+
+                    let finalDiagnosisHTML = '';
+                    if (submission.finalDiagnosis) {
+                        finalDiagnosisHTML = `
+                            <div class="mt-4 pt-4 border-t">
+                                <h4 class="font-bold text-gray-800">Final Diagnosis</h4>
+                                <p class="text-sm"><strong>Pest/Disease:</strong> ${submission.finalDiagnosis.pestDisease}</p>
+                                <p class="text-sm"><strong>Notes:</strong> ${submission.finalDiagnosis.notes || 'N/A'}</p>
+                                <p class="text-xs text-gray-500 mt-1">by ${submission.finalDiagnosis.diagnosedByName}</p>
+                            </div>`;
+                    }
+
+                    let treatmentHTML = '';
+                    if (submission.treatment) {
+                        const { prevention, monitoring, control, instructions, followUpDate } = submission.treatment;
+
+                        const createSection = (title, items) => {
+                            if (!items || items.length === 0) return '';
+                            return `
+                                <div class="mt-3">
+                                    <h5 class="font-semibold text-gray-700">${title}</h5>
+                                    <ul class="list-disc list-inside text-sm text-gray-600 mt-1 space-y-1">
+                                        ${items.map(item => `<li>${item}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            `;
+                        };
+
+                        treatmentHTML = `
+                            <div class="mt-4 pt-4 border-t">
+                                <h4 class="font-bold text-lg text-gray-800">Treatment Plan</h4>
+                                ${createSection('Prevention', prevention)}
+                                ${createSection('Monitoring', monitoring)}
+                                ${createSection('Direct Control', control)}
+                                <div class="mt-3">
+                                    <h5 class="font-semibold text-gray-700">Specific Instructions</h5>
+                                    <p class="text-sm text-gray-600 mt-1">${instructions || 'N/A'}</p>
+                                </div>
+                                ${followUpDate ? `
+                                <div class="mt-3">
+                                    <h5 class="font-semibold text-gray-700">Follow-up Date</h5>
+                                    <p class="text-sm text-gray-600 mt-1">${followUpDate}</p>
+                                </div>` : ''}
+                            </div>`;
+                    }
+
+                    modalContent.innerHTML = `
+                        <div id="${mapId}" class="w-full h-48 bg-gray-200 rounded-md shadow-inner mb-4"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <img src="${submission.imageDataUrl}" class="rounded-lg w-full object-cover">
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800">Report Information</h4>
+                                <p class="text-sm"><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
+                                <p class="text-sm"><strong>Distribution:</strong> ${submission.distribution}</p>
+                                <p class="text-sm"><strong>Severity:</strong> ${submission.severity}</p>
+                            </div>
+                        </div>
+                        ${initialDiagnosisHTML}
+                        ${finalDiagnosisHTML}
+                        ${treatmentHTML}
+                    `;
+
+                    try {
+                        const farmDocRef = doc(db, 'users', submission.userId, 'farmLots', submission.farmId);
+                        const farmDocSnap = await getDoc(farmDocRef);
+                        if (farmDocSnap.exists()) {
+                            const farmData = farmDocSnap.data();
+                            const coordinates = farmData.polygonCoordinates;
+
+                            detailMap = L.map(mapId, { scrollWheelZoom: false, dragging: false, zoomControl: false });
+                            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                                attribution: 'Tiles &copy; Esri'
+                            }).addTo(detailMap);
+
+                            if (coordinates && coordinates.length > 0) {
+                                const latLngs = coordinates.map(c => [c.lat, c.lng]);
+                                const polygon = L.polygon(latLngs, {color: '#22c55e'}).addTo(detailMap);
+                                detailMap.fitBounds(polygon.getBounds());
+                            }
+                            setTimeout(() => detailMap.invalidateSize(), 0);
+                        }
+                    } catch (e) {
+                        console.error("Could not load map for report", e);
+                        document.getElementById(mapId).innerHTML = '<p class="text-red-500">Could not load map.</p>';
+                    }
+
+                    lucide.createIcons();
+
+                    const closeModal = () => {
+                        modal.classList.add('hidden');
+                        modal.classList.remove('flex');
+                        if (detailMap) {
+                            detailMap.remove();
+                        }
+                        closeModalBtn.removeEventListener('click', closeModal);
+                    };
+                    closeModalBtn.addEventListener('click', closeModal, { once: true });
                 });
 
                 reportWrapper.appendChild(summaryCard);
-                reportWrapper.appendChild(detailsCard);
+                // The detailsCard is no longer needed.
                 reportsContainer.appendChild(reportWrapper);
             });
             lucide.createIcons();
