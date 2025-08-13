@@ -1201,15 +1201,15 @@
             updateNavigationControls();
         }
 
-        function updateUIVisibilityBasedOnRole() {
-            if (!userProfile) return;
+        function updateUIVisibilityBasedOnRole(profile) {
+            if (!profile) return;
 
             const roles = {
-                isFarmer: userProfile.role === 'Farmer',
-                isWorker: userProfile.role === 'Extension Worker',
-                isCoordinator: userProfile.role === 'Branch Coordinator',
-                isExpert: userProfile.role === 'Expert',
-                isAdmin: userProfile.role === 'Administrator'
+                isFarmer: profile.role === 'Farmer',
+                isWorker: profile.role === 'Extension Worker',
+                isCoordinator: profile.role === 'Branch Coordinator',
+                isExpert: profile.role === 'Expert',
+                isAdmin: profile.role === 'Administrator'
             };
 
             const getNavElements = (id) => [
@@ -1652,7 +1652,7 @@
             selectedRole = profile.role || 'Farmer';
             document.getElementById('current-role-display').textContent = selectedRole;
             updateRoleRequestStatus();
-            updateUIVisibilityBasedOnRole();
+            updateUIVisibilityBasedOnRole(profile);
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -4479,8 +4479,6 @@
         window.addEventListener('offline', updateOnlineStatus);
         updateOnlineStatus();
 
-        // Expose for testing
-        window.showScreen = showScreen;
     </script>
 </body>
 </html>
