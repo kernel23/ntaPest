@@ -676,7 +676,20 @@
         });
 
         // --- Sidebar Navigation ---
-        document.getElementById('nav-farm-list').addEventListener('click', () => showScreen('farmList'));
+        document.getElementById('nav-farm-list').addEventListener('click', () => {
+            if (!userProfile) return;
+
+            // Clear any drill-down context when returning to the main dashboard.
+            currentViewContext = {};
+
+            if (userProfile.role === 'Extension Worker') {
+                showScreen('ewDashboard');
+            } else if (userProfile.role === 'Branch Coordinator') {
+                showScreen('coordinatorDashboard');
+            } else { // Default to Farmer
+                showScreen('farmList');
+            }
+        });
         document.getElementById('nav-profile').addEventListener('click', () => showScreen('profile'));
         document.getElementById('nav-reports').addEventListener('click', () => showScreen('reports'));
         document.getElementById('nav-diagnosis').addEventListener('click', () => showScreen('diagnosis'));
