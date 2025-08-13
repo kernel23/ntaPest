@@ -1,0 +1,150 @@
+{
+  "fungal_and_bacterial_diseases": [
+    {
+      "Disease Name": "Black Shank",
+      "Causal Agents": "Phytophthora nicotianae",
+      "Primary Visual Symptoms": "Initial symptoms include rapid, one-sided yellowing (chlorosis) and wilting of leaves during the heat of the day, which may recover overnight. This progresses to permanent wilting. A key diagnostic sign is a dark brown to black lesion at the base of the stalk, extending from the soil line upwards. When the stalk is split lengthwise, the pith (the central core) shows separated, brown-to-black disks, appearing like a ladder. Roots become black and rotten.",
+      "Key Plant Parts Affected": [
+        "Roots",
+        "Stalk Base (Crown)",
+        "Leaves",
+        "Pith"
+      ],
+      "url": "https://content.ces.ncsu.edu/black-shank"
+    },
+    {
+      "Disease Name": "Blue Mold (Downy Mildew)",
+      "Causal Agents": "Peronospora hyoscyami f.sp. tabacina",
+      "Primary Visual Symptoms": "On young plants, leaves may cup downwards and become stunted and distorted. On older plants, distinct yellow to light green spots or blotches appear on the upper leaf surface. In cool, humid conditions, the underside of these spots will be covered with a dense, bluish-gray, downy fungal growth. As the disease progresses, the spots enlarge, turn brown, and become necrotic, leading to large dead areas on the leaf.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "https://content.ces.ncsu.edu/blue-mold-of-tobacco"
+    },
+    {
+      "Disease Name": "Brown Spot",
+      "Causal Agents": "Alternaria alternata",
+      "Primary Visual Symptoms": "Primarily affects maturing leaves. Lesions start as small, water-soaked spots that enlarge into circular, dark brown lesions, often with a distinct 'target spot' or concentric ring pattern. A bright yellow halo typically surrounds these spots. The spots can merge (coalesce), leading to large, blighted areas and a 'fired' appearance on the lower leaves. The centers of older spots may fall out, giving a ragged look.",
+      "Key Plant Parts Affected": [
+        "Leaves (especially lower, mature ones)"
+      ],
+      "url": "https://content.ces.ncsu.edu/brown-spot"
+    },
+    {
+      "Disease Name": "Frogeye Leaf Spot",
+      "Causal Agents": "Cercospora nicotianae",
+      "Primary Visual Symptoms": "Lesions are typically small, circular, and well-defined, ranging from 1-10 mm. They begin as brown spots but mature to have a distinct grayish-white or tan center with a dark, thin, raised border, resembling a frog's eye. Lesions are often more numerous on lower, shaded leaves and can cause premature yellowing and curing of the leaf.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "https://content.ces.ncsu.edu/frogeye-leaf-spot-of-tobacco"
+    },
+    {
+      "Disease Name": "Granville Wilt (Bacterial Wilt)",
+      "Causal Agents": "Ralstonia solanacearum",
+      "Primary Visual Symptoms": "Symptoms appear as a sudden wilting of leaves, often on only one side of the plant or even one side of a single leaf. The plant shows no initial yellowing. Wilting is permanent and leads to stunting and death. A key diagnostic sign is seen by cutting the stem: the vascular tissue will be dark brown or black, and a milky-white to yellowish bacterial ooze will emerge from the cut end, especially when placed in water.",
+      "Key Plant Parts Affected": [
+        "Roots",
+        "Vascular System",
+        "Stem"
+      ],
+      "url": "https://content.ces.ncsu.edu/granville-wilt-of-tobacco"
+    },
+    {
+      "Disease Name": "Wildfire",
+      "Causal Agents": "Pseudomonas syringae pv. tabaci",
+      "Primary Visual Symptoms": "Characterized by small, circular, water-soaked spots that quickly enlarge. Each spot develops a necrotic, dark brown to black center surrounded by a very prominent, wide, bright yellow halo. This halo is the most distinctive feature. The spots can merge, leading to large, dead patches on the leaf.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": ""
+    },
+    {
+      "Disease Name": "Angular Leaf Spot",
+      "Causal Agents": "Pseudomonas syringae pv. angulata",
+      "Primary Visual Symptoms": "Lesions begin as water-soaked spots that turn dark brown to black. Unlike Wildfire, these spots are distinctly angular, as their spread is limited by the leaf veins. The spots lack the wide, prominent yellow halo seen with Wildfire. In wet weather, the spots may merge, causing large areas of the leaf to become blighted and ragged.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": ""
+    }
+  ],
+  "major_insect_pests": [
+    {
+      "Pest Common Name": "Tobacco Hornworm",
+      "Scientific Name": "Manduca sexta",
+      "Feeding Guild": "Defoliator",
+      "Characteristic Visual Damage": "Severe and rapid defoliation. Large sections of leaves are consumed, often starting from the leaf margin. In heavy infestations, entire leaves can be stripped, leaving only the bare midrib and main veins. The presence of very large (up to 1/2 inch), dark green or black, barrel-shaped droppings (frass) on the leaves and ground below is a clear indicator.",
+      "Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "https://content.ces.ncsu.edu/tobacco-hornworms"
+    },
+    {
+      "Pest Common Name": "Tobacco Budworm",
+      "Scientific Name": "Heliothis virescens",
+      "Feeding Guild": "Bud Feeder / Defoliator",
+      "Characteristic Visual Damage": "Larvae feed directly on the unopened leaf bud. This feeding creates small holes and ragged edges on the young, furled leaves. As these leaves grow and unfurl, the holes expand, resulting in large, symmetrical, and tattered-looking holes in the most valuable upper leaves. Dark, wet frass is often present within the bud.",
+      "Plant Parts Affected": [
+        "Leaf Bud",
+        "Young Leaves",
+        "Flowers",
+        "Seed Pods"
+      ],
+      "url": "https://content.ces.ncsu.edu/tobacco-budworm"
+    },
+    {
+      "Pest Common Name": "Tobacco Flea Beetle",
+      "Scientific Name": "Epitrix hirtipennis",
+      "Feeding Guild": "Defoliator (Shothole)",
+      "Characteristic Visual Damage": "Adult beetles chew numerous small, round holes (1-2 mm) through the leaf tissue, making the leaves look as if they have been hit with fine birdshot. This 'shot-hole' damage reduces leaf quality and can be severe enough to kill newly set transplants. Larvae feed on roots, causing minor damage.",
+      "Plant Parts Affected": [
+        "Leaves",
+        "Roots (larvae)"
+      ],
+      "url": "https://content.ces.ncsu.edu/insect-and-related-pests-of-vegetables/pests-of-potato"
+    },
+    {
+      "Pest Common Name": "Cutworms",
+      "Scientific Name": "Various Noctuidae species",
+      "Feeding Guild": "Stem Cutter / Defoliator",
+      "Characteristic Visual Damage": "The most characteristic damage is to newly transplanted seedlings, which are chewed through and severed at or just below the soil line, causing the plant to fall over and die. Some species are 'climbing cutworms' that ascend the plant at night and chew irregular holes in the leaves.",
+      "Plant Parts Affected": [
+        "Stem (at soil line)",
+        "Leaves"
+      ],
+      "url": "https://content.ces.ncsu.edu/north-carolina-organic-commodities-production-guide/chapter-6-crop-production-management-flue-cured-tobacco"
+    },
+    {
+      "Pest Common Name": "Aphids",
+      "Scientific Name": "Myzus nicotianae",
+      "Feeding Guild": "Sucking Pest",
+      "Characteristic Visual Damage": "Infestations cause leaves to yellow, curl downwards, and become distorted or stunted. Aphids excrete a sugary liquid called 'honeydew,' which coats the leaves, making them sticky. This honeydew promotes the growth of a black, powdery fungus called sooty mold, which contaminates the leaf and reduces photosynthesis.",
+      "Plant Parts Affected": [
+        "Leaves (especially underside)",
+        "Stems"
+      ],
+      "url": "https://content.ces.ncsu.edu/green-peach-aphid"
+    },
+    {
+      "Pest Common Name": "Whiteflies",
+      "Scientific Name": "Bemisia tabaci",
+      "Feeding Guild": "Sucking Pest",
+      "Characteristic Visual Damage": "Feeding by nymphs and adults causes yellow mottling or 'silverleaf' on the upper leaf surface. Heavy infestations lead to plant stunting, yellowing, and leaf death. Like aphids, they produce honeydew, resulting in sticky leaves and the growth of black sooty mold. They are also major vectors for viruses.",
+      "Plant Parts Affected": [
+        "Leaves (underside)"
+      ],
+      "url": "https://content.ces.ncsu.edu/whiteflies-in-strawberries"
+    },
+    {
+      "Pest Common Name": "Tobacco Stem Borer (Buros)",
+      "Scientific Name": "Scrobipalpa heliopa",
+      "Feeding Guild": "Stem Borer",
+      "Characteristic Visual Damage": "The primary symptom is a noticeable, gall-like swelling on the main stem, often several inches above the ground. This swelling is caused by the larva tunneling inside. Above the gall, the plant may show signs of wilting, especially the top leaves, and stunted growth. Splitting the gall open will reveal the tunnel and the small, pinkish larva.",
+      "Plant Parts Affected": [
+        "Stem"
+      ],
+      "url": ""
+    }
+  ]
+}
