@@ -1677,16 +1677,41 @@
                     userProfile = profileData;
                 }
 
-                const requiredFields = ['fullName', 'homeAddress', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
-                const isProfileComplete = requiredFields.every(field => userProfile[field]);
+                const requiredFields = ['fullName', 'province', 'municipality', 'barangay', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
+                const isProfileComplete = requiredFields.every(field => userProfile[field] !== undefined && userProfile[field] !== null && userProfile[field] !== '');
 
                 if (isProfileComplete) {
                     populateProfileFields(userProfile); // Repopulate with the latest saved data
                     setProfileMode('view');
-                    document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
-                    loadFarms();
-                    showScreen('farmList');
-                    document.getElementById('add-farm-btn').style.display = 'flex';
+
+                    // Role-based routing after profile save
+                    let screen;
+                    const context = {
+                        isFreshNavigation: true,
+                        userId: currentUser.uid,
+                        userName: userProfile.fullName,
+                        label: 'Dashboard'
+                    };
+
+                    if (userProfile.role === 'Extension Worker') {
+                        screen = 'ewDashboard';
+                        document.getElementById('ew-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                        document.getElementById('add-farm-btn').style.display = 'none';
+                    } else if (userProfile.role === 'Branch Coordinator') {
+                        screen = 'coordinatorDashboard';
+                        document.getElementById('coordinator-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                        document.getElementById('add-farm-btn').style.display = 'none';
+                    } else if (userProfile.role === 'Expert') {
+                        screen = 'expertDashboard';
+                        document.getElementById('expert-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                        document.getElementById('add-farm-btn').style.display = 'none';
+                    } else { // Default to Farmer
+                        screen = 'farmList';
+                        document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+                        document.getElementById('add-farm-btn').style.display = 'flex';
+                    }
+                    showScreen(screen, context);
+
                 } else {
                     setProfileMode('new');
                 }
