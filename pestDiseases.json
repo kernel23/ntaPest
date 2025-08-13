@@ -3,148 +3,626 @@
     {
       "Disease Name": "Black Shank",
       "Causal Agents": "Phytophthora nicotianae",
-      "Primary Visual Symptoms": "Initial symptoms include rapid, one-sided yellowing (chlorosis) and wilting of leaves during the heat of the day, which may recover overnight. This progresses to permanent wilting. A key diagnostic sign is a dark brown to black lesion at the base of the stalk, extending from the soil line upwards. When the stalk is split lengthwise, the pith (the central core) shows separated, brown-to-black disks, appearing like a ladder. Roots become black and rotten.",
+      "Primary Visual Symptoms": "Rapid wilting, often starting on one side. A key sign is a dark brown to black lesion at the base of the stalk extending upwards from the soil line. When the stalk is split, the pith shows separated, brown-to-black disks. Roots become black and rotten.",
       "Key Plant Parts Affected": [
         "Roots",
         "Stalk Base (Crown)",
         "Leaves",
         "Pith"
       ],
-      "url": "https://content.ces.ncsu.edu/black-shank"
+      "url": "https://content.ces.ncsu.edu/black-shank",
+      "management": {
+        "prevention": [
+          "Use resistant cultivars.",
+          "Form high and wide beds to provide drainage for root systems, as the fungus is favored by high soil moisture.",
+          "Use balanced fertilization; avoid excessive levels of nitrogen.",
+          "Control nematodes as they can greatly exacerbate disease severity and reduce the effectiveness of resistant varieties.",
+          "Practice crop rotation with any other crop to prevent build-up of the inoculum in the soil, as the fungus primarily attacks tobacco."
+        ],
+        "monitoring": [
+          "Monitor from the seedling stage for symptoms: wilting, yellowing of leaves, stem lesions, and plant death.",
+          "Check for root and crown rot.",
+          "Look for stems that are dark brown or black near the soil line.",
+          "Inspect the stem pith for dry, brown-to-black, plate-like discs.",
+          "Once the fungus is detected, practice at least a 2-year rotation. The longer the rotation, the more effective the control.",
+          "Survey tobacco fields and keep track of disease pressure, incidence, and severity every year."
+        ],
+        "direct_control": [
+          "Practice field sanitation: destroy stalks and roots immediately following harvest.",
+          "Apply Metalaxyl-M/Mefenoxam where registered and appropriate."
+        ]
+      }
     },
     {
       "Disease Name": "Blue Mold (Downy Mildew)",
       "Causal Agents": "Peronospora hyoscyami f.sp. tabacina",
-      "Primary Visual Symptoms": "On young plants, leaves may cup downwards and become stunted and distorted. On older plants, distinct yellow to light green spots or blotches appear on the upper leaf surface. In cool, humid conditions, the underside of these spots will be covered with a dense, bluish-gray, downy fungal growth. As the disease progresses, the spots enlarge, turn brown, and become necrotic, leading to large dead areas on the leaf.",
+      "Primary Visual Symptoms": "On young plants, leaves may cup downwards and become stunted. On older plants, distinct yellow to light green spots appear on the upper leaf surface. In cool, humid conditions, the underside of these spots is covered with a dense, bluish-gray, downy fungal growth.",
       "Key Plant Parts Affected": [
         "Leaves"
       ],
-      "url": "https://content.ces.ncsu.edu/blue-mold-of-tobacco"
+      "url": "https://content.ces.ncsu.edu/blue-mold-of-tobacco",
+      "management": {
+        "prevention": [
+          "Use resistant varieties whenever possible.",
+          "Orient fields and rows to maximize air circulation and sunlight penetration to promote leaf drying.",
+          "Avoid excessive nitrogen fertilization, which can lead to dense, susceptible canopies.",
+          "Destroy tobacco stalks, roots, and volunteer seedlings immediately after harvest to reduce overwintering sites for the pathogen.",
+          "Maintain proper plant spacing to reduce canopy humidity."
+        ],
+        "monitoring": [
+          "Begin scouting early in the season, especially during cool, wet, and cloudy weather.",
+          "Check the undersides of leaves for the characteristic bluish-gray mold, particularly in the lower canopy.",
+          "Monitor regional alerts and forecasts, as blue mold spores can travel long distances on wind currents.",
+          "Pay close attention to low-lying or shaded areas of the field where humidity remains high."
+        ],
+        "direct_control": [
+          "Apply preventative fungicides before the disease is established, especially when weather conditions are favorable for infection.",
+          "Once detected, apply systemic fungicides according to label recommendations to manage the spread.",
+          "Promptly harvest mature leaves to salvage them before they become infected.",
+          "In greenhouses, increase temperature and decrease humidity to create an unfavorable environment for the pathogen."
+        ]
+      }
     },
     {
       "Disease Name": "Brown Spot",
       "Causal Agents": "Alternaria alternata",
-      "Primary Visual Symptoms": "Primarily affects maturing leaves. Lesions start as small, water-soaked spots that enlarge into circular, dark brown lesions, often with a distinct 'target spot' or concentric ring pattern. A bright yellow halo typically surrounds these spots. The spots can merge (coalesce), leading to large, blighted areas and a 'fired' appearance on the lower leaves. The centers of older spots may fall out, giving a ragged look.",
+      "Primary Visual Symptoms": "Primarily affects mature leaves. Lesions start as small wet spots that enlarge into circular, dark brown lesions with a 'target spot' pattern, often surrounded by a yellow halo. In humid conditions, a black layer of spores can appear on the spots.",
       "Key Plant Parts Affected": [
-        "Leaves (especially lower, mature ones)"
+        "Leaves (especially lower, mature ones)",
+        "Stems",
+        "Petioles"
       ],
-      "url": "https://content.ces.ncsu.edu/brown-spot"
+      "url": "https://content.ces.ncsu.edu/brown-spot",
+      "management": {
+        "prevention": [
+          "Use clean, certified seeds and plant tolerant varieties.",
+          "Reduce planting density to promote ventilation and decrease humidity.",
+          "Avoid planting in plots where the disease has been severe.",
+          "Use balanced fertilization; avoid excessive nitrogen and apply proper levels of potassium.",
+          "Practice crop rotation with a non-host crop.",
+          "Destroy stalks and roots to reduce inoculum.",
+          "Control nematodes, as high levels can increase brown spot damage.",
+          "Control suckers to aid in reducing losses."
+        ],
+        "monitoring": [
+          "Monitor for symptoms on lower, mature leaves first.",
+          "Look for small wet spots that turn into brown, circular lesions with concentric rings and a yellow halo.",
+          "Check for progression to upper leaves and the development of black spores in humid conditions.",
+          "Note if spots merge, leading to large areas of dead tissue.",
+          "Be aware that spots can continue to develop during curing."
+        ],
+        "direct_control": [
+          "Harvest infected leaves as soon as possible to reduce spore spread.",
+          "Apply appropriate fungicides like Timorex Gold (extract of Melaleuca alternifolia) following label instructions."
+        ]
+      }
     },
     {
       "Disease Name": "Frogeye Leaf Spot",
       "Causal Agents": "Cercospora nicotianae",
-      "Primary Visual Symptoms": "Lesions are typically small, circular, and well-defined, ranging from 1-10 mm. They begin as brown spots but mature to have a distinct grayish-white or tan center with a dark, thin, raised border, resembling a frog's eye. Lesions are often more numerous on lower, shaded leaves and can cause premature yellowing and curing of the leaf.",
+      "Primary Visual Symptoms": "Lesions are small (2-15 mm), circular, with a reddish-brown margin and a necrotic, parchment-like center. Minute black dots (fruiting bodies) are scattered in the center. Spots occur mostly on lower, mature leaves.",
       "Key Plant Parts Affected": [
         "Leaves"
       ],
-      "url": "https://content.ces.ncsu.edu/frogeye-leaf-spot-of-tobacco"
+      "url": "https://content.ces.ncsu.edu/frogeye-leaf-spot-of-tobacco",
+      "management": {
+        "prevention": [
+          "Use only healthy and disease-free seeds.",
+          "Sterilize and prepare soil properly.",
+          "Carefully inspect seedlings and discard infected ones before transplanting.",
+          "Eliminate weed-host reservoirs around tobacco fields.",
+          "Use balanced fertilization; avoid excess nitrogen.",
+          "Rotate with a non-host crop."
+        ],
+        "monitoring": [
+          "Monitor all plant stages from nursery to curing.",
+          "Look for characteristic frog-eye lesions (2-15 mm) with reddish-brown margins and white centers.",
+          "Check for minute black dots in the center of lesions.",
+          "Focus on lower leaves, as mature leaves are more susceptible.",
+          "Note that spots can also occur on younger leaves in wet weather."
+        ],
+        "direct_control": [
+          "Remove crop residues prior to planting a new crop.",
+          "Bury infected tobacco stalks and roots deeply.",
+          "Apply appropriate botanical fungicides like Timorex Gold following label instructions."
+        ]
+      }
     },
     {
       "Disease Name": "Granville Wilt (Bacterial Wilt)",
       "Causal Agents": "Ralstonia solanacearum",
-      "Primary Visual Symptoms": "Symptoms appear as a sudden wilting of leaves, often on only one side of the plant or even one side of a single leaf. The plant shows no initial yellowing. Wilting is permanent and leads to stunting and death. A key diagnostic sign is seen by cutting the stem: the vascular tissue will be dark brown or black, and a milky-white to yellowish bacterial ooze will emerge from the cut end, especially when placed in water.",
+      "Primary Visual Symptoms": "Rapid wilting, often on one side of the plant, sometimes with yellowing. The entire plant eventually wilts and dies. The stalk becomes dark at the ground level, and vascular tissues show yellow-brown discoloration and dark streaks. Roots may turn brown to black.",
       "Key Plant Parts Affected": [
         "Roots",
         "Vascular System",
         "Stem"
       ],
-      "url": "https://content.ces.ncsu.edu/granville-wilt-of-tobacco"
+      "url": "https://content.ces.ncsu.edu/granville-wilt-of-tobacco",
+      "management": {
+        "prevention": [
+          "In fields with a history of the disease, use varieties with high resistance.",
+          "Wash and steam-sterilize greenhouse trays.",
+          "Select warm, well-drained sites for plant beds and prepare high, wide beds.",
+          "Avoid root wounding and manage nematodes.",
+          "Use balanced fertilization, avoiding excessive nitrogen.",
+          "Control other host plants (e.g., Ragweed) in and around the field.",
+          "Disinfect tools and equipment regularly.",
+          "Practice long crop rotations with non-hosts like fescue, soybean, or small grains. Avoid rotation with potato, tomato, pepper, or groundnut."
+        ],
+        "monitoring": [
+          "Monitor plant beds regularly for symptoms.",
+          "Look for initial signs of one-sided foliar wilting.",
+          "Check the stalk for darkening at the ground level and discoloration of vascular tissues.",
+          "Inspect roots for browning or blackening."
+        ],
+        "direct_control": [
+          "Destroy stalks and roots immediately at the end of the harvest."
+        ]
+      }
     },
     {
-      "Disease Name": "Wildfire",
+      "Disease Name": "Damping-Off / Soft Rot / Hollow Stalk",
+      "Causal Agents": "Pythium spp., Rhizoctonia spp., Fusarium spp., Pectobacterium carotovorum",
+      "Primary Visual Symptoms": "In nursery, circular patches of dead/wilting plants. Stems show brown, watery, soft rot at soil line (damping-off) or blackened lesions (blackleg), leading to collapse. Stalk may become hollow. Debris appears necrotic and slimy with a foul odor.",
+      "Key Plant Parts Affected": [
+        "Stem (at soil line)",
+        "Roots",
+        "Pith"
+      ],
+      "url": "",
+      "management": {
+        "prevention": [
+          "Clean, fumigate, and/or steam-sterilize float trays.",
+          "Disinfect seeds by soaking in hot water (50°C for 12 mins).",
+          "Minimize wounding, especially in wet conditions; sanitize clipping tools.",
+          "Avoid over-fertilizing, especially with nitrogen (keep below 150 ppm).",
+          "Ensure good ventilation and drainage in seedbeds; avoid dense stands.",
+          "Practice sucker control and remove debris.",
+          "Avoid sprinkler irrigation if possible."
+        ],
+        "monitoring": [
+          "Monitor for circular patches of wilting in nurseries.",
+          "Look for soft rot, lesions, or collapse at the seedling soil line.",
+          "Check for hollow stalks in older plants.",
+          "Take action as soon as symptoms are seen, as soft rot spreads rapidly in warm (above 25°C), humid conditions."
+        ],
+        "direct_control": [
+          "Rapidly remove and destroy infected plants from the nursery.",
+          "Workers handling infected plants should wash hands and clothes before touching healthy plants.",
+          "Harvest tobacco only when plants are dry.",
+          "In the seedbed, apply copper oxychloride at the collar level of seedlings or to foliage."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Cucumber Mosaic Virus (CMV)",
+      "Causal Agents": "Cucumber mosaic virus",
+      "Primary Visual Symptoms": "Symptoms vary but include mottling or mosaic patterns (interveinal yellowing, vein banding), abnormal leaf shape (blisters, filiform shape, curling), and localized rusty brown necrotic lesions. Widespread necrosis can destroy the terminal bud.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Terminal Bud"
+      ],
+      "url": "",
+      "management": {
+        "prevention": [
+          "Control aphids, the primary vector.",
+          "Protect nurseries and young plants with agrotextiles.",
+          "Keep nurseries and fields free of weeds, which can be reservoir hosts.",
+          "Practice timely topping and good sucker control to make plants less attractive to aphids.",
+          "Apply nitrogen fertilizers at recommended rates; avoid over-fertilizing.",
+          "Avoid transplanting near affected areas.",
+          "Plant natural barriers of non-susceptible crops (e.g., maize) around the field."
+        ],
+        "monitoring": [
+          "Monitor for both aphids and virus symptoms weekly, especially early in the season.",
+          "Look for mosaic patterns, abnormal leaf shapes, and necrotic lesions.",
+          "Apply control measures for aphids as soon as they are seen in the field."
+        ],
+        "direct_control": [
+          "If infections are detected early in nurseries, eliminate plants with CMV symptoms immediately.",
+          "Use yellow sticky traps to attract and kill winged aphids.",
+          "Topping can help reduce aphid populations."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Potato Virus Y (PVY)",
+      "Causal Agents": "Potato virus Y",
+      "Primary Visual Symptoms": "Symptoms vary by strain and cultivar. Includes various discoloration patterns like mottling, vein yellowing (clearing), vein banding (greener areas along veins), and chlorotic rings on middle leaves. Leaves can be small, crinkled, and curled.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "",
+      "management": {
+        "prevention": [
+          "Use resistant varieties.",
+          "Protect nurseries and young plants from aphids using non-woven fabrics.",
+          "Avoid planting tobacco next to PVY-susceptible crops like potato, tomato, and pepper.",
+          "Control weeds in and around nurseries to eliminate virus sources.",
+          "Control aphid populations in plant beds using sticky traps and reflective surfaces."
+        ],
+        "monitoring": [
+          "Monitor for various patterns of discoloration (mottling, vein clearing, vein banding, chlorotic rings).",
+          "Look for small, crinkled, and curled leaves."
+        ],
+        "direct_control": [
+          "In the nursery, infected plants should be destroyed quickly and not transplanted.",
+          "For vector management, refer to aphid control measures."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Target Spot (Sore Shin)",
+      "Causal Agents": "Rhizoctonia solani (Thanatephorus cucumeris)",
+      "Primary Visual Symptoms": "On leaves, causes round, translucent, light brown spots with concentric rings; centers become thin and papery and may drop out, leaving holes. On stems, causes a dark brown lesion near the soil line within a few weeks of transplanting, which can lead to wilting and plant death.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Stem (at soil line)"
+      ],
+      "url": "",
+      "management": {
+        "prevention": [
+          "Disinfect nursery soil using solarization.",
+          "Control greenhouse climate to avoid excessive moisture and high temperature.",
+          "Use steam disinfection for trays.",
+          "Clip plants frequently to allow foliage to dry and remove debris.",
+          "Do not transplant diseased seedlings.",
+          "Improve ventilation by reducing planting density and harvesting lower leaves quickly.",
+          "Ensure good drainage in heavy soils.",
+          "Use balanced fertilization; avoid low nitrogen levels."
+        ],
+        "monitoring": [
+          "Monitor from nursery to harvest.",
+          "In seedlings, look for lack of germination and damping-off.",
+          "On leaves, look for characteristic target-like spots.",
+          "On stems, check for dark brown lesions near the soil line."
+        ],
+        "direct_control": [
+          "Harvest or remove bottom leaves as soon as the disease begins."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Wildfire and Angular Leaf Spot",
       "Causal Agents": "Pseudomonas syringae pv. tabaci",
-      "Primary Visual Symptoms": "Characterized by small, circular, water-soaked spots that quickly enlarge. Each spot develops a necrotic, dark brown to black center surrounded by a very prominent, wide, bright yellow halo. This halo is the most distinctive feature. The spots can merge, leading to large, dead patches on the leaf.",
+      "Primary Visual Symptoms": "Wildfire appears as small, pale-green leaf spots that become necrotic with a wide yellow halo. Angular Leaf Spot lesions are necrotic and angular in shape, lacking the halo. Young leaves may be deformed and twisted.",
       "Key Plant Parts Affected": [
         "Leaves"
       ],
-      "url": ""
-    },
-    {
-      "Disease Name": "Angular Leaf Spot",
-      "Causal Agents": "Pseudomonas syringae pv. angulata",
-      "Primary Visual Symptoms": "Lesions begin as water-soaked spots that turn dark brown to black. Unlike Wildfire, these spots are distinctly angular, as their spread is limited by the leaf veins. The spots lack the wide, prominent yellow halo seen with Wildfire. In wet weather, the spots may merge, causing large areas of the leaf to become blighted and ragged.",
-      "Key Plant Parts Affected": [
-        "Leaves"
-      ],
-      "url": ""
+      "url": "",
+      "management": {
+        "prevention": [
+          "Use certified seed and resistant cultivars.",
+          "Change nursery locations or sterilize seedbeds with steam.",
+          "Provide ditches around seedbeds to prevent runoff contamination.",
+          "Keep the area free of alternate hosts like solanaceous weeds.",
+          "Ventilate nurseries to reduce moisture.",
+          "Avoid sprinkler irrigation and working with wet plants.",
+          "Use balanced fertilization (avoid excessive nitrogen, low potassium, high pH).",
+          "Rotate with non-susceptible crops.",
+          "Sterilize clipping tools regularly.",
+          "Destroy all plant residue and regrowth after the season."
+        ],
+        "monitoring": [
+          "Scout seedbeds and fields regularly, especially low-lying areas.",
+          "For Wildfire, look for pale-green spots that turn brown with a wide yellow halo.",
+          "For Angular Leaf Spot, look for necrotic, angular lesions without a halo.",
+          "Check for deformed or twisted young leaves."
+        ],
+        "direct_control": [
+          "Remove and destroy infected seedlings and all others within a 1-meter radius; disinfect the area.",
+          "If the crop is severely affected, early harvesting can reduce losses.",
+          "Reap clean fields before infected ones to minimize spread.",
+          "In the seedbed, apply copper oxychloride at the collar level of seedlings or to foliage."
+        ]
+      }
     }
   ],
   "major_insect_pests": [
     {
-      "Pest Common Name": "Tobacco Hornworm",
-      "Scientific Name": "Manduca sexta",
-      "Feeding Guild": "Defoliator",
-      "Characteristic Visual Damage": "Severe and rapid defoliation. Large sections of leaves are consumed, often starting from the leaf margin. In heavy infestations, entire leaves can be stripped, leaving only the bare midrib and main veins. The presence of very large (up to 1/2 inch), dark green or black, barrel-shaped droppings (frass) on the leaves and ground below is a clear indicator.",
-      "Plant Parts Affected": [
-        "Leaves"
-      ],
-      "url": "https://content.ces.ncsu.edu/tobacco-hornworms"
-    },
-    {
-      "Pest Common Name": "Tobacco Budworm",
-      "Scientific Name": "Heliothis virescens",
+      "Pest Common Name": "Budworm / Bollworm / Caterpillar Complex",
+      "Scientific Name": "Heliothis virescens, Helicoverpa armigera, Spodoptera litura",
       "Feeding Guild": "Bud Feeder / Defoliator",
-      "Characteristic Visual Damage": "Larvae feed directly on the unopened leaf bud. This feeding creates small holes and ragged edges on the young, furled leaves. As these leaves grow and unfurl, the holes expand, resulting in large, symmetrical, and tattered-looking holes in the most valuable upper leaves. Dark, wet frass is often present within the bud.",
-      "Plant Parts Affected": [
+      "Characteristic Visual Damage": "Larvae feed on top tender leaves and developing buds, creating holes in expanding leaves. They can also cut the stems of seedlings or feed on leaf tissues along the veins. They destroy flowers and seed capsules.",
+      "Key Plant Parts Affected": [
         "Leaf Bud",
         "Young Leaves",
         "Flowers",
-        "Seed Pods"
+        "Seed Pods",
+        "Stem"
       ],
-      "url": "https://content.ces.ncsu.edu/tobacco-budworm"
-    },
-    {
-      "Pest Common Name": "Tobacco Flea Beetle",
-      "Scientific Name": "Epitrix hirtipennis",
-      "Feeding Guild": "Defoliator (Shothole)",
-      "Characteristic Visual Damage": "Adult beetles chew numerous small, round holes (1-2 mm) through the leaf tissue, making the leaves look as if they have been hit with fine birdshot. This 'shot-hole' damage reduces leaf quality and can be severe enough to kill newly set transplants. Larvae feed on roots, causing minor damage.",
-      "Plant Parts Affected": [
-        "Leaves",
-        "Roots (larvae)"
-      ],
-      "url": "https://content.ces.ncsu.edu/insect-and-related-pests-of-vegetables/pests-of-potato"
+      "url": "https://content.ces.ncsu.edu/tobacco-budworm",
+      "management": {
+        "prevention": [
+          "Adjust planting date to avoid seasonal peaks of pest populations.",
+          "Plant trap crops (e.g., maize, okra, sunflower, taro) around tobacco and destroy them before larvae pupate.",
+          "Deep ploughing to expose pupae to predators and environmental conditions.",
+          "Remove and destroy crop residues and volunteer plants.",
+          "Avoid crop rotation with other host plants like soybeans, cotton, and corn.",
+          "Timely topping will prevent the build-up of budworm populations."
+        ],
+        "monitoring": [
+          "Monitor for pests and symptoms 1-2 times per week from emergence to harvest.",
+          "Use pheromone traps to detect early adult moth populations.",
+          "Look for egg masses (often covered with brown hair scales for Spodoptera) or single eggs on tender shoots and flowers.",
+          "Identify larvae by their characteristic bands and colors.",
+          "Check for feeding damage on buds and leaves."
+        ],
+        "direct_control": [
+          "Handpick and destroy egg masses and larvae.",
+          "Release natural enemies like Trichogramma, Telenomus, or Cotesia species if available.",
+          "Place baited traps (5/ha) with sex pheromones to monitor and catch adults.",
+          "Plough the soil after harvesting to expose pupae.",
+          "Apply appropriate insecticides like flubendiamide, spinosad, or indoxacarb, following all label directions for timing and safety."
+        ]
+      }
     },
     {
       "Pest Common Name": "Cutworms",
-      "Scientific Name": "Various Noctuidae species",
+      "Scientific Name": "Peridroma saucia, Agrotis ipsilon, Xestia c-nigrum",
       "Feeding Guild": "Stem Cutter / Defoliator",
-      "Characteristic Visual Damage": "The most characteristic damage is to newly transplanted seedlings, which are chewed through and severed at or just below the soil line, causing the plant to fall over and die. Some species are 'climbing cutworms' that ascend the plant at night and chew irregular holes in the leaves.",
-      "Plant Parts Affected": [
+      "Characteristic Visual Damage": "Small larvae cause small holes on young leaves. Larger larvae cut the stem at the soil level at night, causing transplants to fall over.",
+      "Key Plant Parts Affected": [
         "Stem (at soil line)",
         "Leaves"
       ],
-      "url": "https://content.ces.ncsu.edu/north-carolina-organic-commodities-production-guide/chapter-6-crop-production-management-flue-cured-tobacco"
+      "url": "https://content.ces.ncsu.edu/cutworms-in-tobacco",
+      "management": {
+        "prevention": [
+          "Avoid planting in fields with a known history of cutworm problems.",
+          "Practice early planting.",
+          "Prepare the soil 4 to 6 weeks before transplanting.",
+          "Control weeds and grass in and around fields to destroy overwintering sites.",
+          "Remove crop residue and plough the soil after harvest to expose larvae and pupae.",
+          "Encourage natural enemies by planting conservation strips.",
+          "Rotate planting sites and/or crops."
+        ],
+        "monitoring": [
+          "Scout in the evening for larvae or their damage during the first 3-4 weeks after transplanting.",
+          "Identify larvae: greyish to dark brown, up to 5 cm long, hide curled up in the soil by day.",
+          "Look for small, webless holes from small larvae and cut stems from larger larvae.",
+          "Use larval bait traps and adult pheromone traps to monitor populations.",
+          "Take control measures when 5% of newly transplanted plants are attacked."
+        ],
+        "direct_control": [
+          "During scouting, handpick and destroy larvae found.",
+          "Release natural enemies such as Cotesia spp. or tachinid flies (Linnaemya comta).",
+          "Apply appropriate insecticides like Indoxacarb or Beauveria bassiana, following all label directions."
+        ]
+      }
     },
     {
       "Pest Common Name": "Aphids",
       "Scientific Name": "Myzus nicotianae",
       "Feeding Guild": "Sucking Pest",
-      "Characteristic Visual Damage": "Infestations cause leaves to yellow, curl downwards, and become distorted or stunted. Aphids excrete a sugary liquid called 'honeydew,' which coats the leaves, making them sticky. This honeydew promotes the growth of a black, powdery fungus called sooty mold, which contaminates the leaf and reduces photosynthesis.",
-      "Plant Parts Affected": [
+      "Characteristic Visual Damage": "Infestations cause stunting and reduced yields. Leaves become thinner, black, and stuck together due to the growth of sooty mold on excreted honeydew.",
+      "Key Plant Parts Affected": [
         "Leaves (especially underside)",
         "Stems"
       ],
-      "url": "https://content.ces.ncsu.edu/green-peach-aphid"
+      "url": "https://content.ces.ncsu.edu/aphids-in-tobacco",
+      "management": {
+        "prevention": [
+          "Practice early planting, as it is less favorable to aphids.",
+          "Avoid excessive rates of nitrogen fertilizer.",
+          "Top plants at the 50% button or early flower stage to eliminate food sources.",
+          "Control weeds around seedbeds and fields.",
+          "Practice good sucker control to reduce food sources.",
+          "Encourage natural enemies (ladybirds, lacewings, hoverflies) by reducing insecticide use and maintaining flowering plants.",
+          "Destroy overwintering hosts like wild mustard near greenhouses.",
+          "Avoid growing alternative hosts (tomato, potato) near tobacco fields."
+        ],
+        "monitoring": [
+          "Monitor once a week for aphids or their damage, beginning 3-4 weeks after transplanting.",
+          "Look on the underside of upper leaves for aphid colonies (both red and green forms).",
+          "Check upper surfaces of middle and lower leaves for sticky honeydew or black sooty mold.",
+          "Take control measures when 50 or more aphids are found on any upper leaf of 10% of the monitored plants."
+        ],
+        "direct_control": [
+          "Release parasitoids such as Aphidius colemani if available.",
+          "Use yellow sticky traps to control winged aphids.",
+          "Apply Neem-based products (e.g., NeemAzal-T/S or AzaMax).",
+          "Topping can be used to reduce aphid populations as it increases leaf thickness and alkaloid concentrations."
+        ]
+      }
     },
     {
       "Pest Common Name": "Whiteflies",
       "Scientific Name": "Bemisia tabaci",
       "Feeding Guild": "Sucking Pest",
-      "Characteristic Visual Damage": "Feeding by nymphs and adults causes yellow mottling or 'silverleaf' on the upper leaf surface. Heavy infestations lead to plant stunting, yellowing, and leaf death. Like aphids, they produce honeydew, resulting in sticky leaves and the growth of black sooty mold. They are also major vectors for viruses.",
-      "Plant Parts Affected": [
+      "Characteristic Visual Damage": "Heavy infestations cause yellowing, curling, and crumpling of leaves. Whiteflies excrete honeydew, leading to sooty mold. They are major vectors for viruses like Tobacco Leaf Curl Virus.",
+      "Key Plant Parts Affected": [
         "Leaves (underside)"
       ],
-      "url": "https://content.ces.ncsu.edu/whiteflies-in-strawberries"
+      "url": "",
+      "management": {
+        "prevention": [
+          "Remove and destroy tobacco residues and volunteer plants after harvest.",
+          "Use resistant varieties if available.",
+          "Use shade nets or tunnels in the nursery.",
+          "Cover greenhouse vents with netting.",
+          "Transplant shortly after or during the rainy season.",
+          "Use white/black plastic mulch to attract and kill whiteflies.",
+          "Conserve natural enemies by leaving a hedge of flowering plants.",
+          "Plant repellent crops like coriander or marigold.",
+          "Keep fields weed-free, as weeds are alternate hosts.",
+          "Avoid planting near other host crops like tomato, pepper, or cassava."
+        ],
+        "monitoring": [
+          "Monitor weekly until harvest, especially on the underside of leaves.",
+          "Adults (1mm, white, powdery) will fly when plants are shaken.",
+          "Look for yellow-white larvae (scales) and brown pupae.",
+          "Check for yellowing, curling leaves and sooty mold.",
+          "Use yellow sticky traps to detect adults.",
+          "Take action if 3-5 whiteflies are found per plant 7-14 days after transplanting."
+        ],
+        "direct_control": [
+          "Use yellow sticky traps (1 per 5 plants).",
+          "Conserve and release natural enemies like Encarsia and Eretmocerus wasps, ladybirds, and lacewing larvae.",
+          "Spray with natural fatty acid or soap products.",
+          "Apply Beauveria bassiana or appropriate insecticides like Imidacloprid, following all label directions."
+        ]
+      }
     },
     {
-      "Pest Common Name": "Tobacco Stem Borer (Buros)",
-      "Scientific Name": "Scrobipalpa heliopa",
-      "Feeding Guild": "Stem Borer",
-      "Characteristic Visual Damage": "The primary symptom is a noticeable, gall-like swelling on the main stem, often several inches above the ground. This swelling is caused by the larva tunneling inside. Above the gall, the plant may show signs of wilting, especially the top leaves, and stunted growth. Splitting the gall open will reveal the tunnel and the small, pinkish larva.",
-      "Plant Parts Affected": [
+      "Pest Common Name": "Root-Knot Nematodes",
+      "Scientific Name": "Meloidogyne spp.",
+      "Feeding Guild": "Root Feeder",
+      "Characteristic Visual Damage": "Above ground: plants are stunted, yellow, and wilt during the hottest hours of the day. Flowering may be premature, delayed, or suppressed. Below ground: presence of knots or galls on the roots.",
+      "Key Plant Parts Affected": [
+        "Roots"
+      ],
+      "url": "",
+      "management": {
+        "prevention": [
+          "Use resistant varieties.",
+          "Use floating seedbed systems to protect trays from contamination.",
+          "Disinfect nursery soil using solarization.",
+          "Prepare raised beds to reduce nematode impact.",
+          "Practice early planting.",
+          "Maintain strict weed control during and between seasons.",
+          "Ensure good fertilization and irrigation.",
+          "Plant cover crops or trap crops and disk under before nematode reproduction occurs.",
+          "Practice crop rotation with non-hosts like small grains and fescue for at least four years.",
+          "Clean and disinfect tools and equipment used in contaminated fields."
+        ],
+        "monitoring": [
+          "Monitor for symptoms in nurseries and fields until harvest.",
+          "Look for stunted, yellow, wilting plants.",
+          "Inspect roots for the presence of knots or galls.",
+          "Collect soil samples at the end of the season to identify nematode species and plan for the next year."
+        ],
+        "direct_control": [
+          "If outbreaks occur in nurseries, affected plants should be removed.",
+          "At the end of the season, destroy and remove root systems from the field (or expose them to dry up).",
+          "In some cases, flooding contaminated fields for 7 to 9 months can control nematodes.",
+          "Make green manure with Crotalaria. Do not plant beans, soybeans, or other legumes in the same area."
+        ]
+      }
+    },
+    {
+      "Pest Common Name": "Thrips",
+      "Scientific Name": "Thrips tabaci, Frankliniella fusca",
+      "Feeding Guild": "Sucking Pest",
+      "Characteristic Visual Damage": "Causes slow and stunted growth, especially in new growth and seedlings. Leaves show silvery outlines traced around the veins, may become yellow, crinkled, and cup upward. Small black spots (excrement) may be visible on the underside of leaves.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Flowers"
+      ],
+      "url": "",
+      "management": {
+        "prevention": [
+          "Regularly weed the plot and field borders at least two weeks before transplanting.",
+          "Avoid planting near grain and alfalfa fields.",
+          "Plant younger fields upwind from older fields.",
+          "If possible, plant during the rainy season when populations are low.",
+          "Keep the crop healthy with good water and fertilizer management.",
+          "Use ultraviolet-reflective mulch to repel thrips.",
+          "Conserve habitat for natural enemies like the minute pirate bug (Orius insidiosus)."
+        ],
+        "monitoring": [
+          "Monitor leaf surfaces in the first 3-4 weeks after transplanting (may need a hand lens).",
+          "Look for adults (pale yellow to brown/black, 1-2 mm long) and larvae (whitish-yellowish).",
+          "Watch for silvery outlines on veins, crinkled leaves, and small black spots.",
+          "Monitor closely during hot, arid weather.",
+          "Use yellow or white sticky traps to monitor adults."
+        ],
+        "direct_control": [
+          "After harvest, remove or destroy volunteer tobacco plants and debris.",
+          "Apply appropriate insecticides like imidacloprid, spinosad, acetamiprid, or thiamethoxam in the seedbed or field, following all label directions."
+        ]
+      }
+    },
+    {
+      "Pest Common Name": "Grasshoppers",
+      "Scientific Name": "Acrididae; Melanoplus spp., Zonocerus spp.",
+      "Feeding Guild": "Defoliator (Chewing)",
+      "Characteristic Visual Damage": "Chews holes in the leaves. Damage is most common from 6 weeks after transplanting to final harvest.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "",
+      "management": {
+        "prevention": [
+          "Regularly remove weeds and tall grass from adjacent land to reduce breeding sites.",
+          "Avoid controlling weeds or haying immediately before and for 4 weeks after transplanting, as this can drive grasshoppers into the tobacco field.",
+          "Encourage habitat for natural enemies (spiders, robber flies, birds, etc.).",
+          "Tilling the land before and after the season can expose eggs to weather and predators."
+        ],
+        "monitoring": [
+          "Monitor for adult grasshoppers (up to 5 cm, slender, large hind legs) and smaller, wingless nymphs.",
+          "Look for holes in the leaves.",
+          "Monitor closely during hot, dry years when populations are higher.",
+          "Take action when there are 10 or more grasshoppers per 50 plants."
+        ],
+        "direct_control": [
+          "Apply neem to foliage when pests first appear, making 2-3 applications at 7-10 day intervals."
+        ]
+      }
+    },
+    {
+      "Pest Common Name": "Stem Borer",
+      "Scientific Name": "Scrobipalpa aptatella (syn. S. heliopa)",
+      "Feeding Guild": "Boring",
+      "Characteristic Visual Damage": "Internal feeding by the small, whitish caterpillar causes stem galls, sprouted side branches, and stunted, distorted, and withered plants.",
+      "Key Plant Parts Affected": [
         "Stem"
       ],
-      "url": ""
+      "url": "",
+      "management": {
+        "prevention": [
+          "Grow seedlings in greenhouses with appropriate netting.",
+          "Avoid establishing new fields near old, heavily infested ones.",
+          "Avoid planting near or rotating with aubergine (eggplant), another host.",
+          "Plant wildflowers (e.g., Tagetes spp.) and sorghum to attract natural enemies.",
+          "Conserve parasitoids and predators by avoiding unnecessary insecticide sprays.",
+          "After harvest, uproot and burn plant residues to kill remaining larvae and pupae.",
+          "Remove solanaceous weeds from the seedbed and field."
+        ],
+        "monitoring": [
+          "Begin scouting 7 days after transplanting, observing young plants twice a week for eggs and larvae.",
+          "Look for small, whitish caterpillars with dark brown heads and thoraxes.",
+          "Check for stem galls and distorted growth.",
+          "Take action when 3-10% of young plants are damaged."
+        ],
+        "direct_control": [
+          "Handpick and crush larvae during early scouting.",
+          "Remove and destroy affected seedlings.",
+          "Install solar light traps to catch nocturnal adults.",
+          "Spray with solutions of Beauveria bassiana or baculoviruses.",
+          "Apply appropriate insecticides like flubendiamide or indoxacarb, following all label directions."
+        ]
+      }
+    }
+  ],
+  "weeds_and_parasitic_plants": [
+    {
+      "Weed Name": "Purple Nutsedge",
+      "Scientific Name": "Cyperus rotundus",
+      "Primary Visual Symptoms": "Erect, perennial sedge (30-60 cm high) with an extensive underground network of dark, irregular-shaped tubers. Leaves are linear with a distinct midrib. Flowering stems are 3-sided, with purplish-brown flowerheads.",
+      "Key Plant Parts Affected": [
+        "Competes with whole plant for resources."
+      ],
+      "url": "",
+      "management": {
+        "prevention": [
+          "Clean tools and farm machinery to prevent spreading tubers.",
+          "Do not use potentially contaminated materials like soil on planting stock.",
+          "Control established populations near waterways to prevent spread during flooding.",
+          "Plant cover crops like alfalfa to suppress establishment."
+        ],
+        "monitoring": [
+          "Regularly inspect fields (at least bi-weekly), particularly in low spots, wetlands, and along waterways, especially during wet weather.",
+          "Look for the characteristic 3-sided stem and purplish-brown flowerheads."
+        ],
+        "direct_control": [
+          "Use nursery soil solarization with plastic sheeting for two weeks to kill tubers.",
+          "Destroy tubers and rhizomes by ploughing and exposing them to sunlight to desiccate them; most effective in dry soil.",
+          "Place organic mulch over areas to provide temporary suppression.",
+          "Conduct fortnightly spot weeding as necessary.",
+          "Apply appropriate herbicides like Clomazone or Fluazifop-P-butyl, following all label directions."
+        ]
+      }
     }
   ]
 }
