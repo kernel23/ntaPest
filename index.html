@@ -36,11 +36,14 @@
             z-index: 10;
         }
 
-        #screen-container.with-sidebar {
-            margin-left: 4rem; /* ml-16 */
+        @media (min-width: 1024px) { /* lg breakpoint */
+            #screen-container.with-sidebar {
+                margin-left: 4rem; /* ml-16 */
+            }
         }
         #map { height: 400px; }
         #report-map { height: 200px; margin-bottom: 1.5rem; }
+        .force-hidden { display: none !important; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -57,19 +60,19 @@
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-md opacity-0 transition-opacity duration-300" style="z-index: 10001;">
+    <div id="toast" class="fixed top-5 right-5 bg-green-600 text-white py-2 px-4 rounded-lg shadow-md opacity-0 transition-opacity duration-300" style="z-index: 10001;">
         <p id="toast-message"></p>
     </div>
 
     <div id="app-container" class="h-screen w-screen relative">
-        <!-- Fixed Icon-Only Sidebar -->
-        <aside id="sidebar" class="w-16 bg-green-800 text-white p-4 hidden flex-col items-center">
+        <!-- Fixed Icon-Only Sidebar for Desktop -->
+        <aside id="sidebar" class="w-16 bg-green-800 text-white p-4 hidden lg:flex flex-col items-center">
             <!-- Logo -->
             <div class="mb-10">
                  <i data-lucide="leaf" class="w-8 h-8 text-green-400"></i>
             </div>
 
-            <!-- Navigation -->
+            <!-- Desktop Navigation -->
             <nav class="flex-1 flex flex-col items-center space-y-4">
                 <a href="#" id="nav-farm-list" class="nav-item p-2 rounded-lg hover:bg-green-700" title="My Farms">
                     <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
@@ -103,7 +106,7 @@
         </aside>
 
         <!-- Main content area that holds all screens -->
-        <div id="screen-container" class="h-screen overflow-y-auto">
+        <div id="screen-container" class="h-screen overflow-y-auto pb-16 lg:pb-0">
             <!-- Loading Screen -->
             <div id="loading-screen" class="screen active flex-col justify-center items-center h-full bg-green-50 text-gray-800">
                 <svg class="animate-spin h-10 w-10 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -337,7 +340,7 @@
                                 <!-- Stats -->
                                 <div class="bg-white p-4 rounded-lg shadow">
                                     <h3 class="text-lg font-bold mb-4">Key Statistics</h3>
-                                    <div id="expert-stats-container" class="grid grid-cols-2 gap-4">
+                                <div id="expert-stats-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div class="text-center p-2 rounded-lg bg-gray-100">
                                             <p class="text-2xl font-bold" id="stat-reports-count">0</p>
                                             <p class="text-sm text-gray-600">Total Reports</p>
@@ -479,7 +482,7 @@
 
                     <label class="block text-sm font-medium text-gray-700 mb-2">Upload Image(s) of Affected Plant</p></label>
                     <div class="mt-1 p-4 border-2 border-gray-300 border-dashed rounded-md">
-                        <div id="submission-image-preview-container" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mb-4">
+                        <div id="submission-image-preview-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-4">
                              <div id="image-placeholder-icon" class="col-span-full text-center text-gray-400 py-4">
                                 <i data-lucide="image" class="mx-auto h-12 w-12"></i>
                                 <p>No images selected</p>
@@ -504,7 +507,7 @@
 
                     <fieldset id="symptoms-checklist" class="mt-6">
                         <legend class="text-base font-medium text-gray-900">Observed Symptoms</legend>
-                        <div class="mt-4 grid grid-cols-2 gap-4">
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-spots" value="spots" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-spots" class="font-medium text-gray-700">Leaf Spots</label></div></div>
                             <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-wilting" value="wilting" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-wilting" class="font-medium text-gray-700">Wilting</label></div></div>
                             <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-yellowing" value="yellowing" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-yellowing" class="font-medium text-gray-700">Yellowing</label></div></div>
@@ -632,6 +635,42 @@
             </div>
 
         </div>
+
+        <!-- Bottom Navigation Bar for Mobile -->
+        <nav id="bottom-nav" class="lg:hidden fixed bottom-0 left-0 right-0 bg-green-800 text-white flex justify-around p-2 z-20 shadow-t-lg">
+            <a href="#" id="nav-farm-list-mobile" class="nav-item flex flex-col items-center text-center text-xs p-1 rounded-md hover:bg-green-700" title="My Farms">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 mb-1"></i>
+                <span class="text-xs">Farms</span>
+            </a>
+            <a href="#" id="nav-profile-mobile" class="nav-item flex flex-col items-center text-center text-xs p-1 rounded-md hover:bg-green-700" title="Profile">
+                <i data-lucide="user" class="w-5 h-5 mb-1"></i>
+                <span class="text-xs">Profile</span>
+            </a>
+            <a href="#" id="nav-reports-mobile" class="nav-item flex flex-col items-center text-center text-xs p-1 rounded-md hover:bg-green-700" title="Reports">
+                <i data-lucide="file-text" class="w-5 h-5 mb-1"></i>
+                <span class="text-xs">Reports</span>
+            </a>
+            <a href="#" id="nav-diagnosis-mobile" class="nav-item flex flex-col items-center text-center text-xs p-1 rounded-md hover:bg-green-700" title="Diagnosis">
+                <i data-lucide="stethoscope" class="w-5 h-5 mb-1"></i>
+                <span class="text-xs">Diagnose</span>
+            </a>
+            <a href="#" id="nav-treatment-mobile" class="nav-item flex flex-col items-center text-center text-xs p-1 rounded-md hover:bg-green-700" title="Final Diagnosis">
+                <i data-lucide="syringe" class="w-5 h-5 mb-1"></i>
+                <span class="text-xs">Treat</span>
+            </a>
+            <a href="#" id="nav-clinic-mobile" class="nav-item flex flex-col items-center text-center text-xs p-1 rounded-md hover:bg-green-700" title="Online Clinic">
+                <i data-lucide="message-square" class="w-5 h-5 mb-1"></i>
+                <span class="text-xs">Clinic</span>
+            </a>
+            <a href="#" id="nav-admin-mobile" class="nav-item flex flex-col items-center text-center text-xs p-1 rounded-md hover:bg-green-700" title="Admin">
+                <i data-lucide="shield-alert" class="w-5 h-5 mb-1"></i>
+                <span class="text-xs">Admin</span>
+            </a>
+            <button id="mobile-logout-btn" class="nav-item flex flex-col items-center text-center text-xs p-1 rounded-md hover:bg-red-700" title="Logout">
+                <i data-lucide="log-out" class="w-5 h-5 mb-1"></i>
+                <span class="text-xs">Logout</span>
+            </button>
+        </nav>
     </div>
 
     <!-- Modals -->
@@ -953,38 +992,39 @@
             showScreen('newSubmission');
         });
 
-        // --- Sidebar Navigation ---
-        document.getElementById('nav-farm-list').addEventListener('click', () => {
-            if (!userProfile) return;
+        // --- Sidebar and Mobile Nav ---
+        const setupNavigation = () => {
+             const navItems = [
+                { id: 'nav-farm-list', handler: () => {
+                    if (!userProfile) return;
+                    let screen;
+                    const context = { isFreshNavigation: true, userId: currentUser.uid, userName: userProfile.fullName, label: 'Dashboard' };
+                    if (userProfile.role === 'Extension Worker') screen = 'ewDashboard';
+                    else if (userProfile.role === 'Branch Coordinator') screen = 'coordinatorDashboard';
+                    else if (userProfile.role === 'Expert') screen = 'expertDashboard';
+                    else screen = 'farmList';
+                    showScreen(screen, context);
+                }},
+                { id: 'nav-profile', handler: () => showScreen('profile', { isFreshNavigation: true, label: 'My Profile' }) },
+                { id: 'nav-reports', handler: () => showScreen('reports', { isFreshNavigation: true, label: 'All Reports' }) },
+                { id: 'nav-diagnosis', handler: () => showScreen('diagnosis', { isFreshNavigation: true, label: 'For Diagnosis' }) },
+                { id: 'nav-treatment', handler: () => showScreen('treatment', { isFreshNavigation: true, label: 'For Treatment' }) },
+                { id: 'nav-clinic', handler: () => showScreen('onlineClinic', { isFreshNavigation: true, label: 'Online Clinic' }) },
+                { id: 'nav-admin', handler: () => showScreen('adminDashboard', { isFreshNavigation: true, label: 'Admin Dashboard' }) }
+            ];
 
-            let screen;
-            const context = {
-                isFreshNavigation: true,
-                userId: currentUser.uid,
-                userName: userProfile.fullName,
-                label: 'Dashboard'
-            };
+            navItems.forEach(({ id, handler }) => {
+                document.getElementById(id)?.addEventListener('click', handler);
+                const mobileEl = document.getElementById(`${id}-mobile`);
+                if (mobileEl) mobileEl.addEventListener('click', handler);
+            });
 
-            if (userProfile.role === 'Extension Worker') {
-                screen = 'ewDashboard';
-            } else if (userProfile.role === 'Branch Coordinator') {
-                screen = 'coordinatorDashboard';
-            } else if (userProfile.role === 'Expert') {
-                screen = 'expertDashboard';
-            } else { // Default to Farmer
-                screen = 'farmList';
-            }
-            showScreen(screen, context);
-        });
-        document.getElementById('nav-profile').addEventListener('click', () => showScreen('profile', { isFreshNavigation: true, label: 'My Profile' }));
-        document.getElementById('nav-reports').addEventListener('click', () => showScreen('reports', { isFreshNavigation: true, label: 'All Reports' }));
-        document.getElementById('nav-diagnosis').addEventListener('click', () => showScreen('diagnosis', { isFreshNavigation: true, label: 'For Diagnosis' }));
-        document.getElementById('nav-treatment').addEventListener('click', () => showScreen('treatment', { isFreshNavigation: true, label: 'For Treatment' }));
-        document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic', { isFreshNavigation: true, label: 'Online Clinic' }));
-        document.getElementById('nav-admin').addEventListener('click', () => showScreen('adminDashboard', { isFreshNavigation: true, label: 'Admin Dashboard' }));
-        document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
+            document.getElementById('sidebar-logout-btn')?.addEventListener('click', () => signOut(auth));
+            document.getElementById('mobile-logout-btn')?.addEventListener('click', () => signOut(auth));
+        };
 
-        // --- Sidebar is now fixed, toggle logic removed ---
+        // Call it once to attach listeners
+        setupNavigation();
 
         let currentUser = null;
         let userProfile = null;
@@ -1085,15 +1125,21 @@
             }
 
             const sidebar = document.getElementById('sidebar');
+            const bottomNav = document.getElementById('bottom-nav');
             const screenContainer = document.getElementById('screen-container');
-            const noSidebarScreens = ['loading', 'login', 'camera', 'privacyPolicy'];
+            const noNavScreens = ['loading', 'login', 'camera', 'privacyPolicy'];
+            const shouldShowNav = !noNavScreens.includes(screenName);
 
-            if (noSidebarScreens.includes(screenName)) {
-                sidebar.classList.add('hidden');
-                screenContainer.classList.remove('with-sidebar');
-            } else {
-                sidebar.classList.remove('hidden');
+            if (shouldShowNav) {
+                // If we should show nav, we want the default responsive behavior
+                sidebar.classList.remove('force-hidden');
+                bottomNav.classList.remove('force-hidden');
                 screenContainer.classList.add('with-sidebar');
+            } else {
+                // If we should NOT show nav, we force them to be hidden
+                sidebar.classList.add('force-hidden');
+                bottomNav.classList.add('force-hidden');
+                screenContainer.classList.remove('with-sidebar');
             }
 
             Object.values(screens).forEach(screen => screen.classList.remove('active'));
@@ -1155,49 +1201,65 @@
             updateNavigationControls();
         }
 
-        function updateUIVisibilityBasedOnRole() {
-            if (!userProfile) return;
+        function updateUIVisibilityBasedOnRole(profile) {
+            if (!profile) return;
 
             const roles = {
-                isFarmer: userProfile.role === 'Farmer',
-                isWorker: userProfile.role === 'Extension Worker',
-                isCoordinator: userProfile.role === 'Branch Coordinator',
-                isExpert: userProfile.role === 'Expert',
-                isAdmin: userProfile.role === 'Administrator'
+                isFarmer: profile.role === 'Farmer',
+                isWorker: profile.role === 'Extension Worker',
+                isCoordinator: profile.role === 'Branch Coordinator',
+                isExpert: profile.role === 'Expert',
+                isAdmin: profile.role === 'Administrator'
             };
 
+            const getNavElements = (id) => [
+                document.getElementById(`nav-${id}`),
+                document.getElementById(`nav-${id}-mobile`)
+            ];
+
             const nav = {
-                farmList: document.getElementById('nav-farm-list'),
-                profile: document.getElementById('nav-profile'),
-                reports: document.getElementById('nav-reports'),
-                diagnosis: document.getElementById('nav-diagnosis'),
-                treatment: document.getElementById('nav-treatment'),
-                clinic: document.getElementById('nav-clinic'),
-                admin: document.getElementById('nav-admin')
+                farmList: getNavElements('farm-list'),
+                profile: getNavElements('profile'),
+                reports: getNavElements('reports'),
+                diagnosis: getNavElements('diagnosis'),
+                treatment: getNavElements('treatment'),
+                clinic: getNavElements('clinic'),
+                admin: getNavElements('admin')
             };
 
             // Hide all role-specific nav items by default
-            Object.values(nav).forEach(item => item.style.display = 'none');
+            Object.values(nav).flat().forEach(el => {
+                if (el) el.style.display = 'none';
+            });
 
-            // Show items common to most roles
-            nav.profile.style.display = 'block';
-            nav.reports.style.display = 'block';
+            // The logout buttons also need role-based visibility, tied to whether ANY nav is visible.
+            const logoutButtons = [document.getElementById('sidebar-logout-btn'), document.getElementById('mobile-logout-btn')];
+            logoutButtons.forEach(btn => { if(btn) btn.style.display = 'flex'; }); // Default to visible when a user is logged in
+
+
+            // Show items common to most roles that are not admin
+            if (!roles.isAdmin) {
+                nav.profile.forEach(el => { if(el) el.style.display = 'flex' });
+                nav.reports.forEach(el => { if(el) el.style.display = 'flex' });
+            }
 
             if (roles.isFarmer) {
-                nav.farmList.style.display = 'block';
+                nav.farmList.forEach(el => { if(el) el.style.display = 'flex' });
             } else if (roles.isWorker) {
-                nav.farmList.style.display = 'block';
-                nav.diagnosis.style.display = 'block';
+                nav.farmList.forEach(el => { if(el) el.style.display = 'flex' });
+                nav.diagnosis.forEach(el => { if(el) el.style.display = 'flex' });
             } else if (roles.isCoordinator) {
-                nav.farmList.style.display = 'block';
-                nav.diagnosis.style.display = 'block';
-                nav.treatment.style.display = 'block';
+                nav.farmList.forEach(el => { if(el) el.style.display = 'flex' });
+                nav.diagnosis.forEach(el => { if(el) el.style.display = 'flex' });
+                nav.treatment.forEach(el => { if(el) el.style.display = 'flex' });
             } else if (roles.isExpert) {
-                nav.farmList.style.display = 'block';
-                nav.clinic.style.display = 'block';
+                nav.farmList.forEach(el => { if(el) el.style.display = 'flex' });
+                nav.clinic.forEach(el => { if(el) el.style.display = 'flex' });
             } else if (roles.isAdmin) {
-                nav.admin.style.display = 'block';
-                // Farm list is intentionally hidden for admins
+                nav.admin.forEach(el => { if(el) el.style.display = 'flex' });
+                // Hide common items for admin if they were shown above
+                nav.profile.forEach(el => { if(el) el.style.display = 'none' });
+                nav.reports.forEach(el => { if(el) el.style.display = 'none' });
             }
         }
 
@@ -1590,7 +1652,7 @@
             selectedRole = profile.role || 'Farmer';
             document.getElementById('current-role-display').textContent = selectedRole;
             updateRoleRequestStatus();
-            updateUIVisibilityBasedOnRole();
+            updateUIVisibilityBasedOnRole(profile);
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -2489,7 +2551,7 @@
 
                     const imageUrls = submission.imageDataUrls || (submission.imageDataUrl ? [submission.imageDataUrl] : []);
                     const imageGridHTML = imageUrls.length > 0
-                        ? `<div class="grid grid-cols-2 md:grid-cols-3 gap-2 my-2">${imageUrls.map(url => `<a href="${url}" target="_blank"><img src="${url}" class="rounded-lg w-full aspect-square object-cover"></a>`).join('')}</div>`
+                        ? `<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 my-2">${imageUrls.map(url => `<a href="${url}" target="_blank"><img src="${url}" class="rounded-lg w-full aspect-square object-cover"></a>`).join('')}</div>`
                         : `<p class="text-sm text-gray-500">No image submitted.</p>`;
 
                     // Populate and show the modal
@@ -3117,7 +3179,7 @@
 
                     const imageUrls = submission.imageDataUrls || (submission.imageDataUrl ? [submission.imageDataUrl] : []);
                     const imageGridHTML = imageUrls.length > 0
-                        ? `<div class="grid grid-cols-2 md:grid-cols-3 gap-2">${imageUrls.map(url => `<a href="${url}" target="_blank"><img src="${url}" class="rounded-lg w-full aspect-square object-cover"></a>`).join('')}</div>`
+                        ? `<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">${imageUrls.map(url => `<a href="${url}" target="_blank"><img src="${url}" class="rounded-lg w-full aspect-square object-cover"></a>`).join('')}</div>`
                         : `<p class="text-sm text-gray-500">No images submitted.</p>`;
 
 
@@ -3593,7 +3655,7 @@
             const reportDate = submission.timestamp?.toDate ? submission.timestamp.toDate().toLocaleDateString() : 'N/A';
 
             const imagesHTML = (submission.imageDataUrls && submission.imageDataUrls.length > 0)
-                ? `<div class="grid grid-cols-2 gap-2 mt-2">${submission.imageDataUrls.map(url => `
+                ? `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">${submission.imageDataUrls.map(url => `
                     <a href="${url}" target="_blank" class="block">
                         <img src="${url}" alt="Reported image" class="rounded-md object-cover aspect-square w-full hover:opacity-80 transition-opacity">
                     </a>`).join('')}
