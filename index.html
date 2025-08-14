@@ -1196,7 +1196,12 @@
         // Function to switch between screens
         async function showScreen(screenName, context = {}, isBack = false) {
             if (!isBack) {
-                if (context.isFreshNavigation) {
+                const isFresh = context.isFreshNavigation;
+                if (isFresh) {
+                    delete context.isFreshNavigation; // Remove the flag from the context
+                }
+
+                if (isFresh) {
                     navigationHistory = [{ screenName, context }];
                 } else {
                     const lastState = navigationHistory[navigationHistory.length - 1];
@@ -2328,15 +2333,16 @@
         document.getElementById('edit-farm-details-btn').addEventListener('click', async () => {
             const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
             const targetUserId = lastContext.userId || currentUser.uid;
+            const farmId = lastContext.farmId;
 
-            if (!currentFarmId || !targetUserId) {
+            if (!farmId || !targetUserId) {
                 showToast('No farm or user selected.', 'error');
                 return;
             }
             isEditMode = true;
 
             // Fetch current farm data
-            const farmDocRef = doc(db, 'users', targetUserId, 'farmLots', currentFarmId);
+            const farmDocRef = doc(db, 'users', targetUserId, 'farmLots', farmId);
             const farmDocSnap = await getDoc(farmDocRef);
 
             if (farmDocSnap.exists()) {
@@ -2417,8 +2423,9 @@
         document.getElementById('delete-farm-btn').addEventListener('click', async () => {
             const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
             const targetUserId = lastContext.userId || currentUser.uid;
+            const farmId = lastContext.farmId;
 
-            if (!currentFarmId || !targetUserId) {
+            if (!farmId || !targetUserId) {
                 showToast('No farm or user selected.', 'error');
                 return;
             }
@@ -2426,7 +2433,7 @@
             if (confirm('Are you sure you want to delete this farm plot? This action cannot be undone.')) {
                 showSavingOverlay('Deleting Farm...');
                 try {
-                    const farmDocRef = doc(db, 'users', targetUserId, 'farmLots', currentFarmId);
+                    const farmDocRef = doc(db, 'users', targetUserId, 'farmLots', farmId);
                     await deleteDoc(farmDocRef);
                     showToast('Deletion Successful: The farm plot has been removed.', 'success');
                     currentFarmId = null;
@@ -2638,15 +2645,19 @@
         // --- Submission Edit Flow ---
         document.getElementById('dashboard-main').addEventListener('click', async (e) => {
             if (e.target && e.target.classList.contains('edit-submission-btn')) {
+                const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+                const targetUserId = lastContext.userId || currentUser.uid;
+                const farmId = lastContext.farmId;
+
                 currentSubmissionId = e.target.getAttribute('data-id');
-                if (!currentSubmissionId || !currentUser || !currentFarmId) {
+                if (!currentSubmissionId || !targetUserId || !farmId) {
                     showToast('Error: Cannot find submission to edit.', 'error');
                     return;
                 }
                 isEditSubmissionMode = true;
 
                 try {
-                    const submissionDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions', currentSubmissionId);
+                    const submissionDocRef = doc(db, 'users', targetUserId, 'farmLots', farmId, 'submissions', currentSubmissionId);
                     const submissionDocSnap = await getDoc(submissionDocRef);
 
                     if (submissionDocSnap.exists()) {
