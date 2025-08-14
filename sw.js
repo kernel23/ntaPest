@@ -95,16 +95,25 @@ self.addEventListener('fetch', event => {
         event.respondWith(
             caches.open(DATA_CACHE_NAME).then(cache => {
                 return cache.match(event.request).then(response => {
+                    // Define the fetch promise to get fresh data.
                     const fetchPromise = fetch(event.request).then(networkResponse => {
                         console.log(`[Service Worker] Updating data cache for: ${url}`);
                         cache.put(event.request, networkResponse.clone());
                         return networkResponse;
                     });
-                    // Return cached response immediately, then fetch update in background
-                    if(response) {
+
+                    // If we have a cached response, return it immediately.
+                    // Also, "fire and forget" the fetch to update the cache in the background.
+                    // A .catch is added to prevent unhandled promise rejections on network failure.
+                    if (response) {
                         console.log(`[Service Worker] Serving from data cache: ${url}`);
+                        fetchPromise.catch(err => console.warn(`[SW] Background cache update for ${url} failed.`, err));
+                        return response;
                     }
-                    return response || fetchPromise;
+
+                    // If we don't have a cached response, we must wait for the network.
+                    // The browser will show an offline error if this fetch fails.
+                    return fetchPromise;
                 });
             })
         );
