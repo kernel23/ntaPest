@@ -11,6 +11,9 @@ const CORE_ASSETS_TO_CACHE = [
     '/address-provider.js',
     '/pestDiseases.json',
     '/public/output.css', // Assuming this is the compiled Tailwind CSS
+];
+
+const REMOTE_ASSETS_TO_CACHE = [
     'https://cdn.tailwindcss.com', // Fallback if the local one isn't used
     'https://unpkg.com/lucide@latest',
     'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
@@ -27,6 +30,7 @@ const CORE_ASSETS_TO_CACHE = [
     'https://placehold.co/96x96/e2e8f0/334155?text=User'
 ];
 
+
 // URLs for the stale-while-revalidate strategy (our data files)
 const DATA_URLS = [
     '/pestDiseases.json',
@@ -39,7 +43,20 @@ self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
             console.log('[Service Worker] Pre-caching core assets:', CORE_ASSETS_TO_CACHE);
-            return cache.addAll(CORE_ASSETS_TO_CACHE);
+            const coreAssetsPromise = cache.addAll(CORE_ASSETS_TO_CACHE);
+
+            console.log('[Service Worker] Pre-caching remote assets:', REMOTE_ASSETS_TO_CACHE);
+            const remoteAssetsPromises = REMOTE_ASSETS_TO_CACHE.map(url => {
+                return fetch(url, { mode: 'no-cors' })
+                    .then(response => {
+                        return cache.put(url, response);
+                    })
+                    .catch(error => {
+                        console.error(`[Service Worker] Failed to cache ${url}:`, error);
+                    });
+            });
+
+            return Promise.all([coreAssetsPromise, ...remoteAssetsPromises]);
         })
     );
     self.skipWaiting();
