@@ -779,7 +779,6 @@
                 <input type="date" id="follow-up-date" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
 
                 <div class="mt-6 flex flex-col sm:flex-row gap-4">
-                    <button id="re-evaluate-btn" class="hidden w-full bg-yellow-500 text-white font-bold py-3 px-4 rounded-lg shadow-md order-0">Re-evaluate</button>
                     <button id="save-treatment-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md order-1 sm:order-2">Save Treatment Plan</button>
                     <button id="escalate-from-treatment-btn" class="w-full bg-orange-500 text-white font-bold py-3 px-4 rounded-lg shadow-md order-2 sm:order-1">Escalate to Expert</button>
                 </div>
@@ -2629,6 +2628,89 @@
             }
         }
 
+        function setupTreatmentModal(submissionData) {
+            currentTreatmentTarget = {
+                userId: submissionData.userId,
+                farmId: submissionData.farmId,
+                submissionId: submissionData.submissionId
+            };
+
+            const detailsContainer = document.getElementById('treatment-report-details');
+            detailsContainer.innerHTML = `
+                <p class="font-bold text-lg">${submissionData.farmName}</p>
+                <p class="font-semibold text-gray-800 mt-2">Initial Diagnosis:</p>
+                <div class="pl-2 border-l-2 border-gray-200">
+                    <p><strong>Pest/Disease:</strong> ${submissionData.initialDiagnosis.pestDisease}</p>
+                    <p class="text-sm text-gray-600"><strong>Notes:</strong> ${submissionData.initialDiagnosis.notes || 'N/A'}</p>
+                    <p class="text-sm text-gray-600"><strong>Diagnosed by:</strong> ${submissionData.initialDiagnosis.diagnosedByName || 'N/A'}</p>
+                </div>
+            `;
+
+            const finalPestDiseaseSelect = document.getElementById('final-pest-disease-select');
+            const saveBtn = document.getElementById('save-treatment-btn');
+            const escalateBtn = document.getElementById('escalate-from-treatment-btn');
+
+            const populateAndCheck = () => {
+                const selectedName = finalPestDiseaseSelect.value;
+                if (!selectedName) return;
+
+                const allItems = [
+                    ...(pestAndDiseaseData.fungal_and_bacterial_diseases || []),
+                    ...(pestAndDiseaseData.major_insect_pests || [])
+                ];
+                const selectedItem = allItems.find(item => (item['Disease Name'] || item['Pest Common Name']) === selectedName);
+
+                if (selectedItem && selectedItem.management) {
+                    populateCheckboxes(document.getElementById('treatment-prevention-list'), selectedItem.management.prevention, 'prevention');
+                    populateCheckboxes(document.getElementById('treatment-monitoring-list'), selectedItem.management.monitoring, 'monitoring');
+                    populateCheckboxes(document.getElementById('treatment-control-list'), selectedItem.management.direct_control, 'control');
+
+                    if (submissionData.treatment) {
+                        const { prevention, monitoring, control } = submissionData.treatment;
+                        const checkItems = (list, category) => {
+                            if (list) list.forEach(item => {
+                                const checkbox = document.querySelector(`#treatment-${category}-list input[value="${item.replace(/"/g, '\\"')}"]`);
+                                if (checkbox) checkbox.checked = true;
+                            });
+                        };
+                        checkItems(prevention, 'prevention');
+                        checkItems(monitoring, 'monitoring');
+                        checkItems(control, 'control');
+                    }
+                }
+            };
+
+            finalPestDiseaseSelect.onchange = populateAndCheck;
+            populatePestDiseaseDropdown(finalPestDiseaseSelect);
+
+            if (submissionData.finalDiagnosis) {
+                saveBtn.textContent = 'Update Treatment Plan';
+                escalateBtn.classList.add('hidden');
+                const { instructions, followUpDate } = submissionData.treatment || {};
+                finalPestDiseaseSelect.value = submissionData.finalDiagnosis.pestDisease;
+                document.getElementById('final-diagnosis-notes').value = submissionData.finalDiagnosis.notes || '';
+                document.getElementById('treatment-instructions').value = instructions || '';
+                document.getElementById('follow-up-date').value = followUpDate || '';
+            } else {
+                saveBtn.textContent = 'Save Treatment Plan';
+                if (userProfile.role === 'Branch Coordinator' && !submissionData.isEscalated) {
+                    escalateBtn.classList.remove('hidden');
+                } else {
+                    escalateBtn.classList.add('hidden');
+                }
+                finalPestDiseaseSelect.value = submissionData.initialDiagnosis.pestDisease;
+                document.getElementById('final-diagnosis-notes').value = submissionData.initialDiagnosis.notes || '';
+                document.getElementById('treatment-instructions').value = '';
+                document.getElementById('follow-up-date').value = '';
+            }
+
+            populateAndCheck();
+
+            document.getElementById('treatment-modal').classList.remove('hidden');
+            document.getElementById('treatment-modal').classList.add('flex');
+            lucide.createIcons();
+        }
+
         function renderReportsForTreatment(submissions) {
             const treatmentContainer = document.getElementById('treatment-reports-container');
             treatmentContainer.innerHTML = '';
@@ -2648,76 +2730,7 @@
                 card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow';
 
                 card.addEventListener('click', () => {
-                    currentTreatmentTarget = {
-                        userId: submission.userId,
-                        farmId: submission.farmId,
-                        submissionId: submission.submissionId
-                    };
-
-                    const detailsContainer = document.getElementById('treatment-report-details');
-                    detailsContainer.innerHTML = `
-                        <p class="font-bold text-lg">${submission.farmName}</p>
-                        <p class="font-semibold text-gray-800 mt-2">Initial Diagnosis:</p>
-                        <div class="pl-2 border-l-2 border-gray-200">
-                            <p><strong>Pest/Disease:</strong> ${submission.initialDiagnosis.pestDisease}</p>
-                            <p class="text-sm text-gray-600"><strong>Notes:</strong> ${submission.initialDiagnosis.notes || 'N/A'}</p>
-                            <p class="text-sm text-gray-600"><strong>Diagnosed by:</strong> ${submission.initialDiagnosis.diagnosedByName || 'N/A'}</p>
-                        </div>
-                    `;
-
-                    const finalPestDiseaseSelect = document.getElementById('final-pest-disease-select');
-                    populatePestDiseaseDropdown(finalPestDiseaseSelect);
-
-                    const saveBtn = document.getElementById('save-treatment-btn');
-                    const reEvalBtn = document.getElementById('re-evaluate-btn');
-                    const escalateBtn = document.getElementById('escalate-from-treatment-btn');
-
-                    if (submission.finalDiagnosis) {
-                        finalPestDiseaseSelect.value = submission.finalDiagnosis.pestDisease;
-                        document.getElementById('final-diagnosis-notes').value = submission.finalDiagnosis.notes || '';
-
-                        finalPestDiseaseSelect.dispatchEvent(new Event('change'));
-
-                        setTimeout(() => {
-                            const { prevention, monitoring, control, instructions, followUpDate } = submission.treatment || {};
-                            document.querySelectorAll('#treatment-plan-container input[type="checkbox"]').forEach(cb => cb.checked = false);
-
-                            const checkItems = (list, category) => {
-                                if (list) list.forEach(item => {
-                                    const checkbox = document.querySelector(`#treatment-${category}-list input[value="${item.replace(/"/g, '\\"')}"]`);
-                                    if (checkbox) checkbox.checked = true;
-                                });
-                            };
-
-                            checkItems(prevention, 'prevention');
-                            checkItems(monitoring, 'monitoring');
-                            checkItems(control, 'control');
-
-                            document.getElementById('treatment-instructions').value = instructions || '';
-                            document.getElementById('follow-up-date').value = followUpDate || '';
-                        }, 100);
-
-                        saveBtn.textContent = 'Update Treatment Plan';
-                        reEvalBtn.classList.remove('hidden');
-                        escalateBtn.classList.add('hidden');
-                    } else {
-                        finalPestDiseaseSelect.value = submission.initialDiagnosis.pestDisease;
-                        document.getElementById('final-diagnosis-notes').value = submission.initialDiagnosis.notes || '';
-                        finalPestDiseaseSelect.dispatchEvent(new Event('change'));
-                        document.getElementById('treatment-instructions').value = '';
-                        document.getElementById('follow-up-date').value = '';
-                        saveBtn.textContent = 'Save Treatment Plan';
-                        reEvalBtn.classList.add('hidden');
-                        if (userProfile.role === 'Branch Coordinator' && !submission.isEscalated) {
-                            escalateBtn.classList.remove('hidden');
-                        } else {
-                            escalateBtn.classList.add('hidden');
-                        }
-                    }
-
-                    document.getElementById('treatment-modal').classList.remove('hidden');
-                    document.getElementById('treatment-modal').classList.add('flex');
-                    lucide.createIcons();
+                    setupTreatmentModal(submission);
                 });
 
                 if (submission.finalDiagnosis) {
@@ -2733,9 +2746,14 @@
                     `;
                 } else {
                     card.innerHTML = `
-                        <p class="font-bold text-lg">${submission.farmName}</p>
-                        <p><strong>Initial Diagnosis:</strong> ${submission.initialDiagnosis.pestDisease}</p>
-                        <p class="text-sm text-gray-600">Diagnosed by ${submission.initialDiagnosis.diagnosedByName || 'an expert'}</p>
+                        <div class="flex justify-between items-center">
+                             <div>
+                                <p class="font-bold text-lg">${submission.farmName}</p>
+                                <p><strong>Initial Diagnosis:</strong> ${submission.initialDiagnosis.pestDisease}</p>
+                                <p class="text-sm text-gray-600">Diagnosed by ${submission.initialDiagnosis.diagnosedByName || 'an expert'}</p>
+                            </div>
+                            <button class="bg-blue-500 text-white text-sm font-bold py-2 px-3 rounded-lg">Provide Treatment</button>
+                        </div>
                     `;
                 }
                 treatmentContainer.appendChild(card);
@@ -2949,10 +2967,19 @@
 
                 showToast('Final diagnosis and treatment plan saved!', 'success');
                 document.getElementById('close-treatment-modal-btn').click();
-                loadReportsForTreatment();
 
-            } catch (error)
-            {
+                // Refresh the current screen to show changes
+                const activeScreenId = document.querySelector('.screen.active').id;
+                if (activeScreenId === 'treatment-screen') {
+                    loadReportsForTreatment();
+                } else if (activeScreenId === 'online-clinic-screen') {
+                    loadOnlineClinicReports();
+                } else {
+                    // Fallback refresh
+                    loadReportsForTreatment();
+                }
+
+            } catch (error) {
                 console.error('Error saving treatment plan:', error);
                 showToast('Could not save treatment plan.', 'error');
             } finally {
@@ -3925,72 +3952,7 @@
 
                 card.querySelector('.view-clinic-report-btn').addEventListener('click', (e) => {
                     const submissionData = JSON.parse(e.currentTarget.getAttribute('data-submission'));
-
-                    currentTreatmentTarget = {
-                        userId: submissionData.userId,
-                        farmId: submissionData.farmId,
-                        submissionId: submissionData.submissionId
-                    };
-
-                    const detailsContainer = document.getElementById('treatment-report-details');
-                    detailsContainer.innerHTML = `
-                        <p class="font-bold text-lg">${submissionData.farmName}</p>
-                        <p class="font-semibold text-gray-800 mt-2">Initial Diagnosis:</p>
-                        <div class="pl-2 border-l-2 border-gray-200">
-                            <p><strong>Pest/Disease:</strong> ${submissionData.initialDiagnosis.pestDisease}</p>
-                            <p class="text-sm text-gray-600"><strong>Notes:</strong> ${submissionData.initialDiagnosis.notes || 'N/A'}</p>
-                            <p class="text-sm text-gray-600"><strong>Diagnosed by:</strong> ${submissionData.initialDiagnosis.diagnosedByName || 'N/A'}</p>
-                        </div>
-                    `;
-
-                    const finalPestDiseaseSelect = document.getElementById('final-pest-disease-select');
-                    populatePestDiseaseDropdown(finalPestDiseaseSelect);
-
-                    const saveBtn = document.getElementById('save-treatment-btn');
-                    const reEvalBtn = document.getElementById('re-evaluate-btn');
-
-                    if (submissionData.finalDiagnosis) {
-                        finalPestDiseaseSelect.value = submissionData.finalDiagnosis.pestDisease;
-                        document.getElementById('final-diagnosis-notes').value = submissionData.finalDiagnosis.notes || '';
-
-                        finalPestDiseaseSelect.dispatchEvent(new Event('change'));
-
-                        setTimeout(() => {
-                            const { prevention, monitoring, control, instructions, followUpDate } = submissionData.treatment || {};
-                            document.querySelectorAll('#treatment-plan-container input[type="checkbox"]').forEach(cb => cb.checked = false);
-
-                            const checkItems = (list, category) => {
-                                if (list) list.forEach(item => {
-                                    const checkbox = document.querySelector(`#treatment-${category}-list input[value="${item.replace(/"/g, '\\"')}"]`);
-                                    if (checkbox) checkbox.checked = true;
-                                });
-                            };
-
-                            checkItems(prevention, 'prevention');
-                            checkItems(monitoring, 'monitoring');
-                            checkItems(control, 'control');
-
-                            document.getElementById('treatment-instructions').value = instructions || '';
-                            document.getElementById('follow-up-date').value = followUpDate || '';
-                        }, 100);
-
-                        saveBtn.textContent = 'Update Treatment Plan';
-                        reEvalBtn.classList.remove('hidden');
-                    } else {
-                        finalPestDiseaseSelect.value = submissionData.initialDiagnosis.pestDisease;
-                        document.getElementById('final-diagnosis-notes').value = submissionData.initialDiagnosis.notes || '';
-                        finalPestDiseaseSelect.dispatchEvent(new Event('change'));
-                        document.getElementById('treatment-instructions').value = '';
-                        document.getElementById('follow-up-date').value = '';
-                        saveBtn.textContent = 'Save Treatment Plan';
-                        reEvalBtn.classList.add('hidden');
-                    }
-
-                    document.getElementById('escalate-from-treatment-btn').classList.add('hidden');
-
-                    document.getElementById('treatment-modal').classList.remove('hidden');
-                    document.getElementById('treatment-modal').classList.add('flex');
-                    lucide.createIcons();
+                    setupTreatmentModal(submissionData);
                 });
 
                 clinicContainer.appendChild(card);
