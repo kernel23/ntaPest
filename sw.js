@@ -82,6 +82,11 @@ self.addEventListener('activate', event => {
 
 // 3. Fetch: Intercept network requests and apply caching strategies.
 self.addEventListener('fetch', event => {
+    // Ignore non-GET requests, such as POST requests to Firebase Storage.
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
     const { url } = event.request;
 
     // Strategy 1: Stale-While-Revalidate for our data files
