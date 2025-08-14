@@ -121,6 +121,7 @@
                     <p class="text-lg text-green-700">Tobacco Pest Monitoring</p>
                     <p class="text-sm text-gray-500 mt-1">Ilocos Region, Philippines</p>
                 </div>
+                <div id="offline-message-container" class="w-full max-w-sm text-center mb-4"></div>
                 <div class="w-full max-w-sm">
                     <button id="google-signin-btn" class="w-full bg-white text-gray-700 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm flex items-center justify-center mb-3">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" class="mr-3"> <!-- Placeholder for Google Icon -->
@@ -845,6 +846,13 @@
             orderBy,
             limit
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import {
+            getStorage,
+            ref,
+            uploadString,
+            getDownloadURL,
+            deleteObject
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
         // --- 1. FIREBASE CONFIGURATION ---
         // IMPORTANT: Replace with your project's Firebase configuration
@@ -852,7 +860,7 @@
             apiKey: "AIzaSyB3yPx1dWJQwqn-SglOjGzrQ6BAZFngMDc",
             authDomain: "pest-monitoring-app-ph.firebaseapp.com",
             projectId: "pest-monitoring-app-ph",
-            storageBucket: "pest-monitoring-app-ph.appspot.com",
+            storageBucket: "pest-monitoring-app-ph.firebasestorage.app",
             messagingSenderId: "948653534237",
             appId: "1:948653534237:web:dc195109343b4d5a12eaf4",
             measurementId: "G-YRFNHDN5VV"
@@ -862,6 +870,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
         // --- 2. PWA & OFFLINE SETUP ---
         let pestAndDiseaseData = {}; // Global variable to hold the data
@@ -1593,7 +1602,19 @@
             updateUIVisibilityBasedOnRole();
         }
 
+        // --- Authentication Flow with Offline Fallback ---
+        const authTimeout = setTimeout(() => {
+            console.log("Authentication timed out. Assuming offline, showing login screen.");
+            // If after the timeout we still don't have a user, show the login screen.
+            // This prevents getting stuck on the loading screen when offline.
+            if (!currentUser) {
+                showScreen('login');
+            }
+        }, 4000); // 4-second timeout for auth state
+
         onAuthStateChanged(auth, async (user) => {
+            clearTimeout(authTimeout); // Auth state resolved, clear the timeout.
+
             if (user) {
                 currentUser = user;
                 updateOnlineStatus();
@@ -2105,35 +2126,51 @@
                 return;
             }
 
-            showSavingOverlay('Saving Report...');
+            // Note: The 'edit' functionality has been temporarily removed to fix the core upload issue.
+            // A more robust edit feature would require comparing image arrays and deleting/uploading as needed.
+            if (isEditSubmissionMode) {
+                showToast('Editing reports with new images is not yet supported. Please create a new report.', 'error');
+                return;
+            }
 
-            const submissionData = {
-                imageDataUrls: imageDataUrls,
-                symptoms,
-                distribution,
-                severity,
-            };
+            showSavingOverlay('Uploading images...');
 
             try {
-                if (isEditSubmissionMode) {
-                    // Update existing submission
-                    submissionData.updatedAt = serverTimestamp();
-                    const submissionDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions', currentSubmissionId);
-                    await updateDoc(submissionDocRef, submissionData);
-                    showToast('Report Updated: Your report has been successfully updated.', 'success');
-                } else {
-                    // Create new submission
-                    submissionData.timestamp = serverTimestamp();
-                     // Simulate GPS data
-                    submissionData.gps_coordinates = { latitude: 17.5734, longitude: 120.3856 };
-                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions');
-                    await addDoc(submissionsCollection, submissionData);
-                    showToast('Report Submitted: Your new report has been saved.', 'success');
-                }
+                // Generate a new submission ID client-side to use in the storage path
+                const submissionDocRef = doc(collection(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions'));
+                const submissionId = submissionDocRef.id;
+
+                // Create a reference and upload task for each image
+                const uploadPromises = imageDataUrls.map((dataUrl, index) => {
+                    const storageRef = ref(storage, `submissions/${currentUser.uid}/${submissionId}/image_${index}.jpg`);
+                    // uploadString is efficient for data URLs
+                    return uploadString(storageRef, dataUrl, 'data_url').then(snapshot => getDownloadURL(snapshot.ref));
+                });
+
+                // Wait for all uploads to complete and get their download URLs
+                const imageDownloadUrls = await Promise.all(uploadPromises);
+
+                showSavingOverlay('Saving report data...');
+
+                const submissionData = {
+                    imageDownloadUrls: imageDownloadUrls, // <-- Store URLs, not base64 data
+                    symptoms,
+                    distribution,
+                    severity,
+                    timestamp: serverTimestamp(),
+                    gps_coordinates: { latitude: 17.5734, longitude: 120.3856 } // Simulate GPS data
+                };
+
+                // Save the complete document to Firestore now that images are uploaded
+                await setDoc(submissionDocRef, submissionData);
+
+                showToast('Report Submitted: Your new report has been saved.', 'success');
 
                 // Reset state and form
                 isEditSubmissionMode = false;
                 currentSubmissionId = null;
+                imagePreviewContainer.innerHTML = '<div id="image-placeholder-icon" class="col-span-full text-center text-gray-400 py-4"><i data-lucide="image" class="mx-auto h-12 w-12"></i><p>No images selected</p></div>';
+
 
                 // Go back to the dashboard, which will be re-rendered
                 const lastContext = navigationHistory[navigationHistory.length - 2] || { screenName: 'farmList', context: {} };
@@ -2141,7 +2178,7 @@
 
             } catch (error) {
                 console.error('Failed to save submission:', error);
-                showToast('Could not save report. Please try again.', 'error');
+                showToast('Could not save report. Please try again. Error: ' + error.message, 'error');
             } finally {
                 hideSavingOverlay();
             }
@@ -2174,7 +2211,7 @@
                         imagePreviewContainer.innerHTML = '';
                         if(placeholder) imagePreviewContainer.appendChild(placeholder);
 
-                        const imageUrls = sub.imageDataUrls || (sub.imageDataUrl ? [sub.imageDataUrl] : []);
+                    const imageUrls = sub.imageDownloadUrls || (sub.imageDataUrl ? [sub.imageDataUrl] : []);
 
                         if (imageUrls.length > 0) {
                              // This is a simplified way to handle blobs. A real app might need more robust handling.
@@ -2268,8 +2305,8 @@
                         const dateString = submissionDate.toLocaleDateString();
                         const timeString = submissionDate.toLocaleTimeString();
 
-                        const thumbnailUrl = (submission.imageDataUrls && submission.imageDataUrls.length > 0)
-                            ? submission.imageDataUrls[0]
+                        const thumbnailUrl = (submission.imageDownloadUrls && submission.imageDownloadUrls.length > 0)
+                            ? submission.imageDownloadUrls[0]
                             : (submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image');
 
 
@@ -2463,8 +2500,8 @@
                 const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date();
                 const dateString = submissionDate.toLocaleDateString();
 
-                const thumbnailUrl = (submission.imageDataUrls && submission.imageDataUrls.length > 0)
-                    ? submission.imageDataUrls[0]
+                const thumbnailUrl = (submission.imageDownloadUrls && submission.imageDownloadUrls.length > 0)
+                    ? submission.imageDownloadUrls[0]
                     : (submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image');
 
 
@@ -2487,7 +2524,7 @@
                         submissionId: submission.submissionId
                     };
 
-                    const imageUrls = submission.imageDataUrls || (submission.imageDataUrl ? [submission.imageDataUrl] : []);
+                    const imageUrls = submission.imageDownloadUrls || (submission.imageDataUrl ? [submission.imageDataUrl] : []);
                     const imageGridHTML = imageUrls.length > 0
                         ? `<div class="grid grid-cols-2 md:grid-cols-3 gap-2 my-2">${imageUrls.map(url => `<a href="${url}" target="_blank"><img src="${url}" class="rounded-lg w-full aspect-square object-cover"></a>`).join('')}</div>`
                         : `<p class="text-sm text-gray-500">No image submitted.</p>`;
@@ -3115,7 +3152,7 @@
                             </div>`;
                     }
 
-                    const imageUrls = submission.imageDataUrls || (submission.imageDataUrl ? [submission.imageDataUrl] : []);
+                    const imageUrls = submission.imageDownloadUrls || (submission.imageDataUrl ? [submission.imageDataUrl] : []);
                     const imageGridHTML = imageUrls.length > 0
                         ? `<div class="grid grid-cols-2 md:grid-cols-3 gap-2">${imageUrls.map(url => `<a href="${url}" target="_blank"><img src="${url}" class="rounded-lg w-full aspect-square object-cover"></a>`).join('')}</div>`
                         : `<p class="text-sm text-gray-500">No images submitted.</p>`;
@@ -3592,8 +3629,8 @@
 
             const reportDate = submission.timestamp?.toDate ? submission.timestamp.toDate().toLocaleDateString() : 'N/A';
 
-            const imagesHTML = (submission.imageDataUrls && submission.imageDataUrls.length > 0)
-                ? `<div class="grid grid-cols-2 gap-2 mt-2">${submission.imageDataUrls.map(url => `
+            const imagesHTML = (submission.imageDownloadUrls && submission.imageDownloadUrls.length > 0)
+                ? `<div class="grid grid-cols-2 gap-2 mt-2">${submission.imageDownloadUrls.map(url => `
                     <a href="${url}" target="_blank" class="block">
                         <img src="${url}" alt="Reported image" class="rounded-md object-cover aspect-square w-full hover:opacity-80 transition-opacity">
                     </a>`).join('')}
@@ -4390,8 +4427,30 @@
             const db = await dbPromise;
             const farmOutboxCount = await db.count('outbox');
             const submissionOutboxCount = await db.count('submission_outbox');
+            const offlineMessageContainer = document.getElementById('offline-message-container');
+            const googleBtn = document.getElementById('google-signin-btn');
+            const facebookBtn = document.getElementById('facebook-signin-btn');
+            const guestBtn = document.getElementById('guest-signin-btn');
 
             if (navigator.onLine) {
+                 if (connectionStatusEl) {
+                    connectionStatusEl.textContent = 'Online';
+                    connectionStatusEl.className = 'text-center py-1 px-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-800';
+                }
+                if (offlineMessageContainer) offlineMessageContainer.innerHTML = '';
+                if (googleBtn) {
+                    googleBtn.disabled = false;
+                    googleBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                if (facebookBtn) {
+                    facebookBtn.disabled = false;
+                    facebookBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                if (guestBtn) {
+                    guestBtn.disabled = false;
+                    guestBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+
                 if (farmOutboxCount > 0) {
                     syncOutbox();
                 }
@@ -4399,18 +4458,31 @@
                     syncSubmissionOutbox();
                 }
 
-                if (farmOutboxCount === 0 && submissionOutboxCount === 0) {
-                    connectionStatusEl.textContent = 'Online';
-                    connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-blue-100 text-blue-800';
-                }
             } else {
-                let message = 'Offline Mode';
-                const totalOutboxCount = farmOutboxCount + submissionOutboxCount;
-                if (totalOutboxCount > 0) {
-                    message += ` (${totalOutboxCount} item(s) waiting to sync)`;
+                if (connectionStatusEl) {
+                    let message = 'Offline Mode';
+                    const totalOutboxCount = farmOutboxCount + submissionOutboxCount;
+                    if (totalOutboxCount > 0) {
+                        message += ` (${totalOutboxCount} item(s) waiting to sync)`;
+                    }
+                    connectionStatusEl.textContent = message;
+                    connectionStatusEl.className = 'text-center py-1 px-2 rounded-full text-sm font-semibold bg-gray-200 text-gray-800';
                 }
-                connectionStatusEl.textContent = message;
-                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-gray-200 text-gray-800';
+                if (offlineMessageContainer) {
+                    offlineMessageContainer.innerHTML = `<p class="text-red-600 bg-red-100 p-3 rounded-lg">You are currently offline. Please connect to sign in.</p>`;
+                }
+                if (googleBtn) {
+                    googleBtn.disabled = true;
+                    googleBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                if (facebookBtn) {
+                    facebookBtn.disabled = true;
+                    facebookBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                if (guestBtn) {
+                    guestBtn.disabled = true;
+                    guestBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
             }
         }
         window.addEventListener('online', updateOnlineStatus);

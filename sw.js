@@ -1,88 +1,143 @@
-// Service Worker for Agri-Guard PWA (sw.js)
+// A more robust service worker for Agri-Guard PWA
 
-const CACHE_NAME = 'agri-guard-cache-v1';
-// This list includes all the essential files needed for the app to run offline.
-const urlsToCache = [
-  '/',
-  '/index.html',
-  'https://unpkg.com/lucide@latest',
-  'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js',
-  'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js',
-  'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js'
+const CACHE_NAME = 'agri-guard-cache-v2';
+const DATA_CACHE_NAME = 'agri-guard-data-cache-v1';
+
+// Pre-cache the app shell and critical assets
+const CORE_ASSETS_TO_CACHE = [
+    '/',
+    '/index.html',
+    '/manifest.json',
+    '/address-provider.js',
+    '/pestDiseases.json',
+    '/public/output.css', // Assuming this is the compiled Tailwind CSS
 ];
 
-// 1. Installation: Open the cache and add the core files.
+const REMOTE_ASSETS_TO_CACHE = [
+    'https://cdn.tailwindcss.com', // Fallback if the local one isn't used
+    'https://unpkg.com/lucide@latest',
+    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css',
+    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js',
+    'https://cdn.jsdelivr.net/npm/idb@8/+esm',
+    'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js',
+    'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js',
+    'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js',
+    'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
+    'https://placehold.co/192x192/22c55e/FFFFFF?text=AG',
+    'https://placehold.co/512x512/22c55e/FFFFFF?text=AG',
+    'https://placehold.co/96x96/e2e8f0/334155?text=User'
+];
+
+
+// URLs for the stale-while-revalidate strategy (our data files)
+const DATA_URLS = [
+    '/pestDiseases.json',
+    'https://raw.githubusercontent.com/flores-jacob/philippine-regions-provinces-cities-municipalities-barangays/master/philippine_provinces_cities_municipalities_and_barangays_2019v2.json'
+];
+
+// 1. Installation: Open caches and add the core files.
 self.addEventListener('install', event => {
-  console.log('Service Worker: Installing...');
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Service Worker: Caching app shell');
-        return cache.addAll(urlsToCache);
-      })
-      .catch(err => {
-        console.error('Service Worker: Caching failed', err);
-      })
-  );
+    console.log('[Service Worker] Install');
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(cache => {
+            console.log('[Service Worker] Pre-caching core assets:', CORE_ASSETS_TO_CACHE);
+            const coreAssetsPromise = cache.addAll(CORE_ASSETS_TO_CACHE);
+
+            console.log('[Service Worker] Pre-caching remote assets:', REMOTE_ASSETS_TO_CACHE);
+            const remoteAssetsPromises = REMOTE_ASSETS_TO_CACHE.map(url => {
+                return fetch(url, { mode: 'no-cors' })
+                    .then(response => {
+                        return cache.put(url, response);
+                    })
+                    .catch(error => {
+                        console.error(`[Service Worker] Failed to cache ${url}:`, error);
+                    });
+            });
+
+            return Promise.all([coreAssetsPromise, ...remoteAssetsPromises]);
+        })
+    );
+    self.skipWaiting();
 });
 
 // 2. Activation: Clean up old caches.
 self.addEventListener('activate', event => {
-  console.log('Service Worker: Activating...');
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Service Worker: Deleting old cache', cacheName);
-            return caches.delete(cacheName);
-          }
+    console.log('[Service Worker] Activate');
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheName !== CACHE_NAME && cacheName !== DATA_CACHE_NAME) {
+                        console.log('[Service Worker] Removing old cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
         })
-      );
-    })
-  );
-  return self.clients.claim();
+    );
+    return self.clients.claim();
 });
 
-// 3. Fetch: Intercept network requests.
-// This is a "cache-first" strategy. It tries to serve the request from the cache.
-// If it's not in the cache, it fetches from the network, serves it, and then caches it for next time.
+// 3. Fetch: Intercept network requests and apply caching strategies.
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
+    // Ignore non-GET requests, such as POST requests to Firebase Storage.
+    if (event.request.method !== 'GET') {
+        return;
+    }
 
-        // Not in cache - fetch from network
-        return fetch(event.request).then(
-          networkResponse => {
-            // Check if we received a valid response
-            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-              return networkResponse;
+    const { url } = event.request;
+
+    // Strategy 1: Stale-While-Revalidate for our data files
+    if (DATA_URLS.some(dataUrl => url.includes(dataUrl))) {
+        console.log(`[Service Worker] Fetch (Stale-While-Revalidate): ${url}`);
+        event.respondWith(
+            caches.open(DATA_CACHE_NAME).then(cache => {
+                return cache.match(event.request).then(response => {
+                    const fetchPromise = fetch(event.request).then(networkResponse => {
+                        console.log(`[Service Worker] Updating data cache for: ${url}`);
+                        cache.put(event.request, networkResponse.clone());
+                        return networkResponse;
+                    });
+                    // Return cached response immediately, then fetch update in background
+                    if(response) {
+                        console.log(`[Service Worker] Serving from data cache: ${url}`);
+                    }
+                    return response || fetchPromise;
+                });
+            })
+        );
+        return;
+    }
+
+    // Strategy 2: Cache First for all other requests (app shell, images, etc.)
+    event.respondWith(
+        caches.match(event.request).then(response => {
+            // Cache hit - return response
+            if (response) {
+                console.log(`[Service Worker] Serving from cache: ${url}`);
+                return response;
             }
 
-            // IMPORTANT: Clone the response. A response is a stream
-            // and because we want the browser to consume the response
-            // as well as the cache consuming the response, we need
-            // to clone it so we have two streams.
-            const responseToCache = networkResponse.clone();
+            console.log(`[Service Worker] Fetch (Cache First - Network): ${url}`);
+            // Not in cache - fetch from network, then cache it
+            return fetch(event.request).then(networkResponse => {
+                // Don't cache unsuccessful responses or Firebase auth requests
+                if (!networkResponse || networkResponse.status !== 200 || url.includes('googleapis.com/identitytoolkit')) {
+                    return networkResponse;
+                }
 
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return networkResponse;
-          }
-        );
-      })
-      .catch(error => {
-        console.error('Service Worker: Fetch error', error);
-        // Here you could return a fallback offline page if needed
-      })
-  );
+                console.log(`[Service Worker] Caching new asset: ${url}`);
+                const responseToCache = networkResponse.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(event.request, responseToCache);
+                });
+                return networkResponse;
+            }).catch(error => {
+                console.error('[Service Worker] Fetch failed:', error);
+                // Optionally, return a fallback page or image
+            });
+        })
+    );
 });
