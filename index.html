@@ -177,15 +177,15 @@
                     <input type="text" id="fullName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
 
                     <label for="province" class="block text-sm font-medium text-gray-700 mt-4">Province</label>
-                    <select id="province" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
-                        <option>Loading provinces...</option>
-                    </select>
+                    <div id="province-multiselect-container" class="relative"></div>
+
 
                     <label for="municipality" class="block text-sm font-medium text-gray-700 mt-4">Municipality</label>
-                    <select id="municipality" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500" disabled></select>
+                    <div id="municipality-multiselect-container" class="relative"></div>
+
 
                     <label for="barangay" class="block text-sm font-medium text-gray-700 mt-4">Barangay</label>
-                    <select id="barangay" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500" disabled></select>
+                     <div id="barangay-multiselect-container" class="relative"></div>
 
                     <label for="birthdate" class="block text-sm font-medium text-gray-700 mt-4">Birthdate</label>
                     <input type="date" id="birthdate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
@@ -571,11 +571,28 @@
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-2xl font-bold">All Pest & Disease Reports</h2>
                     </div>
-                    <div id="report-filters" class="flex space-x-2">
-                        <button data-filter="all" class="report-filter-btn bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">All</button>
-                        <button data-filter="pending" class="report-filter-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold">Pending Diagnosis</button>
-                        <button data-filter="diagnosed" class="report-filter-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold">Diagnosed</button>
-                        <button data-filter="treated" class="report-filter-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold">Treatment Provided</button>
+                    <div id="report-filters" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="col-span-1 md:col-span-4">
+                            <p class="text-sm font-medium text-gray-700">Filter by Status</p>
+                            <div class="flex flex-wrap gap-2 mt-1">
+                                <button data-filter="all" class="report-filter-btn bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">All</button>
+                                <button data-filter="pending" class="report-filter-btn bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">Pending Diagnosis</button>
+                                <button data-filter="diagnosed" class="report-filter-btn bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">Diagnosed</button>
+                                <button data-filter="treated" class="report-filter-btn bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">Treatment Provided</button>
+                            </div>
+                        </div>
+
+                        <div class="col-span-1 md:col-span-4">
+                             <p class="text-sm font-medium text-gray-700">Filter by Location</p>
+                             <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-1">
+                                <div id="province-filter-container" class="relative"></div>
+                                <div id="municipality-filter-container" class="relative"></div>
+                                <div id="barangay-filter-container" class="relative"></div>
+                             </div>
+                        </div>
+                         <div class="col-span-1 md:col-span-4 flex justify-end">
+                            <button id="clear-location-filters-btn" class="text-sm text-blue-600 hover:underline">Clear Location Filters</button>
+                        </div>
                     </div>
                 </header>
                 <main id="reports-container" class="flex-1 p-4 overflow-y-auto">
@@ -1479,6 +1496,145 @@
         }
 
 
+        // --- 3.5 MULTI-SELECT COMPONENT ---
+        function createMultiSelect(containerId, placeholder, isMultiSelect = true) {
+            const container = document.getElementById(containerId);
+            if (!container) {
+                console.error(`MultiSelect container not found: #${containerId}`);
+                return;
+            }
+            container.innerHTML = `
+                <button type="button" class="w-full bg-white border border-gray-300 rounded-md shadow-sm px-3 py-2 text-left cursor-pointer focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 flex items-center justify-between">
+                    <span class="block truncate text-gray-500">${placeholder}</span>
+                    <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
+                </button>
+                <div class="absolute z-20 mt-1 w-full bg-white shadow-lg rounded-md hidden max-h-60 overflow-auto border border-gray-200">
+                    <ul class="py-1">
+                        <!-- Options will be inserted here -->
+                    </ul>
+                </div>
+            `;
+
+            const button = container.querySelector('button');
+            const buttonText = button.querySelector('span');
+            const dropdown = container.querySelector('div');
+            const list = container.querySelector('ul');
+            let options = [];
+
+            const toggleDropdown = (e) => {
+                 e.stopPropagation();
+                 // Close other dropdowns
+                document.querySelectorAll('.multi-select-dropdown').forEach(d => {
+                    if (d !== dropdown) d.classList.add('hidden');
+                });
+                dropdown.classList.toggle('hidden');
+            };
+
+            button.addEventListener('click', toggleDropdown);
+
+            let changeCallback = () => {};
+
+            const instance = {
+                populate: (items) => {
+                    list.innerHTML = '';
+                    options = items;
+                    if (!items || items.length === 0) {
+                        list.innerHTML = `<li class="px-3 py-2 text-gray-500">No options available</li>`;
+                    } else {
+                        items.forEach(item => {
+                            const li = document.createElement('li');
+                            li.className = 'px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center';
+                            li.dataset.value = item;
+
+                            const checkbox = document.createElement('input');
+                            checkbox.type = 'checkbox';
+                            checkbox.className = 'h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mr-3';
+                            if (!isMultiSelect) {
+                                checkbox.type = 'radio';
+                                checkbox.name = `radio-${containerId}`;
+                            }
+
+                            li.appendChild(checkbox);
+
+                            const span = document.createElement('span');
+                            span.className = 'font-normal block truncate';
+                            span.textContent = item;
+                            li.appendChild(span);
+
+                            list.appendChild(li);
+
+                            li.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                if (e.target.tagName !== 'INPUT') {
+                                    checkbox.checked = !checkbox.checked;
+                                }
+
+                                if (!isMultiSelect) {
+                                     list.querySelectorAll('input').forEach(rb => {
+                                        if (rb !== checkbox) rb.checked = false;
+                                    });
+                                    dropdown.classList.add('hidden');
+                                }
+                                instance.updateButtonText();
+                                changeCallback(instance.getSelectedValues());
+                            });
+                        });
+                    }
+                    instance.updateButtonText();
+                    lucide.createIcons();
+                },
+                getSelectedValues: () => {
+                    const selected = [];
+                    list.querySelectorAll('input:checked').forEach(checkbox => {
+                        selected.push(checkbox.closest('li').dataset.value);
+                    });
+                    return selected;
+                },
+                setSelectedValues: (values) => {
+                    list.querySelectorAll('input').forEach(checkbox => {
+                        checkbox.checked = values.includes(checkbox.closest('li').dataset.value);
+                    });
+                    instance.updateButtonText();
+                },
+                updateButtonText: () => {
+                    const selected = instance.getSelectedValues();
+                    if (selected.length === 0) {
+                        buttonText.textContent = placeholder;
+                        buttonText.classList.add('text-gray-500');
+                         buttonText.classList.remove('text-gray-900');
+                    } else if (selected.length <= 2) {
+                        buttonText.textContent = selected.join(', ');
+                        buttonText.classList.remove('text-gray-500');
+                        buttonText.classList.add('text-gray-900');
+                    } else {
+                        buttonText.textContent = `${selected.length} items selected`;
+                        buttonText.classList.remove('text-gray-500');
+                        buttonText.classList.add('text-gray-900');
+                    }
+                },
+                onChange: (callback) => {
+                    changeCallback = callback;
+                },
+                enable: () => {
+                    button.disabled = false;
+                    button.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                },
+                disable: () => {
+                    button.disabled = true;
+                    button.classList.add('bg-gray-100', 'cursor-not-allowed');
+                },
+                clear: () => {
+                    list.innerHTML = `<li class="px-3 py-2 text-gray-500">No options available</li>`;
+                    options = [];
+                    instance.updateButtonText();
+                }
+            };
+
+            dropdown.classList.add('multi-select-dropdown');
+            return instance;
+        }
+
+
         // --- 4. AUTHENTICATION LOGIC ---
         const profileTitle = document.getElementById('profile-title');
         const editProfileBtn = document.getElementById('edit-profile-btn');
@@ -1511,63 +1667,105 @@
         }
 
         // --- Address Dropdown Logic ---
-        const provinceSelect = document.getElementById('province');
-        const municipalitySelect = document.getElementById('municipality');
-        const barangaySelect = document.getElementById('barangay');
+        let profileProvince, profileMunicipality, profileBarangay;
+        let filterProvince, filterMunicipality, filterBarangay;
 
-        function populateProvinces() {
-            provinceSelect.innerHTML = '<option value="">Select Province</option>';
-            if (window.philippineAddresses && window.philippineAddresses.provinces) {
-                window.philippineAddresses.provinces.forEach(province => {
-                    const option = document.createElement('option');
-                    option.value = province.name;
-                    option.textContent = province.name;
-                    provinceSelect.appendChild(option);
+        function initializeAddressFilters() {
+            // For Profile Screen
+            profileProvince = createMultiSelect('province-multiselect-container', 'Select Province', false);
+            profileMunicipality = createMultiSelect('municipality-multiselect-container', 'Select Municipality', false);
+            profileBarangay = createMultiSelect('barangay-multiselect-container', 'Select Barangay', false);
+
+            profileProvince.populate(window.philippineAddresses.provinces.map(p => p.name));
+            profileMunicipality.disable();
+            profileBarangay.disable();
+
+            profileProvince.onChange(selectedProvinces => {
+                profileMunicipality.clear();
+                profileBarangay.clear();
+                if (selectedProvinces.length > 0) {
+                    const provinceData = window.philippineAddresses.provinces.find(p => p.name === selectedProvinces[0]);
+                    profileMunicipality.populate(provinceData.municipalities.map(m => m.name));
+                    profileMunicipality.enable();
+                } else {
+                    profileMunicipality.disable();
+                    profileBarangay.disable();
+                }
+            });
+
+            profileMunicipality.onChange(selectedMunicipalities => {
+                profileBarangay.clear();
+                if (selectedMunicipalities.length > 0) {
+                    const selectedProvinceName = profileProvince.getSelectedValues()[0];
+                    const provinceData = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
+                    const municipalityData = provinceData.municipalities.find(m => m.name === selectedMunicipalities[0]);
+                    profileBarangay.populate(municipalityData.barangays);
+                    profileBarangay.enable();
+                } else {
+                    profileBarangay.disable();
+                }
+            });
+
+            // For Reports Screen Filters
+            filterProvince = createMultiSelect('province-filter-container', 'All Provinces', true);
+            filterMunicipality = createMultiSelect('municipality-filter-container', 'All Municipalities', true);
+            filterBarangay = createMultiSelect('barangay-filter-container', 'All Barangays', true);
+
+            filterProvince.populate(window.philippineAddresses.provinces.map(p => p.name));
+            filterMunicipality.disable();
+            filterBarangay.disable();
+
+            filterProvince.onChange(selectedProvinces => {
+                filterMunicipality.clear();
+                filterBarangay.clear();
+                filterMunicipality.disable();
+                filterBarangay.disable();
+                if (selectedProvinces.length > 0) {
+                    const municipalities = selectedProvinces.flatMap(provinceName => {
+                        const provinceData = window.philippineAddresses.provinces.find(p => p.name === provinceName);
+                        return provinceData.municipalities.map(m => m.name);
+                    });
+                    filterMunicipality.populate([...new Set(municipalities)].sort());
+                    filterMunicipality.enable();
+                }
+                loadAllReports();
+            });
+
+            filterMunicipality.onChange(selectedMunicipalities => {
+                filterBarangay.clear();
+                filterBarangay.disable();
+                if (selectedMunicipalities.length > 0) {
+                    const selectedProvinces = filterProvince.getSelectedValues();
+                    const barangays = selectedProvinces.flatMap(provinceName => {
+                        const provinceData = window.philippineAddresses.provinces.find(p => p.name === provinceName);
+                        return provinceData.municipalities
+                            .filter(m => selectedMunicipalities.includes(m.name))
+                            .flatMap(m => m.barangays);
+                    });
+                    filterBarangay.populate([...new Set(barangays)].sort());
+                    filterBarangay.enable();
+                }
+                loadAllReports();
+            });
+
+            filterBarangay.onChange(() => {
+                loadAllReports();
+            });
+
+            const clearFiltersBtn = document.getElementById('clear-location-filters-btn');
+            if (clearFiltersBtn) {
+                clearFiltersBtn.addEventListener('click', () => {
+                    filterProvince.setSelectedValues([]);
+                    filterMunicipality.setSelectedValues([]);
+                    filterBarangay.setSelectedValues([]);
+                    filterMunicipality.clear();
+                    filterBarangay.clear();
+                    filterMunicipality.disable();
+                    filterBarangay.disable();
+                    loadAllReports();
                 });
-            } else {
-                provinceSelect.innerHTML = '<option value="">Failed to load addresses</option>';
             }
         }
-
-        provinceSelect.addEventListener('change', () => {
-            const selectedProvinceName = provinceSelect.value;
-            const selectedProvince = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
-            municipalitySelect.innerHTML = '<option value="">Select Municipality</option>';
-            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-            barangaySelect.disabled = true;
-
-            if (selectedProvince) {
-                municipalitySelect.disabled = false;
-                selectedProvince.municipalities.forEach(municipality => {
-                    const option = document.createElement('option');
-                    option.value = municipality.name;
-                    option.textContent = municipality.name;
-                    municipalitySelect.appendChild(option);
-                });
-            } else {
-                municipalitySelect.disabled = true;
-            }
-        });
-
-        municipalitySelect.addEventListener('change', () => {
-            const selectedProvinceName = provinceSelect.value;
-            const selectedMunicipalityName = municipalitySelect.value;
-            const selectedProvince = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
-            const selectedMunicipality = selectedProvince?.municipalities.find(m => m.name === selectedMunicipalityName);
-            barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-
-            if (selectedMunicipality && selectedMunicipality.barangays) {
-                barangaySelect.disabled = false;
-                selectedMunicipality.barangays.forEach(barangay => {
-                    const option = document.createElement('option');
-                    option.value = barangay;
-                    option.textContent = barangay;
-                    barangaySelect.appendChild(option);
-                });
-            } else {
-                barangaySelect.disabled = true;
-            }
-        });
 
         // --- RSBSA Logic ---
         const isFarmerCheckbox = document.getElementById('isFarmer');
@@ -1583,21 +1781,23 @@
             // Populate address fields only if the data is ready
             if (window.philippineAddresses && window.philippineAddresses.provinces.length > 0) {
                 if (profile.province) {
-                    provinceSelect.value = profile.province;
-                    provinceSelect.dispatchEvent(new Event('change'));
-
-                    setTimeout(() => {
+                    profileProvince.setSelectedValues([profile.province]);
+                    const provinceData = window.philippineAddresses.provinces.find(p => p.name === profile.province);
+                    if (provinceData) {
+                        profileMunicipality.populate(provinceData.municipalities.map(m => m.name));
+                        profileMunicipality.enable();
                         if (profile.municipality) {
-                            municipalitySelect.value = profile.municipality;
-                            municipalitySelect.dispatchEvent(new Event('change'));
-
-                            setTimeout(() => {
-                                 if (profile.barangay) {
-                                    barangaySelect.value = profile.barangay;
+                            profileMunicipality.setSelectedValues([profile.municipality]);
+                            const municipalityData = provinceData.municipalities.find(m => m.name === profile.municipality);
+                            if (municipalityData) {
+                                profileBarangay.populate(municipalityData.barangays);
+                                profileBarangay.enable();
+                                if (profile.barangay) {
+                                    profileBarangay.setSelectedValues([profile.barangay]);
                                 }
-                            }, 100);
+                            }
                         }
-                    }, 100);
+                    }
                 }
             }
 
@@ -1646,7 +1846,7 @@
                 await Promise.all([window.addressDataPromise, window.pestDiseaseDataPromise]);
 
                 // Now that address data is loaded, populate the dropdowns
-                populateProvinces();
+                initializeAddressFilters();
                 
                 const userDocRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(userDocRef);
@@ -1819,9 +2019,9 @@
 
         document.getElementById('save-profile-btn').addEventListener('click', async () => {
             const fullName = document.getElementById('fullName').value;
-            const province = document.getElementById('province').value;
-            const municipality = document.getElementById('municipality').value;
-            const barangay = document.getElementById('barangay').value;
+            const province = profileProvince.getSelectedValues()[0] || '';
+            const municipality = profileMunicipality.getSelectedValues()[0] || '';
+            const barangay = profileBarangay.getSelectedValues()[0] || '';
             const birthdate = document.getElementById('birthdate').value;
             const civilStatus = document.getElementById('civilStatus').value;
             const religion = document.getElementById('religion').value;
@@ -2419,7 +2619,7 @@
                                     ...submissionDoc.data(),
                                     id: submissionDoc.id,
                                     farmName: farmData.farmName,
-                                    userName: userDoc.data().fullName,
+                                    userProfile: userDoc.data(),
                                     userId: userDoc.id,
                                     farmId: farmDoc.id
                                 });
@@ -2430,12 +2630,32 @@
 
                 // Client-side filtering
                 let filteredSubmissions = allSubmissions;
+
+                // Filter by status
                 if (currentReportFilter === 'pending') {
                     filteredSubmissions = allSubmissions.filter(s => !s.initialDiagnosis);
                 } else if (currentReportFilter === 'diagnosed') {
                     filteredSubmissions = allSubmissions.filter(s => s.initialDiagnosis && !s.finalDiagnosis);
                 } else if (currentReportFilter === 'treated') {
                     filteredSubmissions = allSubmissions.filter(s => s.finalDiagnosis && s.treatment);
+                }
+
+                // Filter by location
+                const selectedProvinces = filterProvince.getSelectedValues();
+                const selectedMunicipalities = filterMunicipality.getSelectedValues();
+                const selectedBarangays = filterBarangay.getSelectedValues();
+
+                if (selectedProvinces.length > 0 || selectedMunicipalities.length > 0 || selectedBarangays.length > 0) {
+                    filteredSubmissions = filteredSubmissions.filter(s => {
+                        const userProfile = s.userProfile;
+                        if (!userProfile) return false;
+
+                        const provinceMatch = selectedProvinces.length === 0 || selectedProvinces.includes(userProfile.province);
+                        const municipalityMatch = selectedMunicipalities.length === 0 || selectedMunicipalities.includes(userProfile.municipality);
+                        const barangayMatch = selectedBarangays.length === 0 || selectedBarangays.includes(userProfile.barangay);
+
+                        return provinceMatch && municipalityMatch && barangayMatch;
+                    });
                 }
 
                 filteredSubmissions.sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0));
@@ -3152,8 +3372,8 @@
                 }
 
                 let farmerNameHTML = '';
-                if (submission.userName && userProfile.role !== 'Farmer') {
-                    farmerNameHTML = `<p class="text-sm text-gray-500">Farmer: ${submission.userName}</p>`;
+                if (submission.userProfile && userProfile.role !== 'Farmer') {
+                    farmerNameHTML = `<p class="text-sm text-gray-500">Farmer: ${submission.userProfile.fullName}</p>`;
                 }
 
                 const thumbnailUrl = (submission.imageDownloadUrls && submission.imageDownloadUrls.length > 0)
