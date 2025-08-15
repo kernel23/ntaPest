@@ -47,12 +47,19 @@ self.addEventListener('install', event => {
 
             console.log('[Service Worker] Pre-caching remote assets:', REMOTE_ASSETS_TO_CACHE);
             const remoteAssetsPromises = REMOTE_ASSETS_TO_CACHE.map(url => {
-                return fetch(url, { mode: 'no-cors' })
+                // Important: We fetch with the default 'cors' mode.
+                // 'no-cors' would lead to opaque responses that can't be validated and cause errors.
+                return fetch(url)
                     .then(response => {
+                        // Ensure we got a valid response before caching.
+                        if (!response.ok) {
+                            throw new Error(`Server responded with ${response.status} for ${url}`);
+                        }
                         return cache.put(url, response);
                     })
                     .catch(error => {
-                        console.error(`[Service Worker] Failed to cache ${url}:`, error);
+                        // This catch is important to prevent one failed asset from stopping the entire service worker installation.
+                        console.error(`[Service Worker] Failed to fetch and cache ${url}:`, error);
                     });
             });
 

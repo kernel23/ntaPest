@@ -2605,24 +2605,51 @@
                             });
                         });
                     }
-                } else { // For Extension Worker or Branch Coordinator
-                    const usersSnapshot = await getDocs(collection(db, 'users'));
-                    for (const userDoc of usersSnapshot.docs) {
-                         const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
-                        const farmLotsSnapshot = await getDocs(farmLotsCollection);
-                        for (const farmDoc of farmLotsSnapshot.docs) {
-                            const farmData = farmDoc.data();
-                            const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
-                            const submissionsSnapshot = await getDocs(submissionsCollection);
-                            submissionsSnapshot.forEach(submissionDoc => {
-                                allSubmissions.push({
-                                    ...submissionDoc.data(),
-                                    id: submissionDoc.id,
-                                    farmName: farmData.farmName,
-                                    userProfile: userDoc.data(),
-                                    userId: userDoc.id,
-                                    farmId: farmDoc.id
-                                });
+                } else { // For Extension Worker, Coordinator, Expert, etc.
+                    const submissionsQuery = collectionGroup(db, 'submissions');
+                    const submissionsSnapshot = await getDocs(submissionsQuery);
+
+                    const farmCache = {};
+                    const userCache = {};
+
+                    for (const submissionDoc of submissionsSnapshot.docs) {
+                        const submissionData = submissionDoc.data();
+                        const farmLotRef = submissionDoc.ref.parent.parent;
+                        const userRef = farmLotRef.parent.parent;
+
+                        // Fetch Farm Data from cache or Firestore
+                        let farmData = farmCache[farmLotRef.id];
+                        if (!farmData) {
+                            const farmDoc = await getDoc(farmLotRef);
+                            if (farmDoc.exists()) {
+                                farmData = farmDoc.data();
+                                farmCache[farmLotRef.id] = farmData;
+                            }
+                        }
+
+                        // Fetch User Profile from cache or Firestore (gracefully)
+                        let userProfileData = userCache[userRef.id];
+                        if (!userProfileData) {
+                            try {
+                                const userDoc = await getDoc(userRef);
+                                if (userDoc.exists()) {
+                                    userProfileData = userDoc.data();
+                                    userCache[userRef.id] = userProfileData;
+                                }
+                            } catch (e) {
+                                userProfileData = { fullName: 'Unknown Farmer' };
+                                userCache[userRef.id] = userProfileData;
+                            }
+                        }
+
+                        if (farmData && userProfileData) {
+                            allSubmissions.push({
+                                ...submissionData,
+                                id: submissionDoc.id,
+                                farmName: farmData.farmName,
+                                userProfile: userProfileData,
+                                userId: userRef.id,
+                                farmId: farmLotRef.id
                             });
                         }
                     }
@@ -3815,48 +3842,75 @@
             lucide.createIcons();
 
             try {
-                const usersSnapshot = await getDocs(collection(db, 'users'));
+                const q = query(collectionGroup(db, 'submissions'), where("isEscalated", "==", true));
+                const submissionsSnapshot = await getDocs(q);
+
                 let escalatedSubmissions = [];
-                const userProfilesCache = {}; // Cache to avoid re-fetching user profiles
+                const userProfilesCache = {}; // Cache for all user profiles fetched
+                const farmCache = {}; // Cache for farm data
 
-                for (const userDoc of usersSnapshot.docs) {
-                    userProfilesCache[userDoc.id] = userDoc.data(); // Pre-populate cache
-                    const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
-                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                for (const submissionDoc of submissionsSnapshot.docs) {
+                    const submissionData = submissionDoc.data();
+                    const farmLotRef = submissionDoc.ref.parent.parent;
+                    const farmerRef = farmLotRef.parent.parent;
+                    const coordinatorId = submissionData.escalatedBy;
 
-                    for (const farmDoc of farmLotsSnapshot.docs) {
-                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
-                        const q = query(submissionsCollection, where("isEscalated", "==", true));
-                        const submissionsSnapshot = await getDocs(q);
-
-                        for (const submissionDoc of submissionsSnapshot.docs) {
-                             const submissionData = submissionDoc.data();
-
-                            // Fetch coordinator details if not already in cache
-                            const coordinatorId = submissionData.escalatedBy;
-                            let coordinatorProfile = null;
-                            if (coordinatorId) {
-                                if (userProfilesCache[coordinatorId]) {
-                                    coordinatorProfile = userProfilesCache[coordinatorId];
-                                } else {
-                                    const coordinatorDoc = await getDoc(doc(db, 'users', coordinatorId));
-                                    if (coordinatorDoc.exists()) {
-                                        coordinatorProfile = coordinatorDoc.data();
-                                        userProfilesCache[coordinatorId] = coordinatorProfile;
-                                    }
-                                }
-                            }
-
-                            escalatedSubmissions.push({
-                                ...submissionData,
-                                userId: userDoc.id,
-                                farmId: farmDoc.id,
-                                submissionId: submissionDoc.id,
-                                farmName: farmDoc.data().farmName,
-                                farmerProfile: userDoc.data(),
-                                coordinatorProfile: coordinatorProfile
-                            });
+                    // Fetch Farm Data
+                    let farmData = farmCache[farmLotRef.id];
+                    if (!farmData) {
+                        const farmDoc = await getDoc(farmLotRef);
+                        if (farmDoc.exists()) {
+                            farmData = farmDoc.data();
+                            farmCache[farmLotRef.id] = farmData;
                         }
+                    }
+
+                    // Fetch Farmer Profile (gracefully)
+                    let farmerProfile = userProfilesCache[farmerRef.id];
+                    if (!farmerProfile) {
+                        try {
+                            const userDoc = await getDoc(farmerRef);
+                            if (userDoc.exists()) {
+                                farmerProfile = userDoc.data();
+                                userProfilesCache[farmerRef.id] = farmerProfile;
+                            }
+                        } catch (e) {
+                            console.warn(`Could not fetch farmer profile ${farmerRef.id}`);
+                            farmerProfile = { fullName: 'Unknown Farmer' };
+                            userProfilesCache[farmerRef.id] = farmerProfile;
+                        }
+                    }
+
+                    // Fetch Coordinator Profile (gracefully)
+                    let coordinatorProfile = null;
+                    if (coordinatorId) {
+                        coordinatorProfile = userProfilesCache[coordinatorId];
+                        if (!coordinatorProfile) {
+                            try {
+                                const coordinatorDocRef = doc(db, 'users', coordinatorId);
+                                const coordinatorDoc = await getDoc(coordinatorDocRef);
+                                if (coordinatorDoc.exists()) {
+                                    coordinatorProfile = coordinatorDoc.data();
+                                    userProfilesCache[coordinatorId] = coordinatorProfile;
+                                }
+                            } catch (e) {
+                                console.warn(`Could not fetch coordinator profile ${coordinatorId}`);
+                                coordinatorProfile = { fullName: 'Unknown Coordinator' };
+                                userProfilesCache[coordinatorId] = coordinatorProfile;
+                            }
+                        }
+                    }
+
+                    if (farmData) { // Only add if we have the essential farm data
+                        escalatedSubmissions.push({
+                            ...submissionData,
+                            userId: farmerRef.id,
+                            farmId: farmLotRef.id,
+                            submissionId: submissionDoc.id,
+                            farmName: farmData.farmName,
+                            farmerProfile: farmerProfile || { fullName: 'Unknown Farmer' },
+                            coordinatorProfile: coordinatorProfile
+                        });
                     }
                 }
 
@@ -3884,43 +3938,35 @@
             Object.values(fields).forEach(field => field.textContent = '...');
 
             try {
-                const usersSnapshot = await getDocs(collection(db, 'users'));
-                let reportCount = 0;
+                // Use a collection group query, which is permitted for 'Expert' roles.
+                // This is far more efficient and respects the security rules.
+                const submissionsQuery = collectionGroup(db, 'submissions');
+                const submissionsSnapshot = await getDocs(submissionsQuery);
+
+                let reportCount = submissionsSnapshot.size;
                 let diagnosedCount = 0;
                 let treatedCount = 0;
                 const pestSet = new Set();
                 const diseaseSet = new Set();
 
-                for (const userDoc of usersSnapshot.docs) {
-                    const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
-                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
-
-                    for (const farmDoc of farmLotsSnapshot.docs) {
-                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
-                        const submissionsSnapshot = await getDocs(submissionsCollection);
-
-                        reportCount += submissionsSnapshot.size;
-
-                        submissionsSnapshot.forEach(submissionDoc => {
-                            const data = submissionDoc.data();
-                            if (data.initialDiagnosis) {
-                                diagnosedCount++;
-                            }
-                            if (data.treatment) {
-                                treatedCount++;
-                            }
-                            if (data.finalDiagnosis && data.finalDiagnosis.pestDisease) {
-                                // Check if it's a pest or disease from our master list
-                                const allPests = pestAndDiseaseData.major_insect_pests.map(p => p['Pest Common Name']);
-                                if (allPests.includes(data.finalDiagnosis.pestDisease)) {
-                                    pestSet.add(data.finalDiagnosis.pestDisease);
-                                } else {
-                                    diseaseSet.add(data.finalDiagnosis.pestDisease);
-                                }
-                            }
-                        });
+                submissionsSnapshot.forEach(submissionDoc => {
+                    const data = submissionDoc.data();
+                    if (data.initialDiagnosis) {
+                        diagnosedCount++;
                     }
-                }
+                    if (data.treatment) {
+                        treatedCount++;
+                    }
+                    if (data.finalDiagnosis && data.finalDiagnosis.pestDisease) {
+                        // Check if it's a pest or disease from our master list
+                        const allPests = pestAndDiseaseData.major_insect_pests.map(p => p['Pest Common Name']);
+                        if (allPests.includes(data.finalDiagnosis.pestDisease)) {
+                            pestSet.add(data.finalDiagnosis.pestDisease);
+                        } else {
+                            diseaseSet.add(data.finalDiagnosis.pestDisease);
+                        }
+                    }
+                });
 
                 fields.reports.textContent = reportCount;
                 fields.diagnosed.textContent = diagnosedCount;
@@ -4033,64 +4079,90 @@
             const pestDiseaseColors = {};
 
             try {
-                const usersSnapshot = await getDocs(collection(db, 'users'));
+                // Use a collection group query to get all diagnosed submissions.
+                const submissionsQuery = query(collectionGroup(db, 'submissions'), where("initialDiagnosis", "!=", null));
+                const submissionsSnapshot = await getDocs(submissionsQuery);
+
                 const layers = [];
+                const farmCache = {}; // Cache for farm data
+                const userCache = {}; // Cache for user data
 
-                for (const userDoc of usersSnapshot.docs) {
-                    const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
-                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                for (const submissionDoc of submissionsSnapshot.docs) {
+                    const submissionData = submissionDoc.data();
+                    const farmLotRef = submissionDoc.ref.parent.parent;
+                    const userRef = farmLotRef.parent.parent;
 
-                    for (const farmDoc of farmLotsSnapshot.docs) {
-                        const farmData = farmDoc.data();
-                        if (!farmData.polygonCoordinates || farmData.polygonCoordinates.length === 0) continue;
-
-                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
-                        const q = query(submissionsCollection, where("initialDiagnosis", "!=", null));
-                        const submissionsSnapshot = await getDocs(q);
-
-                        submissionsSnapshot.forEach(submissionDoc => {
-                            const submissionData = submissionDoc.data();
-                            const pestDisease = submissionData.finalDiagnosis?.pestDisease || submissionData.initialDiagnosis?.pestDisease;
-
-                            if (!pestDisease) return;
-
-                            if (!pestDiseaseColors[pestDisease]) {
-                                pestDiseaseColors[pestDisease] = colorPalette[colorIndex % colorPalette.length];
-                                colorIndex++;
-                            }
-
-                            const latLngs = farmData.polygonCoordinates.map(c => [c.lat, c.lng]);
-                            const polygon = L.polygon(latLngs, {
-                                color: pestDiseaseColors[pestDisease],
-                                weight: 2,
-                                fillOpacity: 0.5
-                            });
-
-                            const center = L.polygon(latLngs).getBounds().getCenter();
-                            const marker = L.marker(center, {
-                                icon: L.divIcon({
-                                    className: 'custom-div-icon',
-                                    html: `<div style='background-color:${pestDiseaseColors[pestDisease]};' class='marker-pin'></div>`,
-                                    iconSize: [30, 42],
-                                    iconAnchor: [15, 42]
-                                })
-                            });
-
-                            const caseDetails = {
-                                farm: farmData,
-                                submission: submissionData,
-                                user: userDoc.data(),
-                                pestDisease: pestDisease
-                            };
-
-                            polygon.on('click', () => openExpertPanel(caseDetails));
-                            marker.on('click', () => openExpertPanel(caseDetails));
-
-                            layers.push(polygon);
-                            layers.push(marker);
-                        });
+                    // Get farm data, using cache if available
+                    if (!farmCache[farmLotRef.id]) {
+                        const farmDoc = await getDoc(farmLotRef);
+                        if (farmDoc.exists()) {
+                            farmCache[farmLotRef.id] = farmDoc.data();
+                        }
                     }
+                    const farmData = farmCache[farmLotRef.id];
+
+                    // Get user data, using cache if available, and handle permission errors gracefully.
+                    let userData = userCache[userRef.id];
+                    if (!userData) {
+                        try {
+                            const userDoc = await getDoc(userRef);
+                            if (userDoc.exists()) {
+                                userData = userDoc.data();
+                                userCache[userRef.id] = userData;
+                            }
+                        } catch (e) {
+                            // This is expected to fail for non-admins. We can log it for debugging but shouldn't crash.
+                            console.warn(`Could not fetch user profile ${userRef.id} due to permissions. This is expected for non-admin roles.`);
+                            // We use a placeholder and cache it to prevent re-fetching.
+                            userData = { fullName: 'Unknown Farmer' };
+                            userCache[userRef.id] = userData;
+                        }
+                    }
+
+                    // Skip if we couldn't retrieve farm data or farm has no coordinates
+                    if (!farmData || !farmData.polygonCoordinates || farmData.polygonCoordinates.length === 0) {
+                        continue;
+                    }
+
+                    const pestDisease = submissionData.finalDiagnosis?.pestDisease || submissionData.initialDiagnosis?.pestDisease;
+                    if (!pestDisease) continue;
+
+                    if (!pestDiseaseColors[pestDisease]) {
+                        pestDiseaseColors[pestDisease] = colorPalette[colorIndex % colorPalette.length];
+                        colorIndex++;
+                    }
+
+                    const latLngs = farmData.polygonCoordinates.map(c => [c.lat, c.lng]);
+                    const polygon = L.polygon(latLngs, {
+                        color: pestDiseaseColors[pestDisease],
+                        weight: 2,
+                        fillOpacity: 0.5
+                    });
+
+                    const center = L.polygon(latLngs).getBounds().getCenter();
+                    const marker = L.marker(center, {
+                        icon: L.divIcon({
+                            className: 'custom-div-icon',
+                            html: `<div style='background-color:${pestDiseaseColors[pestDisease]};' class='marker-pin'></div>`,
+                            iconSize: [30, 42],
+                            iconAnchor: [15, 42]
+                        })
+                    });
+
+                    const caseDetails = {
+                        farm: farmData,
+                        submission: submissionData,
+                        user: userData,
+                        pestDisease: pestDisease
+                    };
+
+                    polygon.on('click', () => openExpertPanel(caseDetails));
+                    marker.on('click', () => openExpertPanel(caseDetails));
+
+                    layers.push(polygon);
+                    layers.push(marker);
                 }
+
 
                 if (layers.length > 0) {
                     const featureGroup = L.featureGroup(layers).addTo(expertMap);
