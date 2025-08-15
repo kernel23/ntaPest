@@ -4019,6 +4019,40 @@
                 `;
             }
 
+            let treatmentHTML = '';
+            if (submission.treatment) {
+                const { prevention, monitoring, control, instructions, followUpDate } = submission.treatment;
+
+                const createSection = (title, items) => {
+                    if (!items || items.length === 0) return '';
+                    return `
+                        <div class="mt-2">
+                            <h6 class="font-semibold text-gray-700">${title}</h6>
+                            <ul class="list-disc list-inside text-sm text-gray-600 mt-1 space-y-1">
+                                ${items.map(item => `<li>${item}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                };
+
+                treatmentHTML = `
+                    <div class="border-t pt-3">
+                        <h5 class="font-semibold text-gray-800 mb-1">Treatment Plan</h5>
+                        ${createSection('Prevention', prevention)}
+                        ${createSection('Monitoring', monitoring)}
+                        ${createSection('Direct Control', control)}
+                        <div class="mt-2">
+                            <h6 class="font-semibold text-gray-700">Specific Instructions</h6>
+                            <p class="text-sm text-gray-600 mt-1">${instructions || 'N/A'}</p>
+                        </div>
+                        ${followUpDate ? `
+                        <div class="mt-2">
+                            <h6 class="font-semibold text-gray-700">Follow-up Date</h6>
+                            <p class="text-sm text-gray-600 mt-1">${followUpDate}</p>
+                        </div>` : ''}
+                    </div>`;
+            }
+
             const contentHTML = `
                 <div class="space-y-4 text-sm">
                     <div>
@@ -4045,6 +4079,8 @@
                         <h5 class="font-semibold text-gray-800 mb-1">Diagnosis</h5>
                         ${diagnosisHTML}
                     </div>` : ''}
+
+                    ${treatmentHTML}
                 </div>
             `;
 
