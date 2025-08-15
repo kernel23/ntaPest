@@ -3884,43 +3884,35 @@
             Object.values(fields).forEach(field => field.textContent = '...');
 
             try {
-                const usersSnapshot = await getDocs(collection(db, 'users'));
-                let reportCount = 0;
+                // Use a collection group query, which is permitted for 'Expert' roles.
+                // This is far more efficient and respects the security rules.
+                const submissionsQuery = collectionGroup(db, 'submissions');
+                const submissionsSnapshot = await getDocs(submissionsQuery);
+
+                let reportCount = submissionsSnapshot.size;
                 let diagnosedCount = 0;
                 let treatedCount = 0;
                 const pestSet = new Set();
                 const diseaseSet = new Set();
 
-                for (const userDoc of usersSnapshot.docs) {
-                    const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
-                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
-
-                    for (const farmDoc of farmLotsSnapshot.docs) {
-                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
-                        const submissionsSnapshot = await getDocs(submissionsCollection);
-
-                        reportCount += submissionsSnapshot.size;
-
-                        submissionsSnapshot.forEach(submissionDoc => {
-                            const data = submissionDoc.data();
-                            if (data.initialDiagnosis) {
-                                diagnosedCount++;
-                            }
-                            if (data.treatment) {
-                                treatedCount++;
-                            }
-                            if (data.finalDiagnosis && data.finalDiagnosis.pestDisease) {
-                                // Check if it's a pest or disease from our master list
-                                const allPests = pestAndDiseaseData.major_insect_pests.map(p => p['Pest Common Name']);
-                                if (allPests.includes(data.finalDiagnosis.pestDisease)) {
-                                    pestSet.add(data.finalDiagnosis.pestDisease);
-                                } else {
-                                    diseaseSet.add(data.finalDiagnosis.pestDisease);
-                                }
-                            }
-                        });
+                submissionsSnapshot.forEach(submissionDoc => {
+                    const data = submissionDoc.data();
+                    if (data.initialDiagnosis) {
+                        diagnosedCount++;
                     }
-                }
+                    if (data.treatment) {
+                        treatedCount++;
+                    }
+                    if (data.finalDiagnosis && data.finalDiagnosis.pestDisease) {
+                        // Check if it's a pest or disease from our master list
+                        const allPests = pestAndDiseaseData.major_insect_pests.map(p => p['Pest Common Name']);
+                        if (allPests.includes(data.finalDiagnosis.pestDisease)) {
+                            pestSet.add(data.finalDiagnosis.pestDisease);
+                        } else {
+                            diseaseSet.add(data.finalDiagnosis.pestDisease);
+                        }
+                    }
+                });
 
                 fields.reports.textContent = reportCount;
                 fields.diagnosed.textContent = diagnosedCount;
@@ -4033,64 +4025,81 @@
             const pestDiseaseColors = {};
 
             try {
-                const usersSnapshot = await getDocs(collection(db, 'users'));
+                // Use a collection group query to get all diagnosed submissions.
+                const submissionsQuery = query(collectionGroup(db, 'submissions'), where("initialDiagnosis", "!=", null));
+                const submissionsSnapshot = await getDocs(submissionsQuery);
+
                 const layers = [];
+                const farmCache = {}; // Cache for farm data
+                const userCache = {}; // Cache for user data
 
-                for (const userDoc of usersSnapshot.docs) {
-                    const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
-                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                for (const submissionDoc of submissionsSnapshot.docs) {
+                    const submissionData = submissionDoc.data();
+                    const farmLotRef = submissionDoc.ref.parent.parent;
+                    const userRef = farmLotRef.parent.parent;
 
-                    for (const farmDoc of farmLotsSnapshot.docs) {
-                        const farmData = farmDoc.data();
-                        if (!farmData.polygonCoordinates || farmData.polygonCoordinates.length === 0) continue;
-
-                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
-                        const q = query(submissionsCollection, where("initialDiagnosis", "!=", null));
-                        const submissionsSnapshot = await getDocs(q);
-
-                        submissionsSnapshot.forEach(submissionDoc => {
-                            const submissionData = submissionDoc.data();
-                            const pestDisease = submissionData.finalDiagnosis?.pestDisease || submissionData.initialDiagnosis?.pestDisease;
-
-                            if (!pestDisease) return;
-
-                            if (!pestDiseaseColors[pestDisease]) {
-                                pestDiseaseColors[pestDisease] = colorPalette[colorIndex % colorPalette.length];
-                                colorIndex++;
-                            }
-
-                            const latLngs = farmData.polygonCoordinates.map(c => [c.lat, c.lng]);
-                            const polygon = L.polygon(latLngs, {
-                                color: pestDiseaseColors[pestDisease],
-                                weight: 2,
-                                fillOpacity: 0.5
-                            });
-
-                            const center = L.polygon(latLngs).getBounds().getCenter();
-                            const marker = L.marker(center, {
-                                icon: L.divIcon({
-                                    className: 'custom-div-icon',
-                                    html: `<div style='background-color:${pestDiseaseColors[pestDisease]};' class='marker-pin'></div>`,
-                                    iconSize: [30, 42],
-                                    iconAnchor: [15, 42]
-                                })
-                            });
-
-                            const caseDetails = {
-                                farm: farmData,
-                                submission: submissionData,
-                                user: userDoc.data(),
-                                pestDisease: pestDisease
-                            };
-
-                            polygon.on('click', () => openExpertPanel(caseDetails));
-                            marker.on('click', () => openExpertPanel(caseDetails));
-
-                            layers.push(polygon);
-                            layers.push(marker);
-                        });
+                    // Get farm data, using cache if available
+                    if (!farmCache[farmLotRef.id]) {
+                        const farmDoc = await getDoc(farmLotRef);
+                        if (farmDoc.exists()) {
+                            farmCache[farmLotRef.id] = farmDoc.data();
+                        }
                     }
+                    const farmData = farmCache[farmLotRef.id];
+
+                    // Get user data, using cache if available
+                    if (!userCache[userRef.id]) {
+                        const userDoc = await getDoc(userRef);
+                        if (userDoc.exists()) {
+                            userCache[userRef.id] = userDoc.data();
+                        }
+                    }
+                    const userData = userCache[userRef.id];
+
+                    // Skip if we couldn't retrieve necessary parent data or farm has no coordinates
+                    if (!farmData || !userData || !farmData.polygonCoordinates || farmData.polygonCoordinates.length === 0) {
+                        continue;
+                    }
+
+                    const pestDisease = submissionData.finalDiagnosis?.pestDisease || submissionData.initialDiagnosis?.pestDisease;
+                    if (!pestDisease) continue;
+
+                    if (!pestDiseaseColors[pestDisease]) {
+                        pestDiseaseColors[pestDisease] = colorPalette[colorIndex % colorPalette.length];
+                        colorIndex++;
+                    }
+
+                    const latLngs = farmData.polygonCoordinates.map(c => [c.lat, c.lng]);
+                    const polygon = L.polygon(latLngs, {
+                        color: pestDiseaseColors[pestDisease],
+                        weight: 2,
+                        fillOpacity: 0.5
+                    });
+
+                    const center = L.polygon(latLngs).getBounds().getCenter();
+                    const marker = L.marker(center, {
+                        icon: L.divIcon({
+                            className: 'custom-div-icon',
+                            html: `<div style='background-color:${pestDiseaseColors[pestDisease]};' class='marker-pin'></div>`,
+                            iconSize: [30, 42],
+                            iconAnchor: [15, 42]
+                        })
+                    });
+
+                    const caseDetails = {
+                        farm: farmData,
+                        submission: submissionData,
+                        user: userData,
+                        pestDisease: pestDisease
+                    };
+
+                    polygon.on('click', () => openExpertPanel(caseDetails));
+                    marker.on('click', () => openExpertPanel(caseDetails));
+
+                    layers.push(polygon);
+                    layers.push(marker);
                 }
+
 
                 if (layers.length > 0) {
                     const featureGroup = L.featureGroup(layers).addTo(expertMap);
