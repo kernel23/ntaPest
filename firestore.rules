@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can read and write to their own user document.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Any authenticated user can read the profile of any other user.
+    // This is needed for coordinators to see EWs, and EWs to see farmers.
+    // A more granular check could be based on roles or relationships.
+    match /users/{userId} {
+        allow get: if request.auth != null;
+    }
+
+    // Rules for subcollections
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Allow Extension Workers to read data of farmers they manage.
+    // This is a more advanced rule that checks the 'managedBy' field.
+    match /users/{farmerId}/farmLots/{lotId} {
+      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(farmerId)).data.managedBy == request.auth.uid;
+    }
+    match /users/{farmerId}/farmLots/{lotId}/submissions/{submissionId} {
+      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(farmerId)).data.managedBy == request.auth.uid;
+    }
+
+    // Allow read access to roleRequests for authenticated users.
+    // Write access should be handled by Cloud Functions or admin-only rules.
+    match /roleRequests/{requestId} {
+        allow read: if request.auth != null;
+    }
+  }
+}

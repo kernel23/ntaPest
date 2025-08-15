@@ -12,13 +12,13 @@ exports.addManualFarmer = functions.https.onCall(async (data, context) => {
     );
   }
 
-  // 2. Role Check: Ensure the user is an Extension Worker.
-  // This is a simplified check. For production, you might use custom claims.
+  // 2. Role Check: Ensure the user has a permitted role.
+  const allowedRoles = ["Extension Worker", "Branch Coordinator", "Administrator"];
   const userDoc = await admin.firestore().collection('users').doc(context.auth.uid).get();
-  if (!userDoc.exists || userDoc.data().role !== 'Extension Worker') {
+  if (!userDoc.exists || !allowedRoles.includes(userDoc.data().role)) {
       throw new functions.https.HttpsError(
         "permission-denied",
-        "This function can only be called by an Extension Worker."
+        "This function can only be called by a user with a permitted role."
       );
   }
 
