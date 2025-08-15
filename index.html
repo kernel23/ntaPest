@@ -4047,17 +4047,26 @@
                     }
                     const farmData = farmCache[farmLotRef.id];
 
-                    // Get user data, using cache if available
-                    if (!userCache[userRef.id]) {
-                        const userDoc = await getDoc(userRef);
-                        if (userDoc.exists()) {
-                            userCache[userRef.id] = userDoc.data();
+                    // Get user data, using cache if available, and handle permission errors gracefully.
+                    let userData = userCache[userRef.id];
+                    if (!userData) {
+                        try {
+                            const userDoc = await getDoc(userRef);
+                            if (userDoc.exists()) {
+                                userData = userDoc.data();
+                                userCache[userRef.id] = userData;
+                            }
+                        } catch (e) {
+                            // This is expected to fail for non-admins. We can log it for debugging but shouldn't crash.
+                            console.warn(`Could not fetch user profile ${userRef.id} due to permissions. This is expected for non-admin roles.`);
+                            // We use a placeholder and cache it to prevent re-fetching.
+                            userData = { fullName: 'Unknown Farmer' };
+                            userCache[userRef.id] = userData;
                         }
                     }
-                    const userData = userCache[userRef.id];
 
-                    // Skip if we couldn't retrieve necessary parent data or farm has no coordinates
-                    if (!farmData || !userData || !farmData.polygonCoordinates || farmData.polygonCoordinates.length === 0) {
+                    // Skip if we couldn't retrieve farm data or farm has no coordinates
+                    if (!farmData || !farmData.polygonCoordinates || farmData.polygonCoordinates.length === 0) {
                         continue;
                     }
 
