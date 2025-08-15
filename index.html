@@ -2605,24 +2605,51 @@
                             });
                         });
                     }
-                } else { // For Extension Worker or Branch Coordinator
-                    const usersSnapshot = await getDocs(collection(db, 'users'));
-                    for (const userDoc of usersSnapshot.docs) {
-                         const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
-                        const farmLotsSnapshot = await getDocs(farmLotsCollection);
-                        for (const farmDoc of farmLotsSnapshot.docs) {
-                            const farmData = farmDoc.data();
-                            const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
-                            const submissionsSnapshot = await getDocs(submissionsCollection);
-                            submissionsSnapshot.forEach(submissionDoc => {
-                                allSubmissions.push({
-                                    ...submissionDoc.data(),
-                                    id: submissionDoc.id,
-                                    farmName: farmData.farmName,
-                                    userProfile: userDoc.data(),
-                                    userId: userDoc.id,
-                                    farmId: farmDoc.id
-                                });
+                } else { // For Extension Worker, Coordinator, Expert, etc.
+                    const submissionsQuery = collectionGroup(db, 'submissions');
+                    const submissionsSnapshot = await getDocs(submissionsQuery);
+
+                    const farmCache = {};
+                    const userCache = {};
+
+                    for (const submissionDoc of submissionsSnapshot.docs) {
+                        const submissionData = submissionDoc.data();
+                        const farmLotRef = submissionDoc.ref.parent.parent;
+                        const userRef = farmLotRef.parent.parent;
+
+                        // Fetch Farm Data from cache or Firestore
+                        let farmData = farmCache[farmLotRef.id];
+                        if (!farmData) {
+                            const farmDoc = await getDoc(farmLotRef);
+                            if (farmDoc.exists()) {
+                                farmData = farmDoc.data();
+                                farmCache[farmLotRef.id] = farmData;
+                            }
+                        }
+
+                        // Fetch User Profile from cache or Firestore (gracefully)
+                        let userProfileData = userCache[userRef.id];
+                        if (!userProfileData) {
+                            try {
+                                const userDoc = await getDoc(userRef);
+                                if (userDoc.exists()) {
+                                    userProfileData = userDoc.data();
+                                    userCache[userRef.id] = userProfileData;
+                                }
+                            } catch (e) {
+                                userProfileData = { fullName: 'Unknown Farmer' };
+                                userCache[userRef.id] = userProfileData;
+                            }
+                        }
+
+                        if (farmData && userProfileData) {
+                            allSubmissions.push({
+                                ...submissionData,
+                                id: submissionDoc.id,
+                                farmName: farmData.farmName,
+                                userProfile: userProfileData,
+                                userId: userRef.id,
+                                farmId: farmLotRef.id
                             });
                         }
                     }
@@ -3815,48 +3842,75 @@
             lucide.createIcons();
 
             try {
-                const usersSnapshot = await getDocs(collection(db, 'users'));
+                const q = query(collectionGroup(db, 'submissions'), where("isEscalated", "==", true));
+                const submissionsSnapshot = await getDocs(q);
+
                 let escalatedSubmissions = [];
-                const userProfilesCache = {}; // Cache to avoid re-fetching user profiles
+                const userProfilesCache = {}; // Cache for all user profiles fetched
+                const farmCache = {}; // Cache for farm data
 
-                for (const userDoc of usersSnapshot.docs) {
-                    userProfilesCache[userDoc.id] = userDoc.data(); // Pre-populate cache
-                    const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
-                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                for (const submissionDoc of submissionsSnapshot.docs) {
+                    const submissionData = submissionDoc.data();
+                    const farmLotRef = submissionDoc.ref.parent.parent;
+                    const farmerRef = farmLotRef.parent.parent;
+                    const coordinatorId = submissionData.escalatedBy;
 
-                    for (const farmDoc of farmLotsSnapshot.docs) {
-                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
-                        const q = query(submissionsCollection, where("isEscalated", "==", true));
-                        const submissionsSnapshot = await getDocs(q);
-
-                        for (const submissionDoc of submissionsSnapshot.docs) {
-                             const submissionData = submissionDoc.data();
-
-                            // Fetch coordinator details if not already in cache
-                            const coordinatorId = submissionData.escalatedBy;
-                            let coordinatorProfile = null;
-                            if (coordinatorId) {
-                                if (userProfilesCache[coordinatorId]) {
-                                    coordinatorProfile = userProfilesCache[coordinatorId];
-                                } else {
-                                    const coordinatorDoc = await getDoc(doc(db, 'users', coordinatorId));
-                                    if (coordinatorDoc.exists()) {
-                                        coordinatorProfile = coordinatorDoc.data();
-                                        userProfilesCache[coordinatorId] = coordinatorProfile;
-                                    }
-                                }
-                            }
-
-                            escalatedSubmissions.push({
-                                ...submissionData,
-                                userId: userDoc.id,
-                                farmId: farmDoc.id,
-                                submissionId: submissionDoc.id,
-                                farmName: farmDoc.data().farmName,
-                                farmerProfile: userDoc.data(),
-                                coordinatorProfile: coordinatorProfile
-                            });
+                    // Fetch Farm Data
+                    let farmData = farmCache[farmLotRef.id];
+                    if (!farmData) {
+                        const farmDoc = await getDoc(farmLotRef);
+                        if (farmDoc.exists()) {
+                            farmData = farmDoc.data();
+                            farmCache[farmLotRef.id] = farmData;
                         }
+                    }
+
+                    // Fetch Farmer Profile (gracefully)
+                    let farmerProfile = userProfilesCache[farmerRef.id];
+                    if (!farmerProfile) {
+                        try {
+                            const userDoc = await getDoc(farmerRef);
+                            if (userDoc.exists()) {
+                                farmerProfile = userDoc.data();
+                                userProfilesCache[farmerRef.id] = farmerProfile;
+                            }
+                        } catch (e) {
+                            console.warn(`Could not fetch farmer profile ${farmerRef.id}`);
+                            farmerProfile = { fullName: 'Unknown Farmer' };
+                            userProfilesCache[farmerRef.id] = farmerProfile;
+                        }
+                    }
+
+                    // Fetch Coordinator Profile (gracefully)
+                    let coordinatorProfile = null;
+                    if (coordinatorId) {
+                        coordinatorProfile = userProfilesCache[coordinatorId];
+                        if (!coordinatorProfile) {
+                            try {
+                                const coordinatorDocRef = doc(db, 'users', coordinatorId);
+                                const coordinatorDoc = await getDoc(coordinatorDocRef);
+                                if (coordinatorDoc.exists()) {
+                                    coordinatorProfile = coordinatorDoc.data();
+                                    userProfilesCache[coordinatorId] = coordinatorProfile;
+                                }
+                            } catch (e) {
+                                console.warn(`Could not fetch coordinator profile ${coordinatorId}`);
+                                coordinatorProfile = { fullName: 'Unknown Coordinator' };
+                                userProfilesCache[coordinatorId] = coordinatorProfile;
+                            }
+                        }
+                    }
+
+                    if (farmData) { // Only add if we have the essential farm data
+                        escalatedSubmissions.push({
+                            ...submissionData,
+                            userId: farmerRef.id,
+                            farmId: farmLotRef.id,
+                            submissionId: submissionDoc.id,
+                            farmName: farmData.farmName,
+                            farmerProfile: farmerProfile || { fullName: 'Unknown Farmer' },
+                            coordinatorProfile: coordinatorProfile
+                        });
                     }
                 }
 
