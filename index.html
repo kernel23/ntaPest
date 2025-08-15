@@ -131,10 +131,6 @@
                         <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" class="mr-3"> <!-- Placeholder for Google Icon -->
                         Sign in with Google
                     </button>
-                    <button id="facebook-signin-btn" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-sm flex items-center justify-center mb-4">
-                         <svg class="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" /></svg>
-                        Sign in with Facebook
-                    </button>
                     <button id="guest-signin-btn" class="w-full text-gray-600 py-2">Continue as Guest</button>
                 </div>
                 <div class="mt-4 text-center text-xs text-gray-500">
@@ -881,7 +877,6 @@
             getAuth, 
             onAuthStateChanged, 
             GoogleAuthProvider, 
-            FacebookAuthProvider,
             signInWithPopup,
             signInAnonymously,
             signOut
@@ -1949,10 +1944,6 @@
             signInWithPopup(auth, provider).catch(error => console.error("Google Sign-in Error", error));
         });
 
-        document.getElementById('facebook-signin-btn').addEventListener('click', () => {
-            const provider = new FacebookAuthProvider();
-            signInWithPopup(auth, provider).catch(error => console.error("Facebook Sign-in Error", error));
-        });
         
         document.getElementById('guest-signin-btn').addEventListener('click', () => {
             signInAnonymously(auth).catch(error => console.error("Anonymous Sign-in Error", error));
@@ -4962,7 +4953,6 @@
             const submissionOutboxCount = await db.count('submission_outbox');
             const offlineMessageContainer = document.getElementById('offline-message-container');
             const googleBtn = document.getElementById('google-signin-btn');
-            const facebookBtn = document.getElementById('facebook-signin-btn');
             const guestBtn = document.getElementById('guest-signin-btn');
 
             if (navigator.onLine) {
@@ -4974,10 +4964,6 @@
                 if (googleBtn) {
                     googleBtn.disabled = false;
                     googleBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
-                if (facebookBtn) {
-                    facebookBtn.disabled = false;
-                    facebookBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 }
                 if (guestBtn) {
                     guestBtn.disabled = false;
@@ -5007,10 +4993,6 @@
                 if (googleBtn) {
                     googleBtn.disabled = true;
                     googleBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                }
-                if (facebookBtn) {
-                    facebookBtn.disabled = true;
-                    facebookBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 }
                 if (guestBtn) {
                     guestBtn.disabled = true;
