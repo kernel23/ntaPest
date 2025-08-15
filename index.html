@@ -283,8 +283,15 @@
                         </button>
                         <div class="breadcrumbs text-sm text-gray-500"></div>
                     </div>
-                    <h2 class="text-2xl font-bold">Extension Worker Dashboard</h2>
-                    <p id="ew-welcome-message" class="text-sm text-gray-600"></p>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold">Extension Worker Dashboard</h2>
+                            <p id="ew-welcome-message" class="text-sm text-gray-600"></p>
+                        </div>
+                        <button id="add-manual-farmer-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-700">
+                            Add Farmer
+                        </button>
+                    </div>
                 </header>
                 <main id="ew-dashboard-container" class="flex-1 p-4 overflow-y-auto">
                     <!-- Farmer list table will be inserted here -->
@@ -855,6 +862,66 @@
                 </select>
                 <input type="hidden" id="change-role-user-id">
                 <button id="save-role-change-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Farmer Modal -->
+    <div id="manual-farmer-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Manually Add Farmer</h3>
+                <button id="close-manual-farmer-modal-btn" class="p-1"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 max-h-[80vh] overflow-y-auto">
+                <label for="manualFarmerName" class="block text-sm font-medium text-gray-700">Full Name</label>
+                <input type="text" id="manualFarmerName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+
+                <label for="manualProvince" class="block text-sm font-medium text-gray-700 mt-4">Province</label>
+                <div id="manual-province-multiselect-container" class="relative"></div>
+
+                <label for="manualMunicipality" class="block text-sm font-medium text-gray-700 mt-4">Municipality</label>
+                <div id="manual-municipality-multiselect-container" class="relative"></div>
+
+                <label for="manualBarangay" class="block text-sm font-medium text-gray-700 mt-4">Barangay</label>
+                <div id="manual-barangay-multiselect-container" class="relative"></div>
+
+                <label for="manualBirthdate" class="block text-sm font-medium text-gray-700 mt-4">Birthdate</label>
+                <input type="date" id="manualBirthdate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+
+                <label for="manualCivilStatus" class="block text-sm font-medium text-gray-700 mt-4">Civil Status</label>
+                <select id="manualCivilStatus" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Widowed</option>
+                    <option>Divorced</option>
+                </select>
+
+                <label for="manualReligion" class="block text-sm font-medium text-gray-700 mt-4">Religion</label>
+                <input type="text" id="manualReligion" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+
+                <label for="manualYearsFarming" class="block text-sm font-medium text-gray-700 mt-4">Years in Tobacco Farming</label>
+                <input type="number" id="manualYearsFarming" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+
+                <label for="manualFamilyMembers" class="block text-sm font-medium text-gray-700 mt-4">Number of Family Members</label>
+                <input type="number" id="manualFamilyMembers" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+
+                <label for="manualEducation" class="block text-sm font-medium text-gray-700 mt-4">Highest Educational Attainment</label>
+                <select id="manualEducation" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <option>No formal education</option>
+                    <option>Elementary</option>
+                    <option>High School</option>
+                    <option>Vocational</option>
+                    <option>College</option>
+                    <option>Post-graduate</option>
+                </select>
+
+                <div id="manual-rsbsa-container" class="mt-4">
+                    <label for="manualRsbsaNumber" class="block text-sm font-medium text-gray-700">RSBSA Number (Optional)</label>
+                    <input type="text" id="manualRsbsaNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                </div>
+
+                <button id="save-manual-farmer-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-8">Save Farmer and Continue</button>
             </div>
         </div>
     </div>
@@ -1689,8 +1756,44 @@
         let profileProvince, profileMunicipality, profileBarangay;
         let filterProvince, filterMunicipality, filterBarangay;
         let expertFilterPestDisease, expertFilterProvince, expertFilterMunicipality, expertFilterBarangay;
+        let manualProvince, manualMunicipality, manualBarangay;
 
         function initializeAddressFilters() {
+            // For Manual Farmer Modal
+            manualProvince = createMultiSelect('manual-province-multiselect-container', 'Select Province', false);
+            manualMunicipality = createMultiSelect('manual-municipality-multiselect-container', 'Select Municipality', false);
+            manualBarangay = createMultiSelect('manual-barangay-multiselect-container', 'Select Barangay', false);
+
+            manualProvince.populate(window.philippineAddresses.provinces.map(p => p.name));
+            manualMunicipality.disable();
+            manualBarangay.disable();
+
+            manualProvince.onChange(selectedProvinces => {
+                manualMunicipality.clear();
+                manualBarangay.clear();
+                if (selectedProvinces.length > 0) {
+                    const provinceData = window.philippineAddresses.provinces.find(p => p.name === selectedProvinces[0]);
+                    manualMunicipality.populate(provinceData.municipalities.map(m => m.name));
+                    manualMunicipality.enable();
+                } else {
+                    manualMunicipality.disable();
+                    manualBarangay.disable();
+                }
+            });
+
+            manualMunicipality.onChange(selectedMunicipalities => {
+                manualBarangay.clear();
+                if (selectedMunicipalities.length > 0) {
+                    const selectedProvinceName = manualProvince.getSelectedValues()[0];
+                    const provinceData = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
+                    const municipalityData = provinceData.municipalities.find(m => m.name === selectedMunicipalities[0]);
+                    manualBarangay.populate(municipalityData.barangays);
+                    manualBarangay.enable();
+                } else {
+                    manualBarangay.disable();
+                }
+            });
+
             // For Profile Screen
             profileProvince = createMultiSelect('province-multiselect-container', 'Select Province', false);
             profileMunicipality = createMultiSelect('municipality-multiselect-container', 'Select Municipality', false);
@@ -1947,6 +2050,93 @@
         
         document.getElementById('guest-signin-btn').addEventListener('click', () => {
             signInAnonymously(auth).catch(error => console.error("Anonymous Sign-in Error", error));
+        });
+
+        // --- Manual Farmer Modal Logic ---
+        const addManualFarmerBtn = document.getElementById('add-manual-farmer-btn');
+        if (addManualFarmerBtn) {
+            addManualFarmerBtn.addEventListener('click', () => {
+                document.getElementById('manual-farmer-modal').classList.remove('hidden');
+                document.getElementById('manual-farmer-modal').classList.add('flex');
+            });
+        }
+
+        document.getElementById('close-manual-farmer-modal-btn').addEventListener('click', () => {
+            document.getElementById('manual-farmer-modal').classList.add('hidden');
+        });
+
+        document.getElementById('save-manual-farmer-btn').addEventListener('click', async () => {
+            const fullName = document.getElementById('manualFarmerName').value.trim();
+            const province = manualProvince.getSelectedValues()[0] || '';
+            const municipality = manualMunicipality.getSelectedValues()[0] || '';
+            const barangay = manualBarangay.getSelectedValues()[0] || '';
+            const birthdate = document.getElementById('manualBirthdate').value;
+            const civilStatus = document.getElementById('manualCivilStatus').value;
+            const religion = document.getElementById('manualReligion').value.trim();
+            const yearsFarming = document.getElementById('manualYearsFarming').value;
+            const familyMembers = document.getElementById('manualFamilyMembers').value;
+            const education = document.getElementById('manualEducation').value;
+            const rsbsaNumber = document.getElementById('manualRsbsaNumber').value.trim();
+
+            if (!fullName || !province || !municipality || !barangay || !birthdate || !civilStatus || !religion || !yearsFarming || !familyMembers || !education) {
+                showToast('Please fill out all required fields.', 'error');
+                return;
+            }
+
+            const farmerData = {
+                fullName,
+                province,
+                municipality,
+                barangay,
+                birthdate,
+                civilStatus,
+                religion,
+                yearsFarming: parseInt(yearsFarming),
+                familyMembers: parseInt(familyMembers),
+                education,
+                rsbsaNumber,
+                role: 'Farmer',
+                isManual: true,
+                managedBy: currentUser.uid,
+                createdAt: serverTimestamp(),
+            };
+
+            showSavingOverlay('Saving Farmer...');
+            try {
+                const usersCollection = collection(db, 'users');
+                const newFarmerRef = await addDoc(usersCollection, farmerData);
+
+                hideSavingOverlay();
+                showToast('Farmer added successfully!', 'success');
+                document.getElementById('manual-farmer-modal').classList.add('hidden');
+
+                // Clear the form
+                document.getElementById('manualFarmerName').value = '';
+                manualProvince.setSelectedValues([]);
+                manualMunicipality.setSelectedValues([]);
+                manualBarangay.setSelectedValues([]);
+                document.getElementById('manualBirthdate').value = '';
+                document.getElementById('manualCivilStatus').value = 'Single';
+                document.getElementById('manualReligion').value = '';
+                document.getElementById('manualYearsFarming').value = '';
+                document.getElementById('manualFamilyMembers').value = '';
+                document.getElementById('manualEducation').value = 'No formal education';
+                document.getElementById('manualRsbsaNumber').value = '';
+
+
+                const context = {
+                    userId: newFarmerRef.id,
+                    userName: farmerData.fullName,
+                    label: farmerData.fullName,
+                    isFreshNavigation: false
+                };
+                showScreen('farmList', context);
+
+            } catch (error) {
+                hideSavingOverlay();
+                showToast('Error saving farmer. Please try again.', 'error');
+                console.error("Error adding manual farmer: ", error);
+            }
         });
 
         // --- 5. PROFILE MANAGEMENT ---
