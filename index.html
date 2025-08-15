@@ -4020,10 +4020,18 @@
             mapContainer.innerHTML = ''; // Clear previous map
             legendContainer.innerHTML = '';
 
+            // Guard against Leaflet being loaded into a hidden div, which causes size issues
+            if (mapContainer.offsetParent === null) {
+                setTimeout(loadExpertMap, 100); // Retry after a short delay
+                return;
+            }
+
             if (expertMap) {
                 expertMap.remove();
+                expertMap = null;
             }
-            expertMap = L.map('expert-map').setView([12.8797, 121.7740], 5);
+
+            expertMap = L.map('expert-map').setView([12.8797, 121.7740], 6);
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 attribution: 'Tiles &copy; Esri'
             }).addTo(expertMap);
@@ -4031,65 +4039,80 @@
             const colorPalette = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF'];
             let colorIndex = 0;
             const pestDiseaseColors = {};
+            const layers = [];
+            const farmCache = {};
+            const userCache = {};
 
             try {
-                const usersSnapshot = await getDocs(collection(db, 'users'));
-                const layers = [];
+                const submissionsQuery = query(collectionGroup(db, 'submissions'), where("initialDiagnosis", "!=", null));
+                const submissionsSnapshot = await getDocs(submissionsQuery);
 
-                for (const userDoc of usersSnapshot.docs) {
-                    const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
-                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                for (const submissionDoc of submissionsSnapshot.docs) {
+                    const submissionData = submissionDoc.data();
+                    const farmLotRef = submissionDoc.ref.parent.parent;
+                    const userRef = farmLotRef.parent.parent;
 
-                    for (const farmDoc of farmLotsSnapshot.docs) {
-                        const farmData = farmDoc.data();
-                        if (!farmData.polygonCoordinates || farmData.polygonCoordinates.length === 0) continue;
-
-                        const submissionsCollection = collection(db, 'users', userDoc.id, 'farmLots', farmDoc.id, 'submissions');
-                        const q = query(submissionsCollection, where("initialDiagnosis", "!=", null));
-                        const submissionsSnapshot = await getDocs(q);
-
-                        submissionsSnapshot.forEach(submissionDoc => {
-                            const submissionData = submissionDoc.data();
-                            const pestDisease = submissionData.finalDiagnosis?.pestDisease || submissionData.initialDiagnosis?.pestDisease;
-
-                            if (!pestDisease) return;
-
-                            if (!pestDiseaseColors[pestDisease]) {
-                                pestDiseaseColors[pestDisease] = colorPalette[colorIndex % colorPalette.length];
-                                colorIndex++;
-                            }
-
-                            const latLngs = farmData.polygonCoordinates.map(c => [c.lat, c.lng]);
-                            const polygon = L.polygon(latLngs, {
-                                color: pestDiseaseColors[pestDisease],
-                                weight: 2,
-                                fillOpacity: 0.5
-                            });
-
-                            const center = L.polygon(latLngs).getBounds().getCenter();
-                            const marker = L.marker(center, {
-                                icon: L.divIcon({
-                                    className: 'custom-div-icon',
-                                    html: `<div style='background-color:${pestDiseaseColors[pestDisease]};' class='marker-pin'></div>`,
-                                    iconSize: [30, 42],
-                                    iconAnchor: [15, 42]
-                                })
-                            });
-
-                            const caseDetails = {
-                                farm: farmData,
-                                submission: submissionData,
-                                user: userDoc.data(),
-                                pestDisease: pestDisease
-                            };
-
-                            polygon.on('click', () => openExpertPanel(caseDetails));
-                            marker.on('click', () => openExpertPanel(caseDetails));
-
-                            layers.push(polygon);
-                            layers.push(marker);
-                        });
+                    let farmData = farmCache[farmLotRef.id];
+                    if (!farmData) {
+                        const farmDoc = await getDoc(farmLotRef);
+                        if (farmDoc.exists() && farmDoc.data().polygonCoordinates) {
+                            farmData = farmDoc.data();
+                            farmCache[farmLotRef.id] = farmData;
+                        } else {
+                            continue; // Skip if farm data or polygon is missing
+                        }
                     }
+
+                    let userData = userCache[userRef.id];
+                    if (!userData) {
+                        const userDoc = await getDoc(userRef);
+                        if (userDoc.exists()) {
+                            userData = userDoc.data();
+                            userCache[userRef.id] = userData;
+                        } else {
+                            continue; // Skip if user data is missing
+                        }
+                    }
+
+                    if (!farmData.polygonCoordinates || farmData.polygonCoordinates.length === 0) continue;
+
+                    const pestDisease = submissionData.finalDiagnosis?.pestDisease || submissionData.initialDiagnosis?.pestDisease;
+                    if (!pestDisease) continue;
+
+                    if (!pestDiseaseColors[pestDisease]) {
+                        pestDiseaseColors[pestDisease] = colorPalette[colorIndex % colorPalette.length];
+                        colorIndex++;
+                    }
+
+                    const latLngs = farmData.polygonCoordinates.map(c => [c.lat, c.lng]);
+                    const polygon = L.polygon(latLngs, {
+                        color: pestDiseaseColors[pestDisease],
+                        weight: 2,
+                        fillOpacity: 0.5
+                    });
+
+                    const center = L.polygon(latLngs).getBounds().getCenter();
+                    const marker = L.marker(center, {
+                        icon: L.divIcon({
+                            className: 'custom-div-icon',
+                            html: `<div style='background-color:${pestDiseaseColors[pestDisease]};' class='marker-pin'></div>`,
+                            iconSize: [30, 42],
+                            iconAnchor: [15, 42]
+                        })
+                    });
+
+                    const caseDetails = {
+                        farm: farmData,
+                        submission: submissionData,
+                        user: userData,
+                        pestDisease: pestDisease
+                    };
+
+                    polygon.on('click', () => openExpertPanel(caseDetails));
+                    marker.on('click', () => openExpertPanel(caseDetails));
+
+                    layers.push(polygon);
+                    layers.push(marker);
                 }
 
                 if (layers.length > 0) {
@@ -4098,14 +4121,14 @@
                 }
 
                 // Build legend
-                legendContainer.innerHTML = ' <h3 class="text-sm font-bold mb-2">Legend</h3>';
+                legendContainer.innerHTML = '<h3 class="text-sm font-bold mb-2">Legend</h3>';
                 for (const [name, color] of Object.entries(pestDiseaseColors)) {
                     legendContainer.innerHTML += `<div class="flex items-center mb-1"><div class="w-4 h-4 rounded-full mr-2" style="background-color:${color};"></div><span>${name}</span></div>`;
                 }
 
             } catch (error) {
                 console.error("Error loading expert map:", error);
-                mapContainer.innerHTML = '<p class="text-red-500">Could not load map.</p>';
+                mapContainer.innerHTML = `<p class="text-red-500 p-4">Could not load map data. Error: ${error.message}</p>`;
                 showToast("Could not load map data.", "error");
             }
         }
