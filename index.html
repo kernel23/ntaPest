@@ -323,8 +323,35 @@
             <!-- Expert Dashboard Screen -->
             <div id="expert-dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
                 <header class="bg-white p-4 shadow-md">
-                    <h2 class="text-2xl font-bold">Expert Dashboard</h2>
-                    <p id="expert-welcome-message" class="text-sm text-gray-600"></p>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold">Expert Dashboard</h2>
+                            <p id="expert-welcome-message" class="text-sm text-gray-600"></p>
+                        </div>
+                        <button id="export-csv-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-700">
+                            Export All Data to CSV
+                        </button>
+                    </div>
+
+                    <!-- Filters -->
+                    <div id="expert-filters" class="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="col-span-1 md:col-span-4">
+                            <p class="text-sm font-medium text-gray-700">Filter by Pest/Disease</p>
+                            <div id="expert-pest-disease-filter-container" class="relative mt-1"></div>
+                        </div>
+
+                        <div class="col-span-1 md:col-span-4">
+                             <p class="text-sm font-medium text-gray-700">Filter by Location</p>
+                             <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-1">
+                                <div id="expert-province-filter-container" class="relative"></div>
+                                <div id="expert-municipality-filter-container" class="relative"></div>
+                                <div id="expert-barangay-filter-container" class="relative"></div>
+                             </div>
+                        </div>
+                         <div class="col-span-1 md:col-span-4 flex justify-end">
+                            <button id="expert-clear-location-filters-btn" class="text-sm text-blue-600 hover:underline">Clear All Filters</button>
+                        </div>
+                    </div>
                 </header>
                 <main class="flex-1 p-4 overflow-y-auto">
                     <div class="flex flex-col lg:flex-row gap-6">
@@ -366,14 +393,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Data Extraction -->
-                                <div class="bg-white p-4 rounded-lg shadow">
-                                    <h3 class="text-lg font-bold mb-2">Data Extraction</h3>
-                                    <p class="text-sm text-gray-600 mb-4">Download a CSV file of all reports, diagnoses, and treatments.</p>
-                                    <button id="export-csv-btn" class="w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-700">
-                                        Export All Data to CSV
-                                    </button>
-                                </div>
+                                <!-- Data Extraction (Button moved to header) -->
                             </div>
                         </div>
 
@@ -1188,6 +1208,10 @@
                     loadCoordinatorDashboard(currentContext);
                     break;
                 case 'expertDashboard':
+                if (!window.expertFiltersInitialized) {
+                    initializeExpertDashboardFilters();
+                    window.expertFiltersInitialized = true;
+                }
                     loadExpertStats();
                     loadExpertMap();
                     break;
@@ -1669,6 +1693,7 @@
         // --- Address Dropdown Logic ---
         let profileProvince, profileMunicipality, profileBarangay;
         let filterProvince, filterMunicipality, filterBarangay;
+        let expertFilterPestDisease, expertFilterProvince, expertFilterMunicipality, expertFilterBarangay;
 
         function initializeAddressFilters() {
             // For Profile Screen
@@ -3924,6 +3949,83 @@
             }
         }
 
+        function initializeExpertDashboardFilters() {
+            // Pest/Disease Filter
+            expertFilterPestDisease = createMultiSelect('expert-pest-disease-filter-container', 'All Pests & Diseases', true);
+            if (pestAndDiseaseData) {
+                const allPestsAndDiseases = [
+                    ...(pestAndDiseaseData.fungal_and_bacterial_diseases || []).map(d => d['Disease Name']),
+                    ...(pestAndDiseaseData.major_insect_pests || []).map(p => p['Pest Common Name'])
+                ].sort();
+                expertFilterPestDisease.populate(allPestsAndDiseases);
+            }
+            expertFilterPestDisease.onChange(() => {
+                loadExpertStats();
+                loadExpertMap();
+            });
+
+            // Location Filters
+            expertFilterProvince = createMultiSelect('expert-province-filter-container', 'All Provinces', true);
+            expertFilterMunicipality = createMultiSelect('expert-municipality-filter-container', 'All Municipalities', true);
+            expertFilterBarangay = createMultiSelect('expert-barangay-filter-container', 'All Barangays', true);
+
+            expertFilterProvince.populate(window.philippineAddresses.provinces.map(p => p.name));
+            expertFilterMunicipality.disable();
+            expertFilterBarangay.disable();
+
+            const reloadData = () => {
+                loadExpertStats();
+                loadExpertMap();
+            };
+
+            expertFilterProvince.onChange(selectedProvinces => {
+                expertFilterMunicipality.clear();
+                expertFilterBarangay.clear();
+                expertFilterMunicipality.disable();
+                expertFilterBarangay.disable();
+                if (selectedProvinces.length > 0) {
+                    const municipalities = selectedProvinces.flatMap(provinceName => {
+                        const provinceData = window.philippineAddresses.provinces.find(p => p.name === provinceName);
+                        return provinceData ? provinceData.municipalities.map(m => m.name) : [];
+                    });
+                    expertFilterMunicipality.populate([...new Set(municipalities)].sort());
+                    expertFilterMunicipality.enable();
+                }
+                reloadData();
+            });
+
+            expertFilterMunicipality.onChange(selectedMunicipalities => {
+                expertFilterBarangay.clear();
+                expertFilterBarangay.disable();
+                if (selectedMunicipalities.length > 0) {
+                    const selectedProvinces = expertFilterProvince.getSelectedValues();
+                    const barangays = selectedProvinces.flatMap(provinceName => {
+                        const provinceData = window.philippineAddresses.provinces.find(p => p.name === provinceName);
+                        return provinceData ? provinceData.municipalities
+                            .filter(m => selectedMunicipalities.includes(m.name))
+                            .flatMap(m => m.barangays) : [];
+                    });
+                    expertFilterBarangay.populate([...new Set(barangays)].sort());
+                    expertFilterBarangay.enable();
+                }
+                reloadData();
+            });
+
+            expertFilterBarangay.onChange(reloadData);
+
+            document.getElementById('expert-clear-location-filters-btn').addEventListener('click', () => {
+                expertFilterPestDisease.setSelectedValues([]);
+                expertFilterProvince.setSelectedValues([]);
+                expertFilterMunicipality.setSelectedValues([]);
+                expertFilterBarangay.setSelectedValues([]);
+                expertFilterMunicipality.clear();
+                expertFilterBarangay.clear();
+                expertFilterMunicipality.disable();
+                expertFilterBarangay.disable();
+                reloadData();
+            });
+        }
+
         async function loadExpertStats() {
             const statsContainer = document.getElementById('expert-stats-container');
             const fields = {
@@ -3933,32 +4035,69 @@
                 pests: document.getElementById('stat-pests-count'),
                 diseases: document.getElementById('stat-diseases-count'),
             };
-
-            // Reset to loading state
             Object.values(fields).forEach(field => field.textContent = '...');
 
+            // Get filter values
+            const selectedPests = expertFilterPestDisease ? expertFilterPestDisease.getSelectedValues() : [];
+            const selectedProvinces = expertFilterProvince ? expertFilterProvince.getSelectedValues() : [];
+            const selectedMunicipalities = expertFilterMunicipality ? expertFilterMunicipality.getSelectedValues() : [];
+            const selectedBarangays = expertFilterBarangay ? expertFilterBarangay.getSelectedValues() : [];
+
             try {
-                // Use a collection group query, which is permitted for 'Expert' roles.
-                // This is far more efficient and respects the security rules.
                 const submissionsQuery = collectionGroup(db, 'submissions');
                 const submissionsSnapshot = await getDocs(submissionsQuery);
+                const userCache = {};
 
-                let reportCount = submissionsSnapshot.size;
+                const filteredDocs = [];
+
+                for (const submissionDoc of submissionsSnapshot.docs) {
+                    const submissionData = submissionDoc.data();
+                    const userRef = submissionDoc.ref.parent.parent; // This gets the farmLot document reference
+                    const farmerRef = userRef.parent.parent; // This gets the user document reference
+
+                    if (!userCache[farmerRef.id]) {
+                        try {
+                            const userDoc = await getDoc(farmerRef);
+                            userCache[farmerRef.id] = userDoc.exists() ? userDoc.data() : null;
+                        } catch (e) {
+                            console.warn(`Could not fetch user profile ${farmerRef.id}`, e);
+                            userCache[farmerRef.id] = null;
+                        }
+                    }
+                    const userProfile = userCache[farmerRef.id];
+
+                    const pestDisease = submissionData.finalDiagnosis?.pestDisease || submissionData.initialDiagnosis?.pestDisease;
+                    const pestMatch = selectedPests.length === 0 || (pestDisease && selectedPests.includes(pestDisease));
+
+                    let locationMatch = true;
+                    if (selectedProvinces.length > 0 || selectedMunicipalities.length > 0 || selectedBarangays.length > 0) {
+                        if (!userProfile) {
+                            locationMatch = false;
+                        } else {
+                            const provinceMatch = selectedProvinces.length === 0 || selectedProvinces.includes(userProfile.province);
+                            const municipalityMatch = selectedMunicipalities.length === 0 || selectedMunicipalities.includes(userProfile.municipality);
+                            const barangayMatch = selectedBarangays.length === 0 || selectedBarangays.includes(userProfile.barangay);
+                            locationMatch = provinceMatch && municipalityMatch && barangayMatch;
+                        }
+                    }
+
+                    if (pestMatch && locationMatch) {
+                        filteredDocs.push(submissionDoc);
+                    }
+                }
+
+                let reportCount = filteredDocs.length;
                 let diagnosedCount = 0;
                 let treatedCount = 0;
                 const pestSet = new Set();
                 const diseaseSet = new Set();
 
-                submissionsSnapshot.forEach(submissionDoc => {
+                filteredDocs.forEach(submissionDoc => {
                     const data = submissionDoc.data();
-                    if (data.initialDiagnosis) {
-                        diagnosedCount++;
-                    }
-                    if (data.treatment) {
-                        treatedCount++;
-                    }
+                    if (data.initialDiagnosis) diagnosedCount++;
+                    if (data.treatment) treatedCount++;
                     if (data.finalDiagnosis && data.finalDiagnosis.pestDisease) {
-                        // Check if it's a pest or disease from our master list
+                        if (!pestAndDiseaseData.major_insect_pests) return;
                         const allPests = pestAndDiseaseData.major_insect_pests.map(p => p['Pest Common Name']);
                         if (allPests.includes(data.finalDiagnosis.pestDisease)) {
                             pestSet.add(data.finalDiagnosis.pestDisease);
@@ -4099,7 +4238,7 @@
         async function loadExpertMap() {
             const mapContainer = document.getElementById('expert-map');
             const legendContainer = document.getElementById('expert-map-legend');
-            mapContainer.innerHTML = ''; // Clear previous map
+            mapContainer.innerHTML = '';
             legendContainer.innerHTML = '';
 
             if (expertMap) {
@@ -4114,53 +4253,61 @@
             let colorIndex = 0;
             const pestDiseaseColors = {};
 
+            // Get filter values
+            const selectedPests = expertFilterPestDisease ? expertFilterPestDisease.getSelectedValues() : [];
+            const selectedProvinces = expertFilterProvince ? expertFilterProvince.getSelectedValues() : [];
+            const selectedMunicipalities = expertFilterMunicipality ? expertFilterMunicipality.getSelectedValues() : [];
+            const selectedBarangays = expertFilterBarangay ? expertFilterBarangay.getSelectedValues() : [];
+
             try {
-                // Use a collection group query to get all diagnosed submissions.
                 const submissionsQuery = query(collectionGroup(db, 'submissions'), where("initialDiagnosis", "!=", null));
                 const submissionsSnapshot = await getDocs(submissionsQuery);
 
                 const layers = [];
-                const farmCache = {}; // Cache for farm data
-                const userCache = {}; // Cache for user data
+                const farmCache = {};
+                const userCache = {};
 
                 for (const submissionDoc of submissionsSnapshot.docs) {
                     const submissionData = submissionDoc.data();
                     const farmLotRef = submissionDoc.ref.parent.parent;
                     const userRef = farmLotRef.parent.parent;
 
-                    // Get farm data, using cache if available
-                    if (!farmCache[farmLotRef.id]) {
-                        const farmDoc = await getDoc(farmLotRef);
-                        if (farmDoc.exists()) {
-                            farmCache[farmLotRef.id] = farmDoc.data();
-                        }
-                    }
-                    const farmData = farmCache[farmLotRef.id];
-
-                    // Get user data, using cache if available, and handle permission errors gracefully.
-                    let userData = userCache[userRef.id];
-                    if (!userData) {
+                    if (!userCache[userRef.id]) {
                         try {
                             const userDoc = await getDoc(userRef);
-                            if (userDoc.exists()) {
-                                userData = userDoc.data();
-                                userCache[userRef.id] = userData;
-                            }
+                            userCache[userRef.id] = userDoc.exists() ? userDoc.data() : null;
                         } catch (e) {
-                            // This is expected to fail for non-admins. We can log it for debugging but shouldn't crash.
-                            console.warn(`Could not fetch user profile ${userRef.id} due to permissions. This is expected for non-admin roles.`);
-                            // We use a placeholder and cache it to prevent re-fetching.
-                            userData = { fullName: 'Unknown Farmer' };
-                            userCache[userRef.id] = userData;
+                            userCache[userRef.id] = null;
+                        }
+                    }
+                    const userProfile = userCache[userRef.id];
+
+                    const pestDisease = submissionData.finalDiagnosis?.pestDisease || submissionData.initialDiagnosis?.pestDisease;
+                    const pestMatch = selectedPests.length === 0 || (pestDisease && selectedPests.includes(pestDisease));
+
+                    let locationMatch = true;
+                    if (selectedProvinces.length > 0 || selectedMunicipalities.length > 0 || selectedBarangays.length > 0) {
+                        if (!userProfile) {
+                            locationMatch = false;
+                        } else {
+                            const provinceMatch = selectedProvinces.length === 0 || selectedProvinces.includes(userProfile.province);
+                            const municipalityMatch = selectedMunicipalities.length === 0 || selectedMunicipalities.includes(userProfile.municipality);
+                            const barangayMatch = selectedBarangays.length === 0 || selectedBarangays.includes(userProfile.barangay);
+                            locationMatch = provinceMatch && municipalityMatch && barangayMatch;
                         }
                     }
 
-                    // Skip if we couldn't retrieve farm data or farm has no coordinates
-                    if (!farmData || !farmData.polygonCoordinates || farmData.polygonCoordinates.length === 0) {
+                    if (!pestMatch || !locationMatch) {
                         continue;
                     }
 
-                    const pestDisease = submissionData.finalDiagnosis?.pestDisease || submissionData.initialDiagnosis?.pestDisease;
+                    if (!farmCache[farmLotRef.id]) {
+                        const farmDoc = await getDoc(farmLotRef);
+                        if (farmDoc.exists()) farmCache[farmLotRef.id] = farmDoc.data();
+                    }
+                    const farmData = farmCache[farmLotRef.id];
+
+                    if (!farmData || !farmData.polygonCoordinates || farmData.polygonCoordinates.length === 0) continue;
                     if (!pestDisease) continue;
 
                     if (!pestDiseaseColors[pestDisease]) {
@@ -4169,12 +4316,7 @@
                     }
 
                     const latLngs = farmData.polygonCoordinates.map(c => [c.lat, c.lng]);
-                    const polygon = L.polygon(latLngs, {
-                        color: pestDiseaseColors[pestDisease],
-                        weight: 2,
-                        fillOpacity: 0.5
-                    });
-
+                    const polygon = L.polygon(latLngs, { color: pestDiseaseColors[pestDisease], weight: 2, fillOpacity: 0.5 });
                     const center = L.polygon(latLngs).getBounds().getCenter();
                     const marker = L.marker(center, {
                         icon: L.divIcon({
@@ -4185,27 +4327,20 @@
                         })
                     });
 
-                    const caseDetails = {
-                        farm: farmData,
-                        submission: submissionData,
-                        user: userData,
-                        pestDisease: pestDisease
-                    };
-
+                    const caseDetails = { farm: farmData, submission: submissionData, user: userProfile, pestDisease: pestDisease };
                     polygon.on('click', () => openExpertPanel(caseDetails));
                     marker.on('click', () => openExpertPanel(caseDetails));
 
-                    layers.push(polygon);
-                    layers.push(marker);
+                    layers.push(polygon, marker);
                 }
-
 
                 if (layers.length > 0) {
                     const featureGroup = L.featureGroup(layers).addTo(expertMap);
                     expertMap.fitBounds(featureGroup.getBounds().pad(0.1));
+                } else {
+                    expertMap.setView([12.8797, 121.7740], 5);
                 }
 
-                // Build legend
                 legendContainer.innerHTML = ' <h3 class="text-sm font-bold mb-2">Legend</h3>';
                 for (const [name, color] of Object.entries(pestDiseaseColors)) {
                     legendContainer.innerHTML += `<div class="flex items-center mb-1"><div class="w-4 h-4 rounded-full mr-2" style="background-color:${color};"></div><span>${name}</span></div>`;
