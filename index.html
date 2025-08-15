@@ -973,6 +973,10 @@
             getDownloadURL,
             deleteObject
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+        import {
+            getFunctions,
+            httpsCallable
+        } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
         // --- 1. FIREBASE CONFIGURATION ---
         // IMPORTANT: Replace with your project's Firebase configuration
@@ -991,6 +995,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const storage = getStorage(app);
+        const functions = getFunctions(app);
 
         // --- 2. PWA & OFFLINE SETUP ---
         let pestAndDiseaseData = {}; // Global variable to hold the data
@@ -2095,46 +2100,44 @@
                 familyMembers: parseInt(familyMembers),
                 education,
                 rsbsaNumber,
-                role: 'Farmer',
-                isManual: true,
-                managedBy: currentUser.uid,
-                createdAt: serverTimestamp(),
             };
 
             showSavingOverlay('Saving Farmer...');
             try {
-                const usersCollection = collection(db, 'users');
-                const newFarmerRef = await addDoc(usersCollection, farmerData);
+                const addManualFarmer = httpsCallable(functions, 'addManualFarmer');
+                const result = await addManualFarmer(farmerData);
 
-                hideSavingOverlay();
-                showToast('Farmer added successfully!', 'success');
-                document.getElementById('manual-farmer-modal').classList.add('hidden');
+                if (result.data.success) {
+                    hideSavingOverlay();
+                    showToast('Farmer added successfully!', 'success');
+                    document.getElementById('manual-farmer-modal').classList.add('hidden');
 
-                // Clear the form
-                document.getElementById('manualFarmerName').value = '';
-                manualProvince.setSelectedValues([]);
-                manualMunicipality.setSelectedValues([]);
-                manualBarangay.setSelectedValues([]);
-                document.getElementById('manualBirthdate').value = '';
-                document.getElementById('manualCivilStatus').value = 'Single';
-                document.getElementById('manualReligion').value = '';
-                document.getElementById('manualYearsFarming').value = '';
-                document.getElementById('manualFamilyMembers').value = '';
-                document.getElementById('manualEducation').value = 'No formal education';
-                document.getElementById('manualRsbsaNumber').value = '';
+                    // Clear the form
+                    document.getElementById('manualFarmerName').value = '';
+                    manualProvince.setSelectedValues([]);
+                    manualMunicipality.setSelectedValues([]);
+                    manualBarangay.setSelectedValues([]);
+                    document.getElementById('manualBirthdate').value = '';
+                    document.getElementById('manualCivilStatus').value = 'Single';
+                    document.getElementById('manualReligion').value = '';
+                    document.getElementById('manualYearsFarming').value = '';
+                    document.getElementById('manualFamilyMembers').value = '';
+                    document.getElementById('manualEducation').value = 'No formal education';
+                    document.getElementById('manualRsbsaNumber').value = '';
 
-
-                const context = {
-                    userId: newFarmerRef.id,
-                    userName: farmerData.fullName,
-                    label: farmerData.fullName,
-                    isFreshNavigation: false
-                };
-                showScreen('farmList', context);
-
+                    const context = {
+                        userId: result.data.farmerId,
+                        userName: farmerData.fullName,
+                        label: farmerData.fullName,
+                        isFreshNavigation: false
+                    };
+                    showScreen('farmList', context);
+                } else {
+                    throw new Error(result.data.error || 'Unknown error occurred.');
+                }
             } catch (error) {
                 hideSavingOverlay();
-                showToast('Error saving farmer. Please try again.', 'error');
+                showToast(`Error saving farmer: ${error.message}`, 'error');
                 console.error("Error adding manual farmer: ", error);
             }
         });
