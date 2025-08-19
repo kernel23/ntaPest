@@ -3396,7 +3396,7 @@
 
     // Create a grid container
     const gridContainer = document.createElement('div');
-    gridContainer.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4';
+    gridContainer.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6';
     reportsContainer.appendChild(gridContainer);
 
     submissions.forEach(submission => {
@@ -3549,12 +3549,36 @@
                 ${treatmentHTML}
             `;
 
-            modalActions.innerHTML = `<button id="edit-report-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Edit Report</button>`;
+            modalActions.innerHTML = `
+                <button id="edit-report-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Update</button>
+                <button id="delete-report-btn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md ml-2">Delete</button>
+            `;
             document.getElementById('edit-report-btn').addEventListener('click', () => {
                 // Navigate to the edit screen
                 isEditSubmissionMode = true;
                 currentSubmissionId = submission.id;
-                showScreen('newSubmission', { farmId: submission.farmId, submissionId: submission.id, label: 'Edit Report' });
+                const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+                const newContext = { ...lastContext, farmId: submission.farmId, submissionId: submission.id, label: 'Edit Report' };
+                showScreen('newSubmission', newContext);
+                modal.classList.add('hidden');
+            });
+
+            document.getElementById('delete-report-btn').addEventListener('click', async () => {
+                if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+                    showSavingOverlay('Deleting Report...');
+                    try {
+                        const reportDocRef = doc(db, 'users', submission.userId, 'farmLots', submission.farmId, 'submissions', submission.id);
+                        await deleteDoc(reportDocRef);
+                        showToast('Report deleted successfully.', 'success');
+                        modal.classList.add('hidden');
+                        loadAllReports(); // Refresh the reports list
+                    } catch (error) {
+                        console.error('Error deleting report:', error);
+                        showToast('Failed to delete report.', 'error');
+                    } finally {
+                        hideSavingOverlay();
+                    }
+                }
             });
 
             try {
