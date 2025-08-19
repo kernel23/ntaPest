@@ -2439,7 +2439,11 @@
                 isEditSubmissionMode = true;
 
                 try {
-                    const submissionDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions', currentSubmissionId);
+                    // FIX: Use the userId from the navigation context to fetch the correct farmer's data
+                    const currentState = navigationHistory[navigationHistory.length - 1];
+                    const targetUserId = currentState?.context?.userId || currentUser.uid;
+
+                    const submissionDocRef = doc(db, 'users', targetUserId, 'farmLots', currentFarmId, 'submissions', currentSubmissionId);
                     const submissionDocSnap = await getDoc(submissionDocRef);
 
                     if (submissionDocSnap.exists()) {
