@@ -27,18 +27,6 @@
         .screen.active { display: flex; }
         body { font-family: 'Inter', sans-serif; } /* Using a common sans-serif font */
 
-        /* Fixed Sidebar */
-        #sidebar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            z-index: 10;
-        }
-
-        #screen-container.with-sidebar {
-            margin-left: 4rem; /* ml-16 */
-        }
         #map { height: 400px; }
         #report-map { height: 200px; margin-bottom: 1.5rem; }
         #pest-cards-container {
@@ -85,14 +73,14 @@
 
     <div id="app-container" class="h-screen w-screen relative">
         <!-- Fixed Icon-Only Sidebar -->
-        <aside id="sidebar" class="w-16 bg-gradient-to-br from-[#384532] via-[#455b3c] to-[#cc9244] text-white p-4 hidden flex-col items-center">
+        <aside id="sidebar" class="fixed bottom-0 left-0 z-10 w-full h-16 bg-gradient-to-br from-[#384532] via-[#455b3c] to-[#cc9244] text-white p-2 hidden flex-row items-center justify-around md:relative md:w-16 md:h-full md:flex-col md:p-4 md:justify-start">
             <!-- Logo -->
-            <div class="mb-10">
+            <div class="mb-10 hidden md:block">
                  <i data-lucide="leaf" class="w-8 h-8 text-[#f1c232]"></i>
             </div>
 
             <!-- Navigation -->
-            <nav class="flex-1 flex flex-col items-center space-y-4">
+            <nav class="flex flex-row items-center space-x-4 md:flex-1 md:flex-col md:space-y-4 md:space-x-0">
                 <a href="#" id="nav-farm-list" class="nav-item p-2 rounded-lg hover:bg-[#455b3c]" title="My Farms">
                     <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
                 </a>
@@ -121,7 +109,7 @@
             </nav>
 
             <!-- Logout Button -->
-            <div class="mt-auto">
+            <div class="md:mt-auto">
                 <button id="sidebar-logout-btn" class="nav-item p-2 rounded-lg hover:bg-red-700" title="Logout">
                     <i data-lucide="log-out" class="w-6 h-6"></i>
                 </button>

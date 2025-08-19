@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+/* Custom styles for responsive sidebar */
+@layer base {
+    /* For mobile view, content needs padding at the bottom to not be obscured by the nav bar */
+    #screen-container.with-sidebar {
+        padding-bottom: 4rem; /* h-16 */
+    }
+
+    /* For desktop view, content has margin on the left for the sidebar */
+    @screen md {
+        #screen-container.with-sidebar {
+            margin-left: 4rem; /* ml-16 */
+            padding-bottom: 0; /* Reset mobile padding */
+        }
+    }
+}
