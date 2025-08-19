@@ -140,8 +140,8 @@
             </div>
 
             <!-- Login Screen -->
-            <div id="login-screen" class="screen h-full text-[#384532]">
-                <div class="w-1/2 flex flex-col justify-center items-center p-6 bg-[#fff2c9]">
+            <div id="login-screen" class="screen h-full text-[#384532] flex-col md:flex-row">
+                <div class="w-full md:w-1/2 flex flex-col justify-center items-center p-6 bg-[#fff2c9]">
                     <div class="text-center mb-10">
                         <i data-lucide="leaf" class="w-16 h-16 text-[#455b3c] mx-auto"></i>
                         <h1 class="text-4xl font-bold bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-transparent bg-clip-text mt-4">Agri-Guard</h1>
@@ -160,7 +160,7 @@
                         By signing in, you agree to our <a href="#" id="privacy-policy-link" class="underline hover:text-[#455b3c]">Privacy Policy</a>. All personal data is encrypted in transit.
                     </div>
                 </div>
-                <div id="pest-cards-container" class="w-1/2 p-6 bg-gradient-to-br from-[#384532] via-[#455b3c] to-[#cc9244] overflow-y-auto">
+                <div id="pest-cards-container" class="w-full md:w-1/2 p-6 bg-gradient-to-br from-[#384532] via-[#455b3c] to-[#cc9244] hidden md:flex md:flex-wrap md:justify-center overflow-y-auto">
                     <!-- Pest and disease cards will be inserted here by JavaScript -->
                 </div>
             </div>
