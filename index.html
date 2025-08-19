@@ -897,7 +897,8 @@
             where,
             orderBy,
             limit,
-            collectionGroup
+            collectionGroup,
+            arrayUnion
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import {
             getStorage,
@@ -3445,7 +3446,7 @@
             // Record the view action
             const reportRef = doc(db, 'users', submission.userId, 'farmLots', submission.farmId, 'submissions', submission.id);
             await updateDoc(reportRef, {
-                history: firebase.firestore.FieldValue.arrayUnion({
+                history: arrayUnion({
                     action: 'view',
                     timestamp: serverTimestamp(),
                     userId: currentUser.uid,
