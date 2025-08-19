@@ -897,7 +897,8 @@
             where,
             orderBy,
             limit,
-            collectionGroup
+            collectionGroup,
+            arrayUnion
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import {
             getStorage,
@@ -3381,210 +3382,247 @@
         });
 
         function renderAllReports(submissions) {
-            const reportsContainer = document.getElementById('reports-container');
-            reportsContainer.innerHTML = '';
+    const reportsContainer = document.getElementById('reports-container');
+    reportsContainer.innerHTML = '';
 
-            if (submissions.length === 0) {
-                reportsContainer.innerHTML = `
-                    <div class="text-center text-gray-500 mt-20">
-                        <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
-                        <p class="mt-4">No reports found for the selected filter.</p>
+    if (submissions.length === 0) {
+        reportsContainer.innerHTML = `
+            <div class="text-center text-gray-500 mt-20">
+                <i data-lucide="folder-search" class="w-12 h-12 mx-auto text-gray-400"></i>
+                <p class="mt-4">No reports found for the selected filter.</p>
+            </div>`;
+        lucide.createIcons();
+        return;
+    }
+
+    // Create a grid container
+    const gridContainer = document.createElement('div');
+    gridContainer.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 p-6';
+    reportsContainer.appendChild(gridContainer);
+
+    submissions.forEach(submission => {
+        const reportButton = document.createElement('button');
+        reportButton.className = 'relative aspect-square bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden text-left p-4 flex flex-col justify-between transform transition-transform duration-200 hover:scale-105 hover:shadow-lg';
+
+        const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date();
+        const dateString = submissionDate.toLocaleDateString();
+
+        let statusHTML = '';
+        if (submission.status === 'Treatment Provided') {
+            statusHTML = `<span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-white bg-blue-500">Treated</span>`;
+        } else if (submission.status === 'Pending Final Diagnosis') {
+            statusHTML = `<span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-yellow-800 bg-yellow-200">Diagnosed</span>`;
+        } else {
+            statusHTML = `<span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-red-800 bg-red-200">Pending</span>`;
+        }
+
+        let farmerNameHTML = '';
+        if (submission.userProfile && userProfile.role !== 'Farmer') {
+            farmerNameHTML = `<p class="text-sm text-gray-500 truncate">Farmer: ${submission.userProfile.fullName}</p>`;
+        }
+
+        const thumbnailUrl = (submission.imageDownloadUrls && submission.imageDownloadUrls.length > 0)
+            ? submission.imageDownloadUrls[0]
+            : (submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image');
+
+        reportButton.innerHTML = `
+            <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('${thumbnailUrl}');">
+                <div class="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-60 transition-all"></div>
+            </div>
+            <div class="relative z-10 flex flex-col h-full text-white">
+                <div class="flex justify-between items-start">
+                    <p class="font-bold text-lg">${submission.farmName}</p>
+                    ${statusHTML}
+                </div>
+                <div class="mt-auto">
+                    ${farmerNameHTML}
+                    <p class="text-sm"><strong>Symptoms:</strong> <span class="capitalize">${submission.symptoms.join(', ')}</span></p>
+                    <p class="text-xs mt-1">${dateString}</p>
+                </div>
+            </div>
+        `;
+
+        reportButton.addEventListener('click', async () => {
+            // Record the view action
+            const reportRef = doc(db, 'users', submission.userId, 'farmLots', submission.farmId, 'submissions', submission.id);
+            await updateDoc(reportRef, {
+                history: arrayUnion({
+                    action: 'view',
+                    timestamp: new Date(),
+                    userId: currentUser.uid,
+                    userName: userProfile.fullName
+                })
+            });
+
+            const modal = document.getElementById('report-details-modal');
+            const modalContent = document.getElementById('report-details-content');
+            const modalActions = document.getElementById('report-details-actions');
+            const closeModalBtn = document.getElementById('close-report-details-modal-btn');
+            let detailMap = null;
+
+            modalContent.innerHTML = `<div class="text-center text-gray-500 p-8"><i data-lucide="loader" class="animate-spin inline-block"></i> Loading details...</div>`;
+            modalActions.innerHTML = '';
+            lucide.createIcons();
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            const mapId = `report-map-${submission.id}`;
+
+            let initialDiagnosisHTML = '';
+            if (submission.initialDiagnosis) {
+                initialDiagnosisHTML = `
+                    <div class="mt-4 pt-4 border-t">
+                        <h4 class="font-bold text-gray-800">Initial Diagnosis</h4>
+                        <p class="text-sm"><strong>Pest/Disease:</strong> ${submission.initialDiagnosis.pestDisease}</p>
+                        <p class="text-sm"><strong>Notes:</strong> ${submission.initialDiagnosis.notes || 'N/A'}</p>
+                        <p class="text-xs text-gray-500 mt-1">by ${submission.initialDiagnosis.diagnosedByName}</p>
                     </div>`;
-                lucide.createIcons();
-                return;
             }
 
-            submissions.forEach(submission => {
-                const reportWrapper = document.createElement('div');
-                reportWrapper.className = 'bg-white rounded-xl mb-4 shadow-sm border border-gray-200 overflow-hidden';
-
-                const summaryCard = document.createElement('div');
-                summaryCard.className = 'p-4 cursor-pointer hover:bg-gray-50';
-
-                const detailsCard = document.createElement('div');
-                detailsCard.className = 'p-4 border-t border-gray-200 hidden';
-                detailsCard.innerHTML = `<div class="text-center text-gray-500"><i data-lucide="loader" class="animate-spin inline-block"></i> Loading details...</div>`;
-
-                const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date();
-                const dateString = submissionDate.toLocaleDateString();
-                const timeString = submissionDate.toLocaleTimeString();
-
-                let statusHTML = '';
-                if (submission.status === 'Treatment Provided') {
-                    statusHTML = `<span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-white bg-blue-500">Treated</span>`;
-                } else if (submission.status === 'Pending Final Diagnosis') {
-                    statusHTML = `<span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-yellow-800 bg-yellow-200">Diagnosed</span>`;
-                } else {
-                    statusHTML = `<span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-red-800 bg-red-200">Pending</span>`;
-                }
-
-                let farmerNameHTML = '';
-                if (submission.userProfile && userProfile.role !== 'Farmer') {
-                    farmerNameHTML = `<p class="text-sm text-gray-500">Farmer: ${submission.userProfile.fullName}</p>`;
-                }
-
-                const thumbnailUrl = (submission.imageDownloadUrls && submission.imageDownloadUrls.length > 0)
-                    ? submission.imageDownloadUrls[0]
-                    : (submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image');
-
-                summaryCard.innerHTML = `
-                    <div class="flex items-start">
-                        <img src="${thumbnailUrl}" class="w-24 h-24 rounded-md mr-4 object-cover">
-                        <div class="flex-grow">
-                            <div class="flex justify-between items-center mb-1">
-                                <p class="font-bold text-lg">${submission.farmName}</p>
-                                ${statusHTML}
-                            </div>
-                            <p class="text-sm text-gray-500 mb-2">Reported on ${dateString} at ${timeString}</p>
-                            ${farmerNameHTML}
-                            <p class="text-sm"><strong>Symptoms:</strong> <span class="capitalize">${submission.symptoms.join(', ')}</span></p>
-                            <p class="text-sm text-blue-600 mt-2">Click to expand for more details</p>
-                        </div>
+            let finalDiagnosisHTML = '';
+            if (submission.finalDiagnosis) {
+                finalDiagnosisHTML = `
+                    <div class="mt-4 pt-4 border-t">
+                        <h4 class="font-bold text-gray-800">Final Diagnosis</h4>
+                        <p class="text-sm"><strong>Pest/Disease:</strong> ${submission.finalDiagnosis.pestDisease}</p>
+                        <p class="text-sm"><strong>Notes:</strong> ${submission.finalDiagnosis.notes || 'N/A'}</p>
+                        <p class="text-xs text-gray-500 mt-1">by ${submission.finalDiagnosis.diagnosedByName}</p>
                     </div>`;
+            }
 
-                summaryCard.addEventListener('click', async () => {
-                    const modal = document.getElementById('report-details-modal');
-                    const modalContent = document.getElementById('report-details-content');
-                    const modalActions = document.getElementById('report-details-actions');
-                    const closeModalBtn = document.getElementById('close-report-details-modal-btn');
-                    let detailMap = null;
+            let treatmentHTML = '';
+            if (submission.treatment) {
+                const { prevention, monitoring, control, instructions, followUpDate } = submission.treatment;
 
-                    // Start with a loading state
-                    modalContent.innerHTML = `<div class="text-center text-gray-500 p-8"><i data-lucide="loader" class="animate-spin inline-block"></i> Loading details...</div>`;
-                    modalActions.innerHTML = ''; // Clear previous actions
-                    lucide.createIcons();
-
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex');
-
-                    const mapId = `report-map-${submission.id}`;
-
-                    let initialDiagnosisHTML = '';
-                    if (submission.initialDiagnosis) {
-                        initialDiagnosisHTML = `
-                            <div class="mt-4 pt-4 border-t">
-                                <h4 class="font-bold text-gray-800">Initial Diagnosis</h4>
-                                <p class="text-sm"><strong>Pest/Disease:</strong> ${submission.initialDiagnosis.pestDisease}</p>
-                                <p class="text-sm"><strong>Notes:</strong> ${submission.initialDiagnosis.notes || 'N/A'}</p>
-                                <p class="text-xs text-gray-500 mt-1">by ${submission.initialDiagnosis.diagnosedByName}</p>
-                            </div>`;
-                    }
-
-                    let finalDiagnosisHTML = '';
-                    if (submission.finalDiagnosis) {
-                        finalDiagnosisHTML = `
-                            <div class="mt-4 pt-4 border-t">
-                                <h4 class="font-bold text-gray-800">Final Diagnosis</h4>
-                                <p class="text-sm"><strong>Pest/Disease:</strong> ${submission.finalDiagnosis.pestDisease}</p>
-                                <p class="text-sm"><strong>Notes:</strong> ${submission.finalDiagnosis.notes || 'N/A'}</p>
-                                <p class="text-xs text-gray-500 mt-1">by ${submission.finalDiagnosis.diagnosedByName}</p>
-                            </div>`;
-                    }
-
-                    let treatmentHTML = '';
-                    if (submission.treatment) {
-                        const { prevention, monitoring, control, instructions, followUpDate } = submission.treatment;
-
-                        const createSection = (title, items) => {
-                            if (!items || items.length === 0) return '';
-                            return `
-                                <div class="mt-3">
-                                    <h5 class="font-semibold text-gray-700">${title}</h5>
-                                    <ul class="list-disc list-inside text-sm text-gray-600 mt-1 space-y-1">
-                                        ${items.map(item => `<li>${item}</li>`).join('')}
-                                    </ul>
-                                </div>
-                            `;
-                        };
-
-                        treatmentHTML = `
-                            <div class="mt-4 pt-4 border-t">
-                                <h4 class="font-bold text-lg text-gray-800">Treatment Plan</h4>
-                                ${createSection('Prevention', prevention)}
-                                ${createSection('Monitoring', monitoring)}
-                                ${createSection('Direct Control', control)}
-                                <div class="mt-3">
-                                    <h5 class="font-semibold text-gray-700">Specific Instructions</h5>
-                                    <p class="text-sm text-gray-600 mt-1">${instructions || 'N/A'}</p>
-                                </div>
-                                ${followUpDate ? `
-                                <div class="mt-3">
-                                    <h5 class="font-semibold text-gray-700">Follow-up Date</h5>
-                                    <p class="text-sm text-gray-600 mt-1">${followUpDate}</p>
-                                </div>` : ''}
-                            </div>`;
-                    }
-
-                    const imageUrls = submission.imageDownloadUrls || (submission.imageDataUrl ? [submission.imageDataUrl] : []);
-                    const imageGridHTML = imageUrls.length > 0
-                        ? `<div class="grid grid-cols-2 md:grid-cols-3 gap-2">${imageUrls.map(url => `<a href="${url}" target="_blank"><img src="${url}" class="rounded-lg w-full aspect-square object-cover"></a>`).join('')}</div>`
-                        : `<p class="text-sm text-gray-500">No images submitted.</p>`;
-
-
-                    modalContent.innerHTML = `
-                        <div id="${mapId}" class="w-full h-48 bg-gray-200 rounded-md shadow-inner mb-4"></div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                             <div>
-                                <h4 class="font-bold text-gray-800 mb-2">Uploaded Images</h4>
-                                ${imageGridHTML}
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-gray-800">Report Information</h4>
-                                <p class="text-sm"><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
-                                <p class="text-sm"><strong>Distribution:</strong> ${submission.distribution}</p>
-                                <p class="text-sm"><strong>Severity:</strong> ${submission.severity}</p>
-                            </div>
+                const createSection = (title, items) => {
+                    if (!items || items.length === 0) return '';
+                    return `
+                        <div class="mt-3">
+                            <h5 class="font-semibold text-gray-700">${title}</h5>
+                            <ul class="list-disc list-inside text-sm text-gray-600 mt-1 space-y-1">
+                                ${items.map(item => `<li>${item}</li>`).join('')}
+                            </ul>
                         </div>
-                        ${initialDiagnosisHTML}
-                        ${finalDiagnosisHTML}
-                        ${treatmentHTML}
                     `;
+                };
 
-                    // Escalation button logic has been moved to the treatment modal.
+                treatmentHTML = `
+                    <div class="mt-4 pt-4 border-t">
+                        <h4 class="font-bold text-lg text-gray-800">Treatment Plan</h4>
+                        ${createSection('Prevention', prevention)}
+                        ${createSection('Monitoring', monitoring)}
+                        ${createSection('Direct Control', control)}
+                        <div class="mt-3">
+                            <h5 class="font-semibold text-gray-700">Specific Instructions</h5>
+                            <p class="text-sm text-gray-600 mt-1">${instructions || 'N/A'}</p>
+                        </div>
+                        ${followUpDate ? `
+                        <div class="mt-3">
+                            <h5 class="font-semibold text-gray-700">Follow-up Date</h5>
+                            <p class="text-sm text-gray-600 mt-1">${followUpDate}</p>
+                        </div>` : ''}
+                    </div>`;
+            }
 
-                    try {
-                        const farmDocRef = doc(db, 'users', submission.userId, 'farmLots', submission.farmId);
-                        const farmDocSnap = await getDoc(farmDocRef);
-                        if (farmDocSnap.exists()) {
-                            const farmData = farmDocSnap.data();
-                            const coordinates = farmData.polygonCoordinates;
+            const imageUrls = submission.imageDownloadUrls || (submission.imageDataUrl ? [submission.imageDataUrl] : []);
+            const imageGridHTML = imageUrls.length > 0
+                ? `<div class="grid grid-cols-2 md:grid-cols-3 gap-2">${imageUrls.map(url => `<a href="${url}" target="_blank"><img src="${url}" class="rounded-lg w-full aspect-square object-cover"></a>`).join('')}</div>`
+                : `<p class="text-sm text-gray-500">No images submitted.</p>`;
 
-                            detailMap = L.map(mapId, { scrollWheelZoom: false, dragging: false, zoomControl: false });
-                            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                                attribution: 'Tiles &copy; Esri'
-                            }).addTo(detailMap);
 
-                            if (coordinates && coordinates.length > 0) {
-                                const latLngs = coordinates.map(c => [c.lat, c.lng]);
-                                const polygon = L.polygon(latLngs, {color: '#22c55e'}).addTo(detailMap);
-                                detailMap.fitBounds(polygon.getBounds());
-                            }
-                            setTimeout(() => detailMap.invalidateSize(), 0);
-                        }
-                    } catch (e) {
-                        console.error("Could not load map for report", e);
-                        document.getElementById(mapId).innerHTML = '<p class="text-red-500">Could not load map.</p>';
-                    }
+            modalContent.innerHTML = `
+                <div id="${mapId}" class="w-full h-48 bg-gray-200 rounded-md shadow-inner mb-4"></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div>
+                        <h4 class="font-bold text-gray-800 mb-2">Uploaded Images</h4>
+                        ${imageGridHTML}
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800">Report Information</h4>
+                        <p class="text-sm"><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
+                        <p class="text-sm"><strong>Distribution:</strong> ${submission.distribution}</p>
+                        <p class="text-sm"><strong>Severity:</strong> ${submission.severity}</p>
+                    </div>
+                </div>
+                ${initialDiagnosisHTML}
+                ${finalDiagnosisHTML}
+                ${treatmentHTML}
+            `;
 
-                    lucide.createIcons();
-
-                    const closeModal = () => {
-                        modal.classList.add('hidden');
-                        modal.classList.remove('flex');
-                        if (detailMap) {
-                            detailMap.remove();
-                        }
-                        closeModalBtn.removeEventListener('click', closeModal);
-                    };
-                    closeModalBtn.addEventListener('click', closeModal, { once: true });
-                });
-
-                reportWrapper.appendChild(summaryCard);
-                // The detailsCard is no longer needed.
-                reportsContainer.appendChild(reportWrapper);
+            modalActions.innerHTML = `
+                <button id="edit-report-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Update</button>
+                <button id="delete-report-btn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md ml-2">Delete</button>
+            `;
+            document.getElementById('edit-report-btn').addEventListener('click', () => {
+                // Navigate to the edit screen
+                isEditSubmissionMode = true;
+                currentSubmissionId = submission.id;
+                const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+                const newContext = { ...lastContext, farmId: submission.farmId, submissionId: submission.id, label: 'Edit Report' };
+                showScreen('newSubmission', newContext);
+                modal.classList.add('hidden');
             });
+
+            document.getElementById('delete-report-btn').addEventListener('click', async () => {
+                if (confirm('Are you sure you want to delete this report? This action cannot be undone.')) {
+                    showSavingOverlay('Deleting Report...');
+                    try {
+                        const reportDocRef = doc(db, 'users', submission.userId, 'farmLots', submission.farmId, 'submissions', submission.id);
+                        await deleteDoc(reportDocRef);
+                        showToast('Report deleted successfully.', 'success');
+                        modal.classList.add('hidden');
+                        loadAllReports(); // Refresh the reports list
+                    } catch (error) {
+                        console.error('Error deleting report:', error);
+                        showToast('Failed to delete report.', 'error');
+                    } finally {
+                        hideSavingOverlay();
+                    }
+                }
+            });
+
+            try {
+                const farmDocRef = doc(db, 'users', submission.userId, 'farmLots', submission.farmId);
+                const farmDocSnap = await getDoc(farmDocRef);
+                if (farmDocSnap.exists()) {
+                    const farmData = farmDocSnap.data();
+                    const coordinates = farmData.polygonCoordinates;
+
+                    detailMap = L.map(mapId, { scrollWheelZoom: false, dragging: false, zoomControl: false });
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Tiles &copy; Esri'
+                    }).addTo(detailMap);
+
+                    if (coordinates && coordinates.length > 0) {
+                        const latLngs = coordinates.map(c => [c.lat, c.lng]);
+                        const polygon = L.polygon(latLngs, {color: '#22c55e'}).addTo(detailMap);
+                        detailMap.fitBounds(polygon.getBounds());
+                    }
+                    setTimeout(() => detailMap.invalidateSize(), 0);
+                }
+            } catch (e) {
+                console.error("Could not load map for report", e);
+                document.getElementById(mapId).innerHTML = '<p class="text-red-500">Could not load map.</p>';
+            }
+
             lucide.createIcons();
-        }
+
+            const closeModal = () => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                if (detailMap) {
+                    detailMap.remove();
+                }
+                closeModalBtn.removeEventListener('click', closeModal);
+            };
+            closeModalBtn.addEventListener('click', closeModal, { once: true });
+        });
+
+        gridContainer.appendChild(reportButton);
+    });
+    lucide.createIcons();
+}
 
         function loadFarms(context) {
             const targetUserId = context.userId || (currentUser ? currentUser.uid : null);
