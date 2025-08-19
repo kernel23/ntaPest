@@ -41,9 +41,31 @@
         }
         #map { height: 400px; }
         #report-map { height: 200px; margin-bottom: 1.5rem; }
+        #pest-cards-container {
+            perspective: 1000px;
+        }
+        .pest-card {
+            width: 180px;
+            height: 220px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s, z-index 0.5s;
+            cursor: pointer;
+            animation: float 6s ease-in-out infinite;
+        }
+        .pest-card:hover {
+            transform: translateY(-10px) scale(1.1);
+            z-index: 10;
+            animation-play-state: paused;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-[#fff2c9]">
 
     <!-- Saving Overlay -->
     <div id="saving-overlay" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center" style="z-index: 10000;">
@@ -63,37 +85,37 @@
 
     <div id="app-container" class="h-screen w-screen relative">
         <!-- Fixed Icon-Only Sidebar -->
-        <aside id="sidebar" class="w-16 bg-green-800 text-white p-4 hidden flex-col items-center">
+        <aside id="sidebar" class="w-16 bg-gradient-to-br from-[#384532] via-[#455b3c] to-[#cc9244] text-white p-4 hidden flex-col items-center">
             <!-- Logo -->
             <div class="mb-10">
-                 <i data-lucide="leaf" class="w-8 h-8 text-green-400"></i>
+                 <i data-lucide="leaf" class="w-8 h-8 text-[#f1c232]"></i>
             </div>
 
             <!-- Navigation -->
             <nav class="flex-1 flex flex-col items-center space-y-4">
-                <a href="#" id="nav-farm-list" class="nav-item p-2 rounded-lg hover:bg-green-700" title="My Farms">
+                <a href="#" id="nav-farm-list" class="nav-item p-2 rounded-lg hover:bg-[#455b3c]" title="My Farms">
                     <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
                 </a>
-                <a href="#" id="nav-profile" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Profile">
+                <a href="#" id="nav-profile" class="nav-item p-2 rounded-lg hover:bg-[#455b3c]" title="Profile">
                     <i data-lucide="user" class="w-6 h-6"></i>
                 </a>
-                <a href="#" id="nav-reports" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Reports">
+                <a href="#" id="nav-reports" class="nav-item p-2 rounded-lg hover:bg-[#455b3c]" title="Reports">
                     <i data-lucide="file-text" class="w-6 h-6"></i>
                 </a>
-                <a href="#" id="nav-diagnosis" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Diagnosis">
+                <a href="#" id="nav-diagnosis" class="nav-item p-2 rounded-lg hover:bg-[#455b3c]" title="Diagnosis">
                     <i data-lucide="stethoscope" class="w-6 h-6"></i>
                 </a>
-                <a href="#" id="nav-treatment" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Final Diagnosis">
+                <a href="#" id="nav-treatment" class="nav-item p-2 rounded-lg hover:bg-[#455b3c]" title="Final Diagnosis">
                     <i data-lucide="syringe" class="w-6 h-6"></i>
                 </a>
-                <a href="#" id="nav-clinic" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Online Clinic">
+                <a href="#" id="nav-clinic" class="nav-item p-2 rounded-lg hover:bg-[#455b3c]" title="Online Clinic">
                     <i data-lucide="message-square" class="w-6 h-6"></i>
                 </a>
-                <a href="#" id="nav-notifications" class="nav-item p-2 rounded-lg hover:bg-green-700 relative" title="Notifications">
+                <a href="#" id="nav-notifications" class="nav-item p-2 rounded-lg hover:bg-[#455b3c] relative" title="Notifications">
                     <i data-lucide="bell" class="w-6 h-6"></i>
                     <span id="notification-badge" class="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center hidden"></span>
                 </a>
-                 <a href="#" id="nav-admin" class="nav-item p-2 rounded-lg hover:bg-green-700" title="Admin Dashboard">
+                 <a href="#" id="nav-admin" class="nav-item p-2 rounded-lg hover:bg-[#455b3c]" title="Admin Dashboard">
                     <i data-lucide="shield-alert" class="w-6 h-6"></i>
                 </a>
             </nav>
@@ -109,37 +131,42 @@
         <!-- Main content area that holds all screens -->
         <div id="screen-container" class="h-screen overflow-y-auto">
             <!-- Loading Screen -->
-            <div id="loading-screen" class="screen active flex-col justify-center items-center h-full bg-green-50 text-gray-800">
-                <svg class="animate-spin h-10 w-10 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <div id="loading-screen" class="screen active flex-col justify-center items-center h-full bg-[#fff2c9] text-[#384532]">
+                <svg class="animate-spin h-10 w-10 text-[#455b3c]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <p class="mt-4 text-lg text-green-700">Loading Agri-Guard...</p>
+                <p class="mt-4 text-lg text-[#455b3c]">Loading Agri-Guard...</p>
             </div>
 
             <!-- Login Screen -->
-            <div id="login-screen" class="screen flex-col justify-center items-center h-full p-6 bg-green-50 text-gray-800">
-                <div class="text-center mb-10">
-                    <i data-lucide="leaf" class="w-16 h-16 text-green-600 mx-auto"></i>
-                    <h1 class="text-4xl font-bold text-green-900 mt-4">Agri-Guard</h1>
-                    <p class="text-lg text-green-700">Tobacco Pest Monitoring</p>
-                    <p class="text-sm text-gray-500 mt-1">Ilocos Region, Philippines</p>
+            <div id="login-screen" class="screen h-full text-[#384532]">
+                <div class="w-1/2 flex flex-col justify-center items-center p-6 bg-[#fff2c9]">
+                    <div class="text-center mb-10">
+                        <i data-lucide="leaf" class="w-16 h-16 text-[#455b3c] mx-auto"></i>
+                        <h1 class="text-4xl font-bold bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-transparent bg-clip-text mt-4">Agri-Guard</h1>
+                        <p class="text-lg text-[#455b3c]">Tobacco Pest Monitoring</p>
+                        <p class="text-sm text-gray-500 mt-1">Ilocos Region, Philippines</p>
+                    </div>
+                    <div id="offline-message-container" class="w-full max-w-sm text-center mb-4"></div>
+                    <div class="w-full max-w-sm">
+                        <button id="google-signin-btn" class="w-full bg-white text-gray-700 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm flex items-center justify-center mb-3">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" class="mr-3"> <!-- Placeholder for Google Icon -->
+                            Sign in with Google
+                        </button>
+                        <button id="guest-signin-btn" class="w-full text-gray-600 py-2">Continue as Guest</button>
+                    </div>
+                    <div class="mt-4 text-center text-xs text-gray-500">
+                        By signing in, you agree to our <a href="#" id="privacy-policy-link" class="underline hover:text-[#455b3c]">Privacy Policy</a>. All personal data is encrypted in transit.
+                    </div>
                 </div>
-                <div id="offline-message-container" class="w-full max-w-sm text-center mb-4"></div>
-                <div class="w-full max-w-sm">
-                    <button id="google-signin-btn" class="w-full bg-white text-gray-700 font-semibold py-3 px-4 border border-gray-300 rounded-lg shadow-sm flex items-center justify-center mb-3">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" class="mr-3"> <!-- Placeholder for Google Icon -->
-                        Sign in with Google
-                    </button>
-                    <button id="guest-signin-btn" class="w-full text-gray-600 py-2">Continue as Guest</button>
-                </div>
-                <div class="mt-4 text-center text-xs text-gray-500">
-                    By signing in, you agree to our <a href="#" id="privacy-policy-link" class="underline hover:text-green-700">Privacy Policy</a>. All personal data is encrypted in transit.
+                <div id="pest-cards-container" class="w-1/2 p-6 bg-gradient-to-br from-[#384532] via-[#455b3c] to-[#cc9244] overflow-y-auto">
+                    <!-- Pest and disease cards will be inserted here by JavaScript -->
                 </div>
             </div>
 
             <!-- Privacy Policy Screen -->
-            <div id="privacy-policy-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="privacy-policy-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md flex justify-between items-center">
                     <h2 class="text-2xl font-bold">Privacy Policy</h2>
                     <button id="close-privacy-policy-btn" class="p-2 rounded-full hover:bg-gray-100">
@@ -161,7 +188,7 @@
             </div>
 
             <!-- Create Profile Screen -->
-            <div id="profile-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="profile-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <h2 id="profile-title" class="text-2xl font-bold">Your Profile</h2>
                 </header>
@@ -170,7 +197,7 @@
                         <img id="profile-pic" src="https://placehold.co/96x96/e2e8f0/334155?text=User" class="w-24 h-24 rounded-full mx-auto mb-4">
                     </div>
                     <label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
-                    <input type="text" id="fullName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <input type="text" id="fullName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
 
                     <label for="province" class="block text-sm font-medium text-gray-700 mt-4">Province</label>
                     <div id="province-multiselect-container" class="relative"></div>
@@ -184,22 +211,22 @@
                      <div id="barangay-multiselect-container" class="relative"></div>
 
                     <label for="birthdate" class="block text-sm font-medium text-gray-700 mt-4">Birthdate</label>
-                    <input type="date" id="birthdate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <input type="date" id="birthdate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
                     <label for="civilStatus" class="block text-sm font-medium text-gray-700 mt-4">Civil Status</label>
-                    <select id="civilStatus" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <select id="civilStatus" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
                         <option>Single</option>
                         <option>Married</option>
                         <option>Widowed</option>
                         <option>Divorced</option>
                     </select>
                     <label for="religion" class="block text-sm font-medium text-gray-700 mt-4">Religion</label>
-                    <input type="text" id="religion" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <input type="text" id="religion" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
                     <label for="yearsFarming" class="block text-sm font-medium text-gray-700 mt-4">Years in Tobacco Farming</label>
-                    <input type="number" id="yearsFarming" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <input type="number" id="yearsFarming" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
                     <label for="familyMembers" class="block text-sm font-medium text-gray-700 mt-4">Number of Family Members</label>
-                    <input type="number" id="familyMembers" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <input type="number" id="familyMembers" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
                     <label for="education" class="block text-sm font-medium text-gray-700 mt-4">Highest Educational Attainment</label>
-                    <select id="education" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                    <select id="education" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
                         <option>No formal education</option>
                         <option>Elementary</option>
                         <option>High School</option>
@@ -209,13 +236,13 @@
                     </select>
                     <div class="mt-4">
                         <label for="isFarmer" class="flex items-center">
-                            <input type="checkbox" id="isFarmer" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                            <input type="checkbox" id="isFarmer" class="h-4 w-4 text-[#455b3c] border-gray-300 rounded focus:ring-[#455b3c]">
                             <span class="ml-2 text-sm font-medium text-gray-700">I am a farmer</span>
                         </label>
                     </div>
                     <div id="rsbsa-container" class="hidden mt-4">
                         <label for="rsbsaNumber" class="block text-sm font-medium text-gray-700">RSBSA Number (Optional)</label>
-                        <input type="text" id="rsbsaNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                        <input type="text" id="rsbsaNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
                     </div>
                     <div id="role-management-section" class="mt-6">
                         <h3 class="text-lg font-medium text-gray-800">Your Role</h3>
@@ -238,14 +265,14 @@
                     </div>
                     <div class="mt-8 space-y-4">
                         <button id="edit-profile-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hidden">Edit Profile</button>
-                        <button id="save-profile-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md">Save and Continue</button>
+                        <button id="save-profile-btn" class="w-full bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-3 px-4 rounded-lg shadow-md">Save and Continue</button>
                         <button id="cancel-edit-btn" class="w-full bg-gray-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hidden">Cancel</button>
                     </div>
                 </main>
             </div>
 
             <!-- Farm List Screen (Home) -->
-            <div id="farm-list-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="farm-list-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <div class="header-nav-container flex items-center mb-2">
                         <button class="back-button p-2 rounded-full hover:bg-gray-100 mr-2 hidden">
@@ -269,13 +296,13 @@
                         <p>Add your first plot to start monitoring.</p>
                     </div>
                 </main>
-                <button id="add-farm-btn" class="absolute bottom-6 right-6 bg-green-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center">
+                <button id="add-farm-btn" class="absolute bottom-6 right-6 bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center">
                     <i data-lucide="plus" class="w-8 h-8"></i>
                 </button>
             </div>
 
             <!-- Extension Worker Dashboard Screen -->
-            <div id="ew-dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="ew-dashboard-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <div class="header-nav-container flex items-center mb-2">
                         <button class="back-button p-2 rounded-full hover:bg-gray-100 mr-2 hidden">
@@ -296,7 +323,7 @@
             </div>
 
             <!-- Coordinator Dashboard Screen -->
-            <div id="coordinator-dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="coordinator-dashboard-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <div class="header-nav-container flex items-center mb-2">
                         <button class="back-button p-2 rounded-full hover:bg-gray-100 mr-2 hidden">
@@ -317,14 +344,14 @@
             </div>
 
             <!-- Expert Dashboard Screen -->
-            <div id="expert-dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="expert-dashboard-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <div class="flex justify-between items-center">
                         <div>
                             <h2 class="text-2xl font-bold">Expert Dashboard</h2>
                             <p id="expert-welcome-message" class="text-sm text-gray-600"></p>
                         </div>
-                        <button id="export-csv-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-700">
+                        <button id="export-csv-btn" class="bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-[#cc9244]">
                             Export All Data to CSV
                         </button>
                     </div>
@@ -411,7 +438,7 @@
             </div>
 
             <!-- Admin Dashboard Screen -->
-            <div id="admin-dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="admin-dashboard-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <h2 class="text-2xl font-bold">Administrator Dashboard</h2>
                     <p id="admin-welcome-message" class="text-sm text-gray-600"></p>
@@ -419,7 +446,7 @@
                 <main class="flex-1 p-4 overflow-y-auto">
                     <div class="mb-4 border-b border-gray-200">
                         <nav class="flex space-x-4" aria-label="Tabs">
-                            <button id="admin-users-tab" class="px-3 py-2 font-medium text-sm rounded-t-md border-b-2 border-green-600 text-green-700">
+                            <button id="admin-users-tab" class="px-3 py-2 font-medium text-sm rounded-t-md border-b-2 border-[#455b3c] text-[#384532]">
                                 User Management
                             </button>
                             <button id="admin-reports-tab" class="px-3 py-2 font-medium text-sm rounded-t-md border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
@@ -455,7 +482,7 @@
             </div>
 
             <!-- Dashboard Screen -->
-            <div id="dashboard-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="dashboard-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <div class="header-nav-container flex items-center mb-2">
                         <button class="back-button p-2 rounded-full hover:bg-gray-100 mr-2 hidden">
@@ -471,7 +498,7 @@
                         <div>
                             <button id="edit-farm-details-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Edit Details</button>
                             <button id="delete-farm-btn" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow-md ml-2">Delete Farm</button>
-                            <button id="new-submission-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md ml-2">New Report</button>
+                            <button id="new-submission-btn" class="bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-2 px-4 rounded-lg shadow-md ml-2">New Report</button>
                         </div>
                     </div>
                 </header>
@@ -484,7 +511,7 @@
             </div>
 
             <!-- New Submission Screen -->
-            <div id="new-submission-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="new-submission-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <div class="header-nav-container flex items-center mb-2">
                         <button class="back-button p-2 rounded-full hover:bg-gray-100 mr-2 hidden">
@@ -508,14 +535,14 @@
                         </div>
                         <div class="text-center">
                             <div class="flex text-sm text-gray-600 justify-center">
-                                <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none">
+                                <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-[#455b3c] hover:text-[#384532] focus-within:outline-none">
                                     <span>Upload files</span>
                                     <input id="image-upload" name="image-upload" type="file" class="sr-only" accept="image/*" multiple>
                                 </label>
                             </div>
                             <p class="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 10MB</p>
                             <div class="mt-4">
-                                <button id="open-camera-btn" type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <button id="open-camera-btn" type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#455b3c]">
                                     <i data-lucide="camera" class="mr-2 h-5 w-5"></i>
                                     Capture with Camera
                                 </button>
@@ -526,30 +553,30 @@
                     <fieldset id="symptoms-checklist" class="mt-6">
                         <legend class="text-base font-medium text-gray-900">Observed Symptoms</legend>
                         <div class="mt-4 grid grid-cols-2 gap-4">
-                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-spots" value="spots" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-spots" class="font-medium text-gray-700">Leaf Spots</label></div></div>
-                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-wilting" value="wilting" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-wilting" class="font-medium text-gray-700">Wilting</label></div></div>
-                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-yellowing" value="yellowing" type="checkbox" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-yellowing" class="font-medium text-gray-700">Yellowing</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-spots" value="spots" type="checkbox" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-spots" class="font-medium text-gray-700">Leaf Spots</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-wilting" value="wilting" type="checkbox" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-wilting" class="font-medium text-gray-700">Wilting</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-yellowing" value="yellowing" type="checkbox" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-yellowing" class="font-medium text-gray-700">Yellowing</label></div></div>
                         </div>
                     </fieldset>
 
                     <fieldset id="distribution-radios" class="mt-6">
                         <legend class="text-base font-medium text-gray-900">Pest/Disease Distribution</legend>
                         <div class="mt-4 space-y-4">
-                            <div class="flex items-center"><input id="dist-isolated" name="distribution" value="isolated" type="radio" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300"><label for="dist-isolated" class="ml-3 block text-sm font-medium text-gray-700">Isolated Plants</label></div>
-                            <div class="flex items-center"><input id="dist-patches" name="distribution" value="patches" type="radio" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300"><label for="dist-patches" class="ml-3 block text-sm font-medium text-gray-700">In Patches</label></div>
+                            <div class="flex items-center"><input id="dist-isolated" name="distribution" value="isolated" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="dist-isolated" class="ml-3 block text-sm font-medium text-gray-700">Isolated Plants</label></div>
+                            <div class="flex items-center"><input id="dist-patches" name="distribution" value="patches" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="dist-patches" class="ml-3 block text-sm font-medium text-gray-700">In Patches</label></div>
                         </div>
                     </fieldset>
 
                     <fieldset id="severity-radios" class="mt-6">
                         <legend class="text-base font-medium text-gray-900">Severity</legend>
                         <div class="mt-4 space-y-4">
-                            <div class="flex items-center"><input id="sev-low" name="severity" value="low" type="radio" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300"><label for="sev-low" class="ml-3 block text-sm font-medium text-gray-700">Low</label></div>
-                            <div class="flex items-center"><input id="sev-medium" name="severity" value="medium" type="radio" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300"><label for="sev-medium" class="ml-3 block text-sm font-medium text-gray-700">Medium</label></div>
-                            <div class="flex items-center"><input id="sev-high" name="severity" value="high" type="radio" class="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300"><label for="sev-high" class="ml-3 block text-sm font-medium text-gray-700">High</label></div>
+                            <div class="flex items-center"><input id="sev-low" name="severity" value="low" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="sev-low" class="ml-3 block text-sm font-medium text-gray-700">Low</label></div>
+                            <div class="flex items-center"><input id="sev-medium" name="severity" value="medium" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="sev-medium" class="ml-3 block text-sm font-medium text-gray-700">Medium</label></div>
+                            <div class="flex items-center"><input id="sev-high" name="severity" value="high" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="sev-high" class="ml-3 block text-sm font-medium text-gray-700">High</label></div>
                         </div>
                     </fieldset>
                     
-                    <button id="save-submission-btn" class="mt-8 w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md">Save Submission</button>
+                    <button id="save-submission-btn" class="mt-8 w-full bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-3 px-4 rounded-lg shadow-md">Save Submission</button>
                 </main>
             </div>
 
@@ -582,7 +609,7 @@
             </div>
 
             <!-- Reports Screen -->
-            <div id="reports-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="reports-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-2xl font-bold">All Pest & Disease Reports</h2>
@@ -591,7 +618,7 @@
                         <div class="col-span-1 md:col-span-4">
                             <p class="text-sm font-medium text-gray-700">Filter by Status</p>
                             <div class="flex flex-wrap gap-2 mt-1">
-                                <button data-filter="all" class="report-filter-btn bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">All</button>
+                                <button data-filter="all" class="report-filter-btn bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white px-3 py-1 rounded-full text-sm font-semibold">All</button>
                                 <button data-filter="pending" class="report-filter-btn bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">Pending Diagnosis</button>
                                 <button data-filter="diagnosed" class="report-filter-btn bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">Diagnosed</button>
                                 <button data-filter="treated" class="report-filter-btn bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">Treatment Provided</button>
@@ -617,7 +644,7 @@
             </div>
 
             <!-- Diagnosis Screen -->
-            <div id="diagnosis-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="diagnosis-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <h2 class="text-2xl font-bold">Reports for Diagnosis</h2>
                 </header>
@@ -631,7 +658,7 @@
             </div>
 
             <!-- Treatment Screen -->
-            <div id="treatment-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="treatment-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <h2 class="text-2xl font-bold">Reports for Final Diagnosis & Treatment</h2>
                 </header>
@@ -645,7 +672,7 @@
             </div>
 
             <!-- Online Clinic Screen -->
-            <div id="online-clinic-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="online-clinic-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <h2 class="text-2xl font-bold">Online Clinic</h2>
                 </header>
@@ -655,7 +682,7 @@
             </div>
 
             <!-- Notifications Screen -->
-            <div id="notifications-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="notifications-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <div class="flex justify-between items-center">
                         <h2 class="text-2xl font-bold">Notifications</h2>
@@ -671,7 +698,7 @@
             </div>
 
             <!-- Farm Setup Screen -->
-            <div id="farm-setup-screen" class="screen flex-col h-full bg-green-50 text-gray-800">
+            <div id="farm-setup-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
                     <h2 class="text-2xl font-bold">Map Your Farm Plot</h2>
                 </header>
@@ -680,7 +707,7 @@
                     <div id="map" class="w-full h-96 bg-gray-200 rounded-md shadow-inner"></div>
                     <div class="mt-6 text-right">
                         <button id="cancel-farm-setup-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md mr-2">Cancel</button>
-                        <button id="save-farm-map-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md" disabled>Save Farm Area</button>
+                        <button id="save-farm-map-btn" class="bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-2 px-4 rounded-lg shadow-md" disabled>Save Farm Area</button>
                     </div>
                 </main>
             </div>
@@ -689,6 +716,19 @@
     </div>
 
     <!-- Modals -->
+    <!-- Pest Details Modal -->
+    <div id="pest-details-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 id="pest-modal-title" class="text-xl font-bold">Pest/Disease Details</h3>
+                <button id="close-pest-details-modal-btn" class="p-1"><i data-lucide="x"></i></button>
+            </div>
+            <div id="pest-modal-content" class="p-6 max-h-[80vh] overflow-y-auto">
+                <!-- Details will be loaded here dynamically -->
+            </div>
+        </div>
+    </div>
+
     <!-- Diagnosis Modal -->
     <div id="diagnosis-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg m-4">
@@ -702,7 +742,7 @@
                 </div>
                 <h4 class="text-lg font-bold mt-4 mb-2">Add Diagnosis</h4>
                 <label for="pest-disease-select" class="block text-sm font-medium text-gray-700">Identified Pest/Disease</label>
-                <select id="pest-disease-select" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500">
+                <select id="pest-disease-select" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
                     <option value="">Select a pest or disease...</option>
                 </select>
                 <div id="pest-disease-info" class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm hidden">
@@ -710,7 +750,7 @@
                 </div>
                 <label for="diagnosis-notes" class="block text-sm font-medium text-gray-700 mt-4">Diagnosis Notes</label>
                 <textarea id="diagnosis-notes" rows="4" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></textarea>
-                <button id="save-diagnosis-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Diagnosis</button>
+                <button id="save-diagnosis-btn" class="w-full bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Diagnosis</button>
             </div>
         </div>
     </div>
@@ -1048,6 +1088,69 @@
         document.getElementById('nav-notifications').addEventListener('click', () => showScreen('notifications', { isFreshNavigation: true, label: 'Notifications' }));
         document.getElementById('nav-admin').addEventListener('click', () => showScreen('adminDashboard', { isFreshNavigation: true, label: 'Admin Dashboard' }));
         document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
+
+        // --- Pest/Disease Card Logic ---
+        async function loadPestAndDiseaseCards() {
+            const container = document.getElementById('pest-cards-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            await window.pestDiseaseDataPromise;
+
+            if (!pestAndDiseaseData || (!pestAndDiseaseData.major_insect_pests && !pestAndDiseaseData.fungal_and_bacterial_diseases)) {
+                container.innerHTML = '<p class="text-white">Could not load pest and disease data.</p>';
+                return;
+            }
+
+            const allItems = [
+                ...(pestAndDiseaseData.major_insect_pests || []).map(p => ({...p, type: 'Pest'})),
+                ...(pestAndDiseaseData.fungal_and_bacterial_diseases || []).map(d => ({...d, type: 'Disease'}))
+            ];
+
+            allItems.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'pest-card bg-white rounded-lg shadow-lg overflow-hidden m-2';
+
+                const name = item['Pest Common Name'] || item['Disease Name'];
+                // Placeholder image - in a real app, you'd have images for each
+                const imageUrl = 'https://placehold.co/200x150/cccccc/333333?text=' + name.split(' ').join('+');
+
+                card.innerHTML = `
+                    <img src="${imageUrl}" alt="${name}" class="w-full h-3/5 object-cover">
+                    <div class="p-3">
+                        <h4 class="font-bold text-md truncate">${name}</h4>
+                        <p class="text-sm text-gray-600">${item.type}</p>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    const modal = document.getElementById('pest-details-modal');
+                    const title = document.getElementById('pest-modal-title');
+                    const content = document.getElementById('pest-modal-content');
+
+                    title.textContent = name;
+                    let contentHTML = `<p class="text-sm text-gray-600 mb-4">${item['Characteristic Visual Damage'] || item['Primary Visual Symptoms']}</p>`;
+
+                    if (item.management) {
+                        contentHTML += '<h5 class="font-bold mt-4">Management</h5>';
+                        const { prevention, monitoring, direct_control } = item.management;
+                        if (prevention) contentHTML += `<div class="mt-2"><strong>Prevention:</strong><ul class="list-disc list-inside">$${prevention.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
+                        if (monitoring) contentHTML += `<div class="mt-2"><strong>Monitoring:</strong><ul class="list-disc list-inside">${monitoring.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
+                        if (direct_control) contentHTML += `<div class="mt-2"><strong>Direct Control:</strong><ul class="list-disc list-inside">${direct_control.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
+                    }
+
+                    content.innerHTML = contentHTML;
+                    modal.classList.remove('hidden');
+                });
+
+                container.appendChild(card);
+            });
+        }
+
+        document.getElementById('close-pest-details-modal-btn').addEventListener('click', () => {
+            document.getElementById('pest-details-modal').classList.add('hidden');
+        });
+
 
         // --- Sidebar is now fixed, toggle logic removed ---
 
@@ -1936,6 +2039,7 @@
                 currentUser = null;
                 userProfile = null;
                 showScreen('login');
+                await loadPestAndDiseaseCards();
             }
         });
 
