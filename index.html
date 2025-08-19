@@ -3448,7 +3448,7 @@
             await updateDoc(reportRef, {
                 history: arrayUnion({
                     action: 'view',
-                    timestamp: serverTimestamp(),
+                    timestamp: new Date(),
                     userId: currentUser.uid,
                     userName: userProfile.fullName
                 })
