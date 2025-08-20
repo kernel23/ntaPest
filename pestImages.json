@@ -1,0 +1,78 @@
+{
+  "pests": [
+    {
+      "name": "Thrips",
+      "image_url": "https://bugwoodcloud.org/images/384x256/5535855.jpg"
+    },
+    {
+      "name": "Cutworm",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1440105.jpg"
+    },
+    {
+      "name": "Aphids",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1402116.jpg"
+    },
+    {
+      "name": "Whiteflies",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1147020.jpg"
+    },
+    {
+      "name": "Budworm",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1440111.jpg"
+    },
+    {
+      "name": "Grasshoppers",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1402130.jpg"
+    },
+    {
+      "name": "Stem borer",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1599625.jpg"
+    }
+  ],
+  "diseases": [
+    {
+      "name": "Root knot",
+      "image_url": "https://bugwoodcloud.org/images/384x256/5442741.jpg"
+    },
+    {
+      "name": "Black Shank",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1440050.jpg"
+    },
+    {
+      "name": "Blue Mold",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1402003.jpg"
+    },
+    {
+      "name": "Brown Spot",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1524158.jpg"
+    },
+    {
+      "name": "Frog Eye Leaf Spot",
+      "image_url": "https://bugwoodcloud.org/images/384x256/5368552.jpg"
+    },
+    {
+      "name": "Granville",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1402044.jpg"
+    },
+    {
+      "name": "Damping Off",
+      "image_url": "https://bugwoodcloud.org/images/384x256/5556309.jpg"
+    },
+    {
+      "name": "Cucumber Mosaic",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1402026.jpg"
+    },
+    {
+      "name": "Potato Virus Y",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1402028.jpg"
+    },
+    {
+      "name": "Target Spot",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1440025.jpg"
+    },
+    {
+      "name": "WildFire",
+      "image_url": "https://bugwoodcloud.org/images/384x256/1402023.jpg"
+    }
+  ]
+}
