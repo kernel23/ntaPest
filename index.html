@@ -52,6 +52,13 @@
             transition: transform 0.5s, z-index 0.5s;
             cursor: pointer;
             animation: float 6s ease-in-out infinite;
+
+            /* Glassmorphism styles */
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); /* For Safari */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
         }
         .pest-card:hover {
             transform: translateY(-10px) scale(1.1);
@@ -1134,7 +1141,7 @@
 
             allItems.forEach(item => {
                 const card = document.createElement('div');
-                card.className = 'pest-card bg-white rounded-lg shadow-lg overflow-hidden m-2';
+                card.className = 'pest-card rounded-lg overflow-hidden m-2';
 
                 const name = item['Pest Common Name'] || item['Disease Name'];
                 const imageUrl = imageMap.get(name) || 'https://placehold.co/200x150/cccccc/333333?text=' + name.split(' ').join('+');
