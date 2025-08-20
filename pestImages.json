@@ -5,7 +5,7 @@
       "image_url": "https://bugwoodcloud.org/images/384x256/5535855.jpg"
     },
     {
-      "name": "Cutworm",
+      "name": "Cutworms",
       "image_url": "https://bugwoodcloud.org/images/384x256/1440105.jpg"
     },
     {
@@ -17,7 +17,7 @@
       "image_url": "https://bugwoodcloud.org/images/384x256/1147020.jpg"
     },
     {
-      "name": "Budworm",
+      "name": "Budworm / Bollworm / Caterpillar Complex",
       "image_url": "https://bugwoodcloud.org/images/384x256/1440111.jpg"
     },
     {
@@ -25,13 +25,13 @@
       "image_url": "https://bugwoodcloud.org/images/384x256/1402130.jpg"
     },
     {
-      "name": "Stem borer",
+      "name": "Stem Borer",
       "image_url": "https://bugwoodcloud.org/images/384x256/1599625.jpg"
     }
   ],
   "diseases": [
     {
-      "name": "Root knot",
+      "name": "Root-Knot Nematodes",
       "image_url": "https://bugwoodcloud.org/images/384x256/5442741.jpg"
     },
     {
@@ -39,7 +39,7 @@
       "image_url": "https://bugwoodcloud.org/images/384x256/1440050.jpg"
     },
     {
-      "name": "Blue Mold",
+      "name": "Blue Mold (Downy Mildew)",
       "image_url": "https://bugwoodcloud.org/images/384x256/1402003.jpg"
     },
     {
@@ -47,31 +47,31 @@
       "image_url": "https://bugwoodcloud.org/images/384x256/1524158.jpg"
     },
     {
-      "name": "Frog Eye Leaf Spot",
+      "name": "Frogeye Leaf Spot",
       "image_url": "https://bugwoodcloud.org/images/384x256/5368552.jpg"
     },
     {
-      "name": "Granville",
+      "name": "Granville Wilt (Bacterial Wilt)",
       "image_url": "https://bugwoodcloud.org/images/384x256/1402044.jpg"
     },
     {
-      "name": "Damping Off",
+      "name": "Damping-Off / Soft Rot / Hollow Stalk",
       "image_url": "https://bugwoodcloud.org/images/384x256/5556309.jpg"
     },
     {
-      "name": "Cucumber Mosaic",
+      "name": "Cucumber Mosaic Virus (CMV)",
       "image_url": "https://bugwoodcloud.org/images/384x256/1402026.jpg"
     },
     {
-      "name": "Potato Virus Y",
+      "name": "Potato Virus Y (PVY)",
       "image_url": "https://bugwoodcloud.org/images/384x256/1402028.jpg"
     },
     {
-      "name": "Target Spot",
+      "name": "Target Spot (Sore Shin)",
       "image_url": "https://bugwoodcloud.org/images/384x256/1440025.jpg"
     },
     {
-      "name": "WildFire",
+      "name": "Wildfire and Angular Leaf Spot",
       "image_url": "https://bugwoodcloud.org/images/384x256/1402023.jpg"
     }
   ]
