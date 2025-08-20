@@ -27,13 +27,13 @@
     {
       "name": "Stem Borer",
       "image_url": "https://bugwoodcloud.org/images/384x256/1599625.jpg"
-    }
-  ],
-  "diseases": [
+    },
     {
       "name": "Root-Knot Nematodes",
       "image_url": "https://bugwoodcloud.org/images/384x256/5442741.jpg"
-    },
+    }
+  ],
+  "diseases": [
     {
       "name": "Black Shank",
       "image_url": "https://bugwoodcloud.org/images/384x256/1440050.jpg"
