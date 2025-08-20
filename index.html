@@ -84,12 +84,6 @@
                 </a>
             </nav>
 
-            <!-- Logout Button -->
-            <div class="mt-auto">
-                <button id="sidebar-logout-btn" class="nav-item p-2 rounded-lg hover:bg-red-700" title="Logout">
-                    <i data-lucide="log-out" class="w-6 h-6"></i>
-                </button>
-            </div>
         </aside>
 
         <!-- Main content area that holds all screens -->
@@ -231,6 +225,7 @@
                         <button id="edit-profile-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hidden">Edit Profile</button>
                         <button id="save-profile-btn" class="w-full bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-3 px-4 rounded-lg shadow-md">Save and Continue</button>
                         <button id="cancel-edit-btn" class="w-full bg-gray-500 text-white font-bold py-3 px-4 rounded-lg shadow-md hidden">Cancel</button>
+                        <button id="profile-logout-btn" class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-4">Logout</button>
                     </div>
                 </main>
             </div>
@@ -698,18 +693,7 @@
     <!-- Bottom Navigation for mobile -->
     <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white shadow-t-lg md:hidden z-30">
         <div class="flex justify-around">
-            <a href="#" id="bottom-nav-farm-list" class="flex-1 p-2 text-center text-gray-600 hover:bg-gray-100">
-                <i data-lucide="layout-dashboard" class="w-6 h-6 mx-auto"></i>
-                <span class="text-xs">Farms</span>
-            </a>
-            <a href="#" id="bottom-nav-reports" class="flex-1 p-2 text-center text-gray-600 hover:bg-gray-100">
-                <i data-lucide="file-text" class="w-6 h-6 mx-auto"></i>
-                <span class="text-xs">Reports</span>
-            </a>
-            <a href="#" id="bottom-nav-profile" class="flex-1 p-2 text-center text-gray-600 hover:bg-gray-100">
-                <i data-lucide="user" class="w-6 h-6 mx-auto"></i>
-                <span class="text-xs">Profile</span>
-            </a>
+            <!-- Buttons will be dynamically inserted here -->
         </div>
     </nav>
 
@@ -1057,19 +1041,6 @@
             });
         });
 
-        document.getElementById('bottom-nav-farm-list').addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('nav-farm-list').click();
-        });
-        document.getElementById('bottom-nav-reports').addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('nav-reports').click();
-        });
-        document.getElementById('bottom-nav-profile').addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('nav-profile').click();
-        });
-
         function setupFilterToggle(toggleBtnId, contentId) {
             const toggleBtn = document.getElementById(toggleBtnId);
             const content = document.getElementById(contentId);
@@ -1138,7 +1109,7 @@
         document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic', { isFreshNavigation: true, label: 'Online Clinic' }));
         document.getElementById('nav-notifications').addEventListener('click', () => showScreen('notifications', { isFreshNavigation: true, label: 'Notifications' }));
         document.getElementById('nav-admin').addEventListener('click', () => showScreen('adminDashboard', { isFreshNavigation: true, label: 'Admin Dashboard' }));
-        document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
+        document.getElementById('profile-logout-btn').addEventListener('click', () => signOut(auth));
 
         // --- Pest/Disease Card Logic ---
         async function loadPestAndDiseaseCards() {
@@ -2012,6 +1983,46 @@
             document.getElementById('current-role-display').textContent = selectedRole;
             updateRoleRequestStatus();
             updateUIVisibilityBasedOnRole();
+            updateBottomNavBasedOnRole();
+        }
+
+        function updateBottomNavBasedOnRole() {
+            const bottomNavContainer = document.querySelector("#bottom-nav > div");
+            if (!bottomNavContainer) return;
+
+            bottomNavContainer.innerHTML = ''; // Clear existing buttons
+
+            // Get all nav items from the main sidebar
+            const mainSidebarNavItems = document.querySelectorAll("#sidebar .nav-item");
+
+            mainSidebarNavItems.forEach(item => {
+                // Check if the item is visible in the main sidebar
+                if (item.style.display !== 'none' && item.id !== 'sidebar-logout-btn') {
+                    const newNavItem = document.createElement('a');
+                    newNavItem.href = '#';
+                    newNavItem.className = 'flex-1 p-2 text-center text-gray-600 hover:bg-gray-100';
+
+                    const icon = item.querySelector('i').cloneNode(true);
+                    icon.classList.add('mx-auto');
+
+                    const title = item.title;
+                    const span = document.createElement('span');
+                    span.className = 'text-xs';
+                    span.textContent = title;
+
+                    newNavItem.appendChild(icon);
+                    newNavItem.appendChild(span);
+
+                    // Add a click listener to trigger the main sidebar's item
+                    newNavItem.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        item.click();
+                    });
+
+                    bottomNavContainer.appendChild(newNavItem);
+                }
+            });
+            lucide.createIcons();
         }
 
         // --- Authentication Flow with Offline Fallback ---
