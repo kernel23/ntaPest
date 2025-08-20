@@ -968,6 +968,7 @@
 
         // --- 2. PWA & OFFLINE SETUP ---
         let pestAndDiseaseData = {}; // Global variable to hold the data
+        let pestImageData = {}; // Global variable to hold image data
 
         window.pestDiseaseDataPromise = (async function() {
             try {
@@ -981,6 +982,22 @@
             } catch (error) {
                 console.error('Failed to load pest and disease data:', error);
                 pestAndDiseaseData = null;
+                return false;
+            }
+        })();
+
+        window.pestImageDataPromise = (async function() {
+            try {
+                const response = await fetch('pestImages.json');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                pestImageData = await response.json();
+                console.log('Pest image data loaded successfully.');
+                return true;
+            } catch (error) {
+                console.error('Failed to load pest image data:', error);
+                pestImageData = null;
                 return false;
             }
         })();
@@ -1095,11 +1112,19 @@
             if (!container) return;
             container.innerHTML = '';
 
-            await window.pestDiseaseDataPromise;
+            await Promise.all([window.pestDiseaseDataPromise, window.pestImageDataPromise]);
 
             if (!pestAndDiseaseData || (!pestAndDiseaseData.major_insect_pests && !pestAndDiseaseData.fungal_and_bacterial_diseases)) {
                 container.innerHTML = '<p class="text-white">Could not load pest and disease data.</p>';
                 return;
+            }
+
+            const imageMap = new Map();
+            if (pestImageData && pestImageData.pests) {
+                pestImageData.pests.forEach(p => imageMap.set(p.name, p.image_url));
+            }
+            if (pestImageData && pestImageData.diseases) {
+                pestImageData.diseases.forEach(d => imageMap.set(d.name, d.image_url));
             }
 
             const allItems = [
@@ -1112,8 +1137,7 @@
                 card.className = 'pest-card bg-white rounded-lg shadow-lg overflow-hidden m-2';
 
                 const name = item['Pest Common Name'] || item['Disease Name'];
-                // Placeholder image - in a real app, you'd have images for each
-                const imageUrl = 'https://placehold.co/200x150/cccccc/333333?text=' + name.split(' ').join('+');
+                const imageUrl = imageMap.get(name) || 'https://placehold.co/200x150/cccccc/333333?text=' + name.split(' ').join('+');
 
                 card.innerHTML = `
                     <img src="${imageUrl}" alt="${name}" class="w-full h-3/5 object-cover">
@@ -1967,7 +1991,7 @@
                 updateOnlineStatus();
 
                 // Wait for the address and pest/disease data to be ready
-                await Promise.all([window.addressDataPromise, window.pestDiseaseDataPromise]);
+                await Promise.all([window.addressDataPromise, window.pestDiseaseDataPromise, window.pestImageDataPromise]);
 
                 // Now that address data is loaded, populate the dropdowns
                 initializeAddressFilters();
