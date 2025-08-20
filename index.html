@@ -1998,28 +1998,31 @@
             mainSidebarNavItems.forEach(item => {
                 // Check if the item is visible in the main sidebar
                 if (item.style.display !== 'none' && item.id !== 'sidebar-logout-btn') {
-                    const newNavItem = document.createElement('a');
-                    newNavItem.href = '#';
-                    newNavItem.className = 'flex-1 p-2 text-center text-gray-600 hover:bg-gray-100';
+                    const iconEl = item.querySelector('i');
+                    if (iconEl) {
+                        const newNavItem = document.createElement('a');
+                        newNavItem.href = '#';
+                        newNavItem.className = 'flex-1 p-2 text-center text-gray-600 hover:bg-gray-100';
 
-                    const icon = item.querySelector('i').cloneNode(true);
-                    icon.classList.add('mx-auto');
+                        const icon = iconEl.cloneNode(true);
+                        icon.classList.add('mx-auto');
 
-                    const title = item.title;
-                    const span = document.createElement('span');
-                    span.className = 'text-xs';
-                    span.textContent = title;
+                        const title = item.title;
+                        const span = document.createElement('span');
+                        span.className = 'text-xs';
+                        span.textContent = title;
 
-                    newNavItem.appendChild(icon);
-                    newNavItem.appendChild(span);
+                        newNavItem.appendChild(icon);
+                        newNavItem.appendChild(span);
 
-                    // Add a click listener to trigger the main sidebar's item
-                    newNavItem.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        item.click();
-                    });
+                        // Add a click listener to trigger the main sidebar's item
+                        newNavItem.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            item.click();
+                        });
 
-                    bottomNavContainer.appendChild(newNavItem);
+                        bottomNavContainer.appendChild(newNavItem);
+                    }
                 }
             });
             lucide.createIcons();
