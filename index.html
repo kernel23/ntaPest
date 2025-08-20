@@ -1285,6 +1285,7 @@
 
         // Function to switch between screens
         async function showScreen(screenName, context = {}, isBack = false) {
+            console.log(`[showScreen] Called for screen: ${screenName} with context:`, context);
             if (!isBack) {
                 if (context.isFreshNavigation) {
                     navigationHistory = [{ screenName, context }];
@@ -1319,9 +1320,18 @@
                 screenContainer.classList.add('with-sidebar');
             }
 
-            Object.values(screens).forEach(screen => screen.classList.remove('active'));
+            console.log(`[showScreen] Hiding all screens.`);
+            Object.values(screens).forEach(screen => {
+                screen.style.display = 'none';
+                screen.classList.remove('active');
+            });
+
             if (screens[screenName]) {
+                console.log(`[showScreen] Showing: ${screenName}`);
+                screens[screenName].style.display = 'flex';
                 screens[screenName].classList.add('active');
+            } else {
+                console.log(`[showScreen] Screen not found: ${screenName}`);
             }
 
             // The context for the current screen is from the last item in history.
@@ -2032,6 +2042,20 @@
 
                 if (docSnap.exists()) {
                     userProfile = docSnap.data();
+
+                    if (userProfile && userProfile.role) {
+                        const body = document.body;
+                        body.classList.remove('force-mobile-view', 'force-desktop-view'); // Clear old classes
+
+                        const mobileRoles = ['Farmer', 'Extension Worker', 'Branch Coordinator'];
+                        const desktopRoles = ['Expert', 'Administrator'];
+
+                        if (mobileRoles.includes(userProfile.role)) {
+                            body.classList.add('force-mobile-view');
+                        } else if (desktopRoles.includes(userProfile.role)) {
+                            body.classList.add('force-desktop-view');
+                        }
+                    }
 
                     const requiredFields = ['fullName', 'province', 'municipality', 'barangay', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
                     const isProfileComplete = requiredFields.every(field => userProfile[field] !== undefined && userProfile[field] !== null && userProfile[field] !== '');

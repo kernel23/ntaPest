@@ -96,3 +96,41 @@ body { font-family: 'Inter', sans-serif; }
     transform: rotate(180deg);
     transition: transform 0.3s ease-in-out;
 }
+
+/* Role-based layout forcing */
+
+/* --- Force Mobile View on Desktop --- */
+@media (min-width: 768px) {
+    body.force-mobile-view #hamburger-btn {
+        display: block !important;
+    }
+    body.force-mobile-view #bottom-nav {
+        display: flex !important;
+    }
+    body.force-mobile-view #sidebar {
+        transform: translateX(-100%) !important;
+    }
+    body.force-mobile-view #sidebar.show {
+        transform: translateX(0) !important;
+    }
+    body.force-mobile-view #screen-container.with-sidebar {
+        margin-left: 0 !important;
+    }
+}
+
+/* --- Force Desktop View on Mobile --- */
+@media (max-width: 767px) {
+    body.force-desktop-view #hamburger-btn {
+        display: none !important;
+    }
+    body.force-desktop-view #bottom-nav {
+        display: none !important;
+    }
+    body.force-desktop-view #sidebar {
+        transform: translateX(0) !important;
+        position: absolute !important;
+    }
+    body.force-desktop-view #screen-container.with-sidebar {
+        margin-left: 4rem !important;
+    }
+}
