@@ -43,25 +43,31 @@
         #report-map { height: 200px; margin-bottom: 1.5rem; }
         #pest-cards-container {
             perspective: 1000px;
+            position: relative;
+            width: 250px;
+            height: 300px;
+            margin: 0 auto;
         }
         .pest-card {
             width: 180px;
             height: 220px;
-            position: relative;
+            position: absolute;
+            left: 50%;
+            top: 50%;
             transform-style: preserve-3d;
-            transition: transform 0.5s, z-index 0.5s;
+            transition: transform 0.5s;
             cursor: pointer;
-            animation: float 6s ease-in-out infinite;
+            transform: translate(-50%, -50%) rotateY(40deg) translateX(calc(var(--i) * -5px)) translateZ(calc(var(--i) * -20px));
+            z-index: calc(18 - var(--i));
         }
+
+        #pest-cards-container:hover .pest-card {
+            transform: translate(-50%, -50%) rotateY(0) translateX(calc(var(--i) * 25px - 110px)) ;
+        }
+
         .pest-card:hover {
-            transform: translateY(-10px) scale(1.1);
-            z-index: 10;
-            animation-play-state: paused;
-        }
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
+            transform: translate(-50%, -50%) rotateY(0) translateX(calc(var(--i) * 25px - 110px)) translateZ(80px) scale(1.2);
+            z-index: 20;
         }
     </style>
 </head>
@@ -1132,8 +1138,9 @@
                 ...(pestAndDiseaseData.fungal_and_bacterial_diseases || []).map(d => ({...d, type: 'Disease'}))
             ];
 
-            allItems.forEach(item => {
+            allItems.forEach((item, index) => {
                 const card = document.createElement('div');
+                card.style.setProperty('--i', index);
                 card.className = 'pest-card bg-white rounded-lg shadow-lg overflow-hidden m-2';
 
                 const name = item['Pest Common Name'] || item['Disease Name'];
