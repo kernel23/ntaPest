@@ -717,13 +717,13 @@
 
     <!-- Modals -->
     <!-- Pest Details Modal -->
-    <div id="pest-details-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl m-4">
+    <div id="pest-details-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden z-50">
+        <div id="pest-details-panel" class="absolute top-0 right-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300 ease-in-out translate-x-full">
             <div class="p-4 border-b flex justify-between items-center">
                 <h3 id="pest-modal-title" class="text-xl font-bold">Pest/Disease Details</h3>
                 <button id="close-pest-details-modal-btn" class="p-1"><i data-lucide="x"></i></button>
             </div>
-            <div id="pest-modal-content" class="p-6 max-h-[80vh] overflow-y-auto">
+            <div id="pest-modal-content" class="p-6" style="max-height: calc(100vh - 65px); overflow-y: auto;">
                 <!-- Details will be loaded here dynamically -->
             </div>
         </div>
@@ -1156,15 +1156,60 @@
                     let contentHTML = `<p class="text-sm text-gray-600 mb-4">${item['Characteristic Visual Damage'] || item['Primary Visual Symptoms']}</p>`;
 
                     if (item.management) {
-                        contentHTML += '<h5 class="font-bold mt-4">Management</h5>';
+                        contentHTML += '<h5 class="font-bold mt-4 text-lg border-b pb-1 mb-2">Management</h5>';
                         const { prevention, monitoring, direct_control } = item.management;
-                        if (prevention) contentHTML += `<div class="mt-2"><strong>Prevention:</strong><ul class="list-disc list-inside">$${prevention.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
-                        if (monitoring) contentHTML += `<div class="mt-2"><strong>Monitoring:</strong><ul class="list-disc list-inside">${monitoring.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
-                        if (direct_control) contentHTML += `<div class="mt-2"><strong>Direct Control:</strong><ul class="list-disc list-inside">${direct_control.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
+
+                        if (prevention && prevention.length > 0) {
+                            contentHTML += `
+                                <div class="mt-3">
+                                    <div class="flex items-center">
+                                        <i data-lucide="shield" class="w-5 h-5 mr-2 text-blue-600"></i>
+                                        <h6 class="font-semibold text-gray-800">Prevention</h6>
+                                    </div>
+                                    <ul class="list-disc list-inside pl-7 text-sm text-gray-700 mt-1 space-y-1">
+                                        ${prevention.map(i => `<li>${i}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            `;
+                        }
+
+                        if (monitoring && monitoring.length > 0) {
+                            contentHTML += `
+                                <div class="mt-4">
+                                    <div class="flex items-center">
+                                        <i data-lucide="search" class="w-5 h-5 mr-2 text-yellow-600"></i>
+                                        <h6 class="font-semibold text-gray-800">Monitoring</h6>
+                                    </div>
+                                    <ul class="list-disc list-inside pl-7 text-sm text-gray-700 mt-1 space-y-1">
+                                        ${monitoring.map(i => `<li>${i}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            `;
+                        }
+
+                        if (direct_control && direct_control.length > 0) {
+                            contentHTML += `
+                                <div class="mt-4">
+                                    <div class="flex items-center">
+                                        <i data-lucide="syringe" class="w-5 h-5 mr-2 text-red-600"></i>
+                                        <h6 class="font-semibold text-gray-800">Direct Control</h6>
+                                    </div>
+                                    <ul class="list-disc list-inside pl-7 text-sm text-gray-700 mt-1 space-y-1">
+                                        ${direct_control.map(i => `<li>${i}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            `;
+                        }
                     }
 
                     content.innerHTML = contentHTML;
+                    lucide.createIcons();
+
+                    const panel = document.getElementById('pest-details-panel');
                     modal.classList.remove('hidden');
+                    setTimeout(() => { // Allow display:block to take effect before starting transition
+                        panel.classList.remove('translate-x-full');
+                    }, 10);
                 });
 
                 container.appendChild(card);
@@ -1172,7 +1217,13 @@
         }
 
         document.getElementById('close-pest-details-modal-btn').addEventListener('click', () => {
-            document.getElementById('pest-details-modal').classList.add('hidden');
+            const modal = document.getElementById('pest-details-modal');
+            const panel = document.getElementById('pest-details-panel');
+
+            panel.classList.add('translate-x-full');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); // Match transition duration
         });
 
 
