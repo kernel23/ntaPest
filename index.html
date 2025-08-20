@@ -44,9 +44,9 @@
         #pest-cards-container {
             perspective: 1000px;
             position: relative;
-            width: 250px;
-            height: 300px;
-            margin: 0 auto;
+            width: 25vw;
+            height: 50vh;
+            margin: auto;
         }
         .pest-card {
             width: 180px;
@@ -57,16 +57,16 @@
             transform-style: preserve-3d;
             transition: transform 0.5s;
             cursor: pointer;
-            transform: translate(-50%, -50%) rotateY(40deg) translateX(calc(var(--i) * -5px)) translateZ(calc(var(--i) * -20px));
+            transform: translate(-50%, -50%) rotateX(70deg) translateY(calc(var(--i) * -5px)) translateZ(calc(var(--i) * -30px));
             z-index: calc(18 - var(--i));
         }
 
         #pest-cards-container:hover .pest-card {
-            transform: translate(-50%, -50%) rotateY(0) translateX(calc(var(--i) * 25px - 110px)) ;
+            transform: translate(-50%, -50%) rotateX(0) translateY(calc(var(--i) * 20px - 85px));
         }
 
         .pest-card:hover {
-            transform: translate(-50%, -50%) rotateY(0) translateX(calc(var(--i) * 25px - 110px)) translateZ(80px) scale(1.2);
+            transform: translate(-50%, -50%) rotateX(0) translateY(calc(var(--i) * 20px - 85px)) translateZ(80px) scale(1.1);
             z-index: 20;
         }
     </style>
