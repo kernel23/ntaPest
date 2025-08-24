@@ -2583,6 +2583,11 @@
             const symptoms = Array.from(document.querySelectorAll('#symptoms-checklist input:checked')).map(cb => cb.value);
             const distribution = document.querySelector('#distribution-radios input:checked')?.value;
             const severity = document.querySelector('#severity-radios input:checked')?.value;
+            const affectedParts = Array.from(document.querySelectorAll('.affected-part-checkbox:checked')).map(cb => cb.value);
+            const onsetDate = document.getElementById('symptom-onset-date').value;
+            const progression = document.querySelector('input[name="progression"]:checked')?.value;
+            const pestSigns = document.getElementById('pest-signs').value;
+
 
             if (imageDataUrls.length === 0 || symptoms.length === 0 || !distribution || !severity) {
                 showToast('Please fill out all fields and select at least one image.', 'error');
@@ -2625,6 +2630,10 @@
                     symptoms,
                     distribution,
                     severity,
+                    affectedParts,
+                    onsetDate,
+                    progression,
+                    pestSigns,
                     timestamp: serverTimestamp(),
                     gps_coordinates: { latitude: 17.5734, longitude: 120.3856 } // Simulate GPS data
                 };
@@ -3758,6 +3767,19 @@
                 : `<p class="text-sm text-gray-500">No images submitted.</p>`;
 
 
+            let additionalInfoHTML = '';
+            if (submission.affectedParts || submission.onsetDate || submission.progression || submission.pestSigns) {
+                additionalInfoHTML = `
+                    <div class="mt-4 pt-4 border-t">
+                        <h4 class="font-bold text-gray-800">Additional Information</h4>
+                        ${submission.affectedParts ? `<p class="text-sm"><strong>Affected Parts:</strong> ${submission.affectedParts.join(', ')}</p>` : ''}
+                        ${submission.onsetDate ? `<p class="text-sm"><strong>Symptom Onset:</strong> ${submission.onsetDate}</p>` : ''}
+                        ${submission.progression ? `<p class="text-sm"><strong>Progression:</strong> ${submission.progression}</p>` : ''}
+                        ${submission.pestSigns ? `<p class="text-sm"><strong>Pest Signs:</strong> ${submission.pestSigns}</p>` : ''}
+                    </div>
+                `;
+            }
+
             modalContent.innerHTML = `
                 <div id="${mapId}" class="w-full h-48 bg-gray-200 rounded-md shadow-inner mb-4"></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -3772,6 +3794,7 @@
                         <p class="text-sm"><strong>Severity:</strong> ${submission.severity}</p>
                     </div>
                 </div>
+                ${additionalInfoHTML}
                 ${initialDiagnosisHTML}
                 ${finalDiagnosisHTML}
                 ${treatmentHTML}
