@@ -1286,13 +1286,13 @@
 
             const locationSuccess = (position) => {
                 const { latitude, longitude } = position.coords;
-                fetchAndDisplayWeather(latitude, longitude, 'Your Location');
+                fetchAndDisplayWeather(latitude, longitude);
             };
 
             const locationError = (error) => {
                 console.warn(`Could not get location (${error.code}): ${error.message}`);
                 // Fallback to default location
-                fetchAndDisplayWeather(17.5747, 120.3869, 'Vigan City, Ilocos Sur');
+                fetchAndDisplayWeather(17.5747, 120.3869);
             };
 
             if ('geolocation' in navigator) {
@@ -1307,39 +1307,89 @@
             }
         }
 
-        async function fetchAndDisplayWeather(lat, lon, locationName) {
+        async function fetchAndDisplayWeather(lat, lon) {
             const container = document.getElementById('weather-dashboard-container');
-            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m,precipitation_probability&timezone=Asia/Manila`;
-            container.innerHTML = `<div class="text-center text-white p-6"><p>Loading weather for ${locationName}...</p></div>`;
+            container.innerHTML = `<div class="text-center text-white p-6"><p>Loading weather data...</p></div>`;
+
+            // 1. Reverse Geocoding to get location name
+            let locationName = "Unknown Location";
+            try {
+                const geoResponse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                const geoData = await geoResponse.json();
+                if (geoData.address) {
+                    locationName = `${geoData.address.village || geoData.address.town || geoData.address.city}, ${geoData.address.country}`;
+                }
+            } catch (e) {
+                console.error("Reverse geocoding failed:", e);
+            }
+
+            // 2. Fetch comprehensive weather data
+            const weatherParams = "temperature_2m,relative_humidity_2m,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,soil_moisture_0_to_1cm,et_0_fao_evapotranspiration";
+            const dailyParams = "sunrise,sunset";
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=${weatherParams}&daily=${dailyParams}&timezone=Asia/Manila&forecast_days=1`;
 
             try {
-                const response = await fetch(apiUrl);
-                if (!response.ok) {
+                const weatherResponse = await fetch(apiUrl);
+                if (!weatherResponse.ok) {
                     throw new Error('Weather data not available');
                 }
-                const data = await response.json();
+                const data = await weatherResponse.json();
                 const weather = data.current;
+                const daily = data.daily;
 
                 const { text, icon } = getWeatherInfo(weather.weather_code);
+                const sunrise = new Date(daily.sunrise[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const sunset = new Date(daily.sunset[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                 const weatherHTML = `
-                    <div class="bg-black bg-opacity-20 p-6 rounded-lg text-center shadow-lg backdrop-blur-sm border border-white/10 w-full max-w-sm">
-                        <h3 class="text-2xl font-bold text-white mb-2">Current Weather</h3>
-                        <p class="text-lg text-gray-300 mb-4">${locationName}</p>
-                        <div class="flex items-center justify-center space-x-4 mb-4">
-                            <i data-lucide="${icon}" class="w-16 h-16 text-[#f1c232]"></i>
-                            <p class="text-5xl font-bold text-white">${Math.round(weather.temperature_2m)}°C</p>
+                    <div class="bg-black bg-opacity-20 p-6 rounded-lg shadow-lg backdrop-blur-sm border border-white/10 w-full max-w-md">
+                        <div class="text-center mb-4">
+                            <h3 class="text-2xl font-bold text-white">Weather Dashboard</h3>
+                            <p class="text-lg text-gray-300">${locationName}</p>
                         </div>
-                        <p class="text-xl text-gray-200 capitalize mb-6">${text}</p>
-                        <div class="flex justify-around text-sm w-full">
-                            <div class="text-center">
-                                <p class="font-bold text-gray-300">Precipitation</p>
-                                <p>${weather.precipitation_probability}%</p>
+                        <div class="flex items-center justify-center space-x-4 mb-6">
+                            <i data-lucide="${icon}" class="w-20 h-20 text-[#f1c232]"></i>
+                            <div>
+                                <p class="text-6xl font-bold text-white">${Math.round(weather.temperature_2m)}°C</p>
+                                <p class="text-xl text-gray-200 capitalize -mt-1">${text}</p>
                             </div>
-                            <div class="text-center">
-                                <p class="font-bold text-gray-300">Wind</p>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-white">
+                            <div class="text-center bg-white/10 p-3 rounded-lg">
+                                <i data-lucide="droplets" class="w-6 h-6 mx-auto mb-1 text-blue-300"></i>
+                                <p class="font-bold text-gray-300 text-sm">Humidity</p>
+                                <p>${weather.relative_humidity_2m}%</p>
+                            </div>
+                            <div class="text-center bg-white/10 p-3 rounded-lg">
+                                <i data-lucide="wind" class="w-6 h-6 mx-auto mb-1 text-gray-300"></i>
+                                <p class="font-bold text-gray-300 text-sm">Wind</p>
                                 <p>${weather.wind_speed_10m} km/h</p>
                             </div>
+                             <div class="text-center bg-white/10 p-3 rounded-lg">
+                                <i data-lucide="compass" class="w-6 h-6 mx-auto mb-1 text-gray-300" style="transform: rotate(${weather.wind_direction_10m}deg);"></i>
+                                <p class="font-bold text-gray-300 text-sm">Direction</p>
+                                <p>${weather.wind_direction_10m}°</p>
+                            </div>
+                            <div class="text-center bg-white/10 p-3 rounded-lg">
+                                <i data-lucide="thermometer-snowflake" class="w-6 h-6 mx-auto mb-1 text-green-300"></i>
+                                <p class="font-bold text-gray-300 text-sm">Soil Moisture</p>
+                                <p>${(weather.soil_moisture_0_to_1cm || 0).toFixed(3)} m³/m³</p>
+                            </div>
+                            <div class="text-center bg-white/10 p-3 rounded-lg">
+                                <i data-lucide="sunrise" class="w-6 h-6 mx-auto mb-1 text-orange-300"></i>
+                                <p class="font-bold text-gray-300 text-sm">Sunrise</p>
+                                <p>${sunrise}</p>
+                            </div>
+                            <div class="text-center bg-white/10 p-3 rounded-lg">
+                                <i data-lucide="sunset" class="w-6 h-6 mx-auto mb-1 text-purple-300"></i>
+                                <p class="font-bold text-gray-300 text-sm">Sunset</p>
+                                <p>${sunset}</p>
+                            </div>
+                        </div>
+                         <div class="text-center bg-white/10 p-3 rounded-lg mt-4">
+                            <i data-lucide="leaf" class="w-6 h-6 mx-auto mb-1 text-lime-300"></i>
+                            <p class="font-bold text-gray-300 text-sm">Evapotranspiration (FAO)</p>
+                            <p>${(weather.et_0_fao_evapotranspiration || 0).toFixed(3)} mm</p>
                         </div>
                     </div>
                 `;
