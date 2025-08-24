@@ -66,34 +66,29 @@
     {
       "Disease Name": "Brown Spot",
       "Causal Agents": "Alternaria alternata",
-      "Primary Visual Symptoms": "Primarily affects mature leaves. Lesions start as small wet spots that enlarge into circular, dark brown lesions with a 'target spot' pattern, often surrounded by a yellow halo. In humid conditions, a black layer of spores can appear on the spots.",
+      "Primary Visual Symptoms": "Affects lower, mature leaves, inducing small wet spots that become brown and circular, with concentric rings and a chlorotic halo. A black, velvet-like conidial layer may appear on spots in humid conditions. Lesions can also appear on stems and petioles.",
       "Key Plant Parts Affected": [
         "Leaves (especially lower, mature ones)",
         "Stems",
         "Petioles"
       ],
-      "url": "https://content.ces.ncsu.edu/brown-spot",
+      "url": "http://ephytia.inra.fr/en/Contents/view/10798",
       "management": {
         "prevention": [
-          "Use clean, certified seeds and plant tolerant varieties.",
-          "Reduce planting density to promote ventilation and decrease humidity.",
-          "Avoid planting in plots where the disease has been severe.",
-          "Use balanced fertilization; avoid excessive nitrogen and apply proper levels of potassium.",
-          "Practice crop rotation with a non-host crop.",
-          "Destroy stalks and roots to reduce inoculum.",
-          "Control nematodes, as high levels can increase brown spot damage.",
-          "Control suckers to aid in reducing losses."
+          "Use fungus-free seeds.",
+          "Avoid re-establishing a crop in a plot where the disease has been severe.",
+          "Provide balanced fertiliser (not excessive in nitrogen, adequate potash and phosphate).",
+          "Reduce planting density to promote ventilation.",
+          "Control bud removing and root-knot nematodes.",
+          "Use resistant varieties if available."
         ],
         "monitoring": [
-          "Monitor for symptoms on lower, mature leaves first.",
-          "Look for small wet spots that turn into brown, circular lesions with concentric rings and a yellow halo.",
-          "Check for progression to upper leaves and the development of black spores in humid conditions.",
-          "Note if spots merge, leading to large areas of dead tissue.",
-          "Be aware that spots can continue to develop during curing."
+          "Monitor lower, mature leaves for small wet spots that turn into brown, circular lesions with concentric rings and a yellow halo.",
+          "Check for a black, velvet-like conidial layer on spots in humid conditions.",
+          "Look for lesions on stems and petioles."
         ],
         "direct_control": [
-          "Harvest infected leaves as soon as possible to reduce spore spread.",
-          "Apply appropriate fungicides like Timorex Gold (extract of Melaleuca alternifolia) following label instructions."
+          "Do not crush and bury remaining plant parts in the field after harvest."
         ]
       }
     },
@@ -161,36 +156,34 @@
       }
     },
     {
-      "Disease Name": "Damping-Off / Soft Rot / Hollow Stalk",
-      "Causal Agents": "Pythium spp., Rhizoctonia spp., Fusarium spp., Pectobacterium carotovorum",
-      "Primary Visual Symptoms": "In nursery, circular patches of dead/wilting plants. Stems show brown, watery, soft rot at soil line (damping-off) or blackened lesions (blackleg), leading to collapse. Stalk may become hollow. Debris appears necrotic and slimy with a foul odor.",
+      "Disease Name": "Damping-off, Basal root rots",
+      "Causal Agents": "Pythium spp., Phytophthora spp.",
+      "Primary Visual Symptoms": "May cause brown, moist and soft lesions on the stem of the plants at the soil line. Roots may also be affected, turning light brown and their cortex eventually disintegrates. Symptoms include browning and death of many feeder roots and decay of the root cortex, the taproot and the buried portion of the stem. Foliar lesions may also be observed on the lower leaves.",
       "Key Plant Parts Affected": [
-        "Stem (at soil line)",
+        "Stem",
         "Roots",
-        "Pith"
+        "Collar",
+        "Leaves"
       ],
-      "url": "",
+      "url": "http://ephytia.inra.fr/en/Contents/view/10801",
       "management": {
         "prevention": [
-          "Clean, fumigate, and/or steam-sterilize float trays.",
-          "Disinfect seeds by soaking in hot water (50°C for 12 mins).",
-          "Minimize wounding, especially in wet conditions; sanitize clipping tools.",
-          "Avoid over-fertilizing, especially with nitrogen (keep below 150 ppm).",
-          "Ensure good ventilation and drainage in seedbeds; avoid dense stands.",
-          "Practice sucker control and remove debris.",
-          "Avoid sprinkler irrigation if possible."
+          "Limit early irrigations and provide maximum ventilation in nurseries.",
+          "Use a healthy or disinfected substrate.",
+          "Do not mix sand or soil from a field with the substrate.",
+          "Place plugs on a plastic film, not directly on the floor.",
+          "Avoid setting tobacco seedlings in very wet or cold soils.",
+          "Pay attention to the quality of irrigation water."
         ],
         "monitoring": [
-          "Monitor for circular patches of wilting in nurseries.",
-          "Look for soft rot, lesions, or collapse at the seedling soil line.",
-          "Check for hollow stalks in older plants.",
-          "Take action as soon as symptoms are seen, as soft rot spreads rapidly in warm (above 25°C), humid conditions."
+          "Monitor for brown, moist and soft lesions on the stem at the soil line.",
+          "Check for browning and death of roots.",
+          "Look for foliar lesions on lower leaves."
         ],
         "direct_control": [
-          "Rapidly remove and destroy infected plants from the nursery.",
-          "Workers handling infected plants should wash hands and clothes before touching healthy plants.",
-          "Harvest tobacco only when plants are dry.",
-          "In the seedbed, apply copper oxychloride at the collar level of seedlings or to foliage."
+          "Treat the entire substrate solution with an anti-oomycete fungicide.",
+          "Apply fungicide at the collar level of the plants by thoroughly soaking the soil if symptoms appear during the growing season.",
+          "Remove infected plants quickly from the nurseries."
         ]
       }
     },
@@ -202,7 +195,7 @@
         "Leaves",
         "Terminal Bud"
       ],
-      "url": "",
+      "url": "http://ephytia.inra.fr/en/C/10813/Tobacco-Cucumber-mosaic-virus-CMV",
       "management": {
         "prevention": [
           "Control aphids, the primary vector.",
@@ -232,7 +225,7 @@
       "Key Plant Parts Affected": [
         "Leaves"
       ],
-      "url": "",
+      "url": "http://ephytia.inra.fr/en/C/10814/Tobacco-Potato-virus-Y-PVY",
       "management": {
         "prevention": [
           "Use resistant varieties.",
@@ -252,33 +245,39 @@
       }
     },
     {
-      "Disease Name": "Target Spot (Sore Shin)",
-      "Causal Agents": "Rhizoctonia solani (Thanatephorus cucumeris)",
-      "Primary Visual Symptoms": "On leaves, causes round, translucent, light brown spots with concentric rings; centers become thin and papery and may drop out, leaving holes. On stems, causes a dark brown lesion near the soil line within a few weeks of transplanting, which can lead to wilting and plant death.",
+      "Disease Name": "Damping-off, Collar cankers, Leaf spot (Target Spot)",
+      "Causal Agents": "Thanatephorus cucumeris, Rhizoctonia solani",
+      "Primary Visual Symptoms": "Causes damping-off in nurseries, with water-soaked lesions on the stem at soil line that turn brown and girdle the collar. In the field, it causes reddish-brown cankers on the stem. On leaves, it causes wet, circular spots that show wide concentric patterns and a chlorotic halo. The centre of the spots may fall out, leaving holes.",
       "Key Plant Parts Affected": [
-        "Leaves",
-        "Stem (at soil line)"
+        "Stem",
+        "Collar",
+        "Roots",
+        "Leaves"
       ],
-      "url": "",
+      "url": "http://ephytia.inra.fr/en/Contents/view/10803",
       "management": {
         "prevention": [
-          "Disinfect nursery soil using solarization.",
           "Control greenhouse climate to avoid excessive moisture and high temperature.",
-          "Use steam disinfection for trays.",
-          "Clip plants frequently to allow foliage to dry and remove debris.",
-          "Do not transplant diseased seedlings.",
-          "Improve ventilation by reducing planting density and harvesting lower leaves quickly.",
-          "Ensure good drainage in heavy soils.",
-          "Use balanced fertilization; avoid low nitrogen levels."
+          "Ensure nitrogen fertilisation is not too low.",
+          "Use healthy potting media in the nursery.",
+          "Disinfect soil in traditional nurseries.",
+          "Use plastic film to separate mini-clods from the soil.",
+          "Consider soil solarization.",
+          "Avoid high planting densities.",
+          "Drain heavy and wet soils.",
+          "Ensure balanced fertilisation."
         ],
         "monitoring": [
-          "Monitor from nursery to harvest.",
-          "In seedlings, look for lack of germination and damping-off.",
-          "On leaves, look for characteristic target-like spots.",
-          "On stems, check for dark brown lesions near the soil line."
+          "Monitor for damping-off in nurseries.",
+          "Check for reddish-brown cankers on stems in the field.",
+          "Look for circular leaf spots with concentric patterns and a chlorotic halo."
         ],
         "direct_control": [
-          "Harvest or remove bottom leaves as soon as the disease begins."
+          "Remove plant debris at the end of each clipping in the greenhouse.",
+          "Sanitise trays where infected seedlings were grown.",
+          "Do not transplant diseased seedlings.",
+          "Remove lower leaves in the field.",
+          "Apply registered fungicides like Azoxystrobin to control target spot in the field."
         ]
       }
     },
@@ -315,6 +314,827 @@
           "Reap clean fields before infected ones to minimize spread.",
           "In the seedbed, apply copper oxychloride at the collar level of seedlings or to foliage."
         ]
+      }
+    },
+    {
+      "Disease Name": "Grey mould",
+      "Causal Agents": "Botrytis cinerea",
+      "Primary Visual Symptoms": "In the nursery, it attacks senescent leaves and produces stem cankers. In the field, it causes beige to brown coloured leaf spots, sometimes concentric and surrounded by a yellow halo. It can also cause stem cankers after colonising defoliation wounds. A characteristic grey mould is produced on all attacked organs in favourable weather conditions.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Stem",
+        "Collar"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10796",
+      "management": {
+        "prevention": [
+          "Ensure good ventilation in nurseries to reduce humidity.",
+          "Avoid the presence of free water on plants.",
+          "Irrigate during the morning and early afternoon, not at night.",
+          "Manage nitrogen fertilisation to avoid succulent tissues or chlorotic leaves.",
+          "Disinfect shelter walls and equipment.",
+          "Eliminate plant debris rapidly."
+        ],
+        "monitoring": [
+          "Monitor for stem cankers in nurseries.",
+          "Look for beige to brown leaf spots in the field.",
+          "Check for the characteristic grey mould on attacked organs."
+        ],
+        "direct_control": [
+          "Use fungicides like iprodione or pyrimethanil, alternating between them.",
+          "If collar cankers are observed, ridging may promote adventitious root formation."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Black root rot",
+      "Causal Agents": "Thielaviopsis basicola, Chalara elegans",
+      "Primary Visual Symptoms": "The fungus colonises the plant roots, causing many brown to black lesions along the entire root length and destroying most of the feeder rootlets. A large proportion of the root system has a typical black rot. Affected plants are often poorly developed and chlorotic, and sometimes wilt in hot weather.",
+      "Key Plant Parts Affected": [
+        "Roots"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10804",
+      "management": {
+        "prevention": [
+          "Use healthy substrates in the nursery.",
+          "Disinfect soil in traditional nurseries.",
+          "Use plastic film to separate mini-clods from the ground.",
+          "Apply hygienic measures.",
+          "Use long crop rotations (4-5 years) with non-sensitive crops like cereals, rice, and sorghum.",
+          "Clean tools and equipment after use in contaminated fields.",
+          "Ensure good field draining, fertilisation, and irrigation.",
+          "Maintain soil pH around 6.",
+          "Use resistant varieties."
+        ],
+        "monitoring": [
+          "Monitor for poorly developed and chlorotic plants.",
+          "Check for wilting in hot weather.",
+          "Inspect roots for brown to black lesions and black rot."
+        ],
+        "direct_control": [
+          "Remove diseased plants in the nursery.",
+          "Consider fungicide treatments (e.g., benzimidazoles, triadiménol) as a preventive measure or in specific contexts, but be aware of resistance risks.",
+          "Try ridging plants in the field to promote further rooting.",
+          "Destroy and remove tobacco stems and root systems from the field at the end of the season."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Anthracnose",
+      "Causal Agents": "Colletotrichum tabacum, Colletotrichum nicotianae, Colletotrichum gloeosporioides, Glomerella sp.",
+      "Primary Visual Symptoms": "Causes circular lesions that are initially dark and oily then become greyish, parchmentlike, and surrounded by a brown border. Some lateral veins may turn brown. Small elongated cankers are observed on petioles and stems, and sometimes these are covered by pink clusters of acervuli containing conidia.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Petioles",
+        "Stems"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10921",
+      "management": {
+        "prevention": [
+          "Use disease-free seeds.",
+          "Manage plant debris and soil.",
+          "Avoid high humidity, cool temperatures, and low light."
+        ],
+        "monitoring": [
+          "Monitor for circular lesions on leaves.",
+          "Check for cankers on petioles and stems."
+        ],
+        "direct_control": [
+          "No product is approved for this use in France. Fungicide use may be an option in other regions."
+        ]
+      }
+    },
+    {
+      "Disease Name": "White mould, Powdery mildew",
+      "Causal Agents": "Golovinomyces cichoracearum var. cichoracearum, Erysiphe cichoracearum",
+      "Primary Visual Symptoms": "Greyish, white, felt-like powdery patches first appear on the upper leaf surface. They gradually spread and converge to cover the entire lamina. Afterwards the affected tissues show irregular brown lesions resulting from cell death.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10794",
+      "management": {
+        "prevention": [
+          "Choose a plot location in a rather airy and sunny area.",
+          "Avoid excessive watering and stagnation of water in the plot.",
+          "Ensure a balanced fertilisation.",
+          "Destroy weeds in and around the plot.",
+          "Avoid the vicinity of crops that host the parasite.",
+          "Harvest the lower leaves as soon as possible.",
+          "Use resistant varieties."
+        ],
+        "monitoring": [
+          "Monitor for greyish, white, felt-like powdery patches on the upper leaf surface.",
+          "Check for the spread of these patches and the appearance of irregular brown lesions."
+        ],
+        "direct_control": [
+          "Apply chemical treatments early, such as with penconazole.",
+          "Apply treatments during cloudy and cool periods to avoid phytotoxicity."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Ragged leaf spot, Phoma leaf blight",
+      "Causal Agents": "Boeremia exigua var. exigua, Ascochyta nicotianae, Didymella sp.",
+      "Primary Visual Symptoms": "Causes irregular to circular, brown to ashy grey leaf spots. Occasionally, the spots are very large. Numerous pycnidia containing two-septate spores can be found scattered on these spots. Eventually the centre of the spot, which is dead tissue, disintegrates leaving a ragged appearing leaf.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10919",
+      "management": {
+        "prevention": [
+          "Manage plant debris."
+        ],
+        "monitoring": [
+          "Monitor for irregular to circular, brown to ashy grey leaf spots.",
+          "Check for pycnidia on the spots.",
+          "Look for ragged appearance of leaves as the center of the spot disintegrates."
+        ],
+        "direct_control": [
+          "No product is registered for control of this disease in France."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Athelia stem rot, Southern stem rot",
+      "Causal Agents": "Athelia rolfsii, Sclerotium rolfsii",
+      "Primary Visual Symptoms": "Wet looking lesions develop on the stems at the soil level. They are often concave, light brown, rather dry in texture and sometimes surrounded by discrete concentric rings. Abundant white mycelium may cover the lesions and sometimes the soil close to the stem. Numerous small (1-3 mm), smooth and rather spherical sclerotia of the fungus may be observed. At first the sclerotia are white, but gradually turn brown as they mature.",
+      "Key Plant Parts Affected": [
+        "Stem"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10992",
+      "management": {
+        "prevention": [
+          "Destruction of crop residues.",
+          "Soil disinfection.",
+          "Solarization.",
+          "Crop rotations."
+        ],
+        "monitoring": [
+          "Look for wet looking lesions on the stems at the soil level.",
+          "Check for white mycelium on lesions and surrounding soil.",
+          "Look for small, spherical sclerotia that are initially white and turn brown."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Calonectria crotalariae",
+      "Causal Agents": "Calonectria crotalariae, Cylindrocladium crotalariae",
+      "Primary Visual Symptoms": "Root systems are reduced in size. Large black lesions are found at the collar. The cortex shows deep splits in several locations.",
+      "Key Plant Parts Affected": [
+        "Roots",
+        "Collar"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10995",
+      "management": {
+        "prevention": [
+          "Avoid growing other hosts of the pathogen, such as peanuts and soybeans, in rotation with tobacco."
+        ],
+        "monitoring": [
+          "Check for reduced root systems.",
+          "Look for large black lesions at the collar.",
+          "Inspect the cortex for deep splits."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Helicobasidium monpa",
+      "Causal Agents": "Helicobasidium monpa",
+      "Primary Visual Symptoms": "Rotting of the root cortex. The diseased tissue eventually turns pink. Dense, wine-coloured mycelia develops in the infected tissues, for instance the stem at the soil level.",
+      "Key Plant Parts Affected": [
+        "Roots",
+        "Stem"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10994",
+      "management": {
+        "prevention": [],
+        "monitoring": [
+          "Check for rotting of the root cortex.",
+          "Look for pink discoloration of diseased tissue.",
+          "Check for dense, wine-coloured mycelia on the stem at the soil level."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Macrophomina phaseolina",
+      "Causal Agents": "Macrophomina phaseolina",
+      "Primary Visual Symptoms": "Produces black lesions on the basal portion of the stem that frequently extend to the vessels and pith. These lesions are dotted with numerous smooth, black, and hard microsclerotia.",
+      "Key Plant Parts Affected": [
+        "Stem",
+        "Vessels",
+        "Pith"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10993",
+      "management": {
+        "prevention": [
+          "Destruction of crop residues.",
+          "Soil disinfection.",
+          "Crop rotation."
+        ],
+        "monitoring": [
+          "Look for black lesions on the basal portion of the stem.",
+          "Check for microsclerotia on the lesions."
+        ],
+        "direct_control": [
+          "No fungicide is registered in France to control this disease."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Root burn disease",
+      "Causal Agents": "Olpidium brassicae",
+      "Primary Visual Symptoms": "Associated with a widespread root browning of tobacco seedlings. In floating seedbeds severe root necrosis (or breakdown) may occur affecting the plant parts suspended in the nutrient solution. The affected plants grow slowly; they are chlorotic and sometimes wilt and dessicate.",
+      "Key Plant Parts Affected": [
+        "Roots"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10800",
+      "management": {
+        "prevention": [
+          "In traditional nurseries, disinfection of the soil with a fumigant may be considered.",
+          "The addition of certain non-ionic wetters in the nutrient solution of floating seedbeds may partly eradicate the zoospores of Olpidium brassicae."
+        ],
+        "monitoring": [
+          "Monitor for root browning and necrosis in seedlings.",
+          "Check for slow growth, chlorosis, wilting, and desiccation of plants."
+        ],
+        "direct_control": [
+          "Eliminate heavily infected plants in traditional seedbeds.",
+          "In floating seedbeds, add water to the trays if the level has decreased."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Collar rot",
+      "Causal Agents": "Sclerotinia sclerotiorum",
+      "Primary Visual Symptoms": "On seedlings, stem cankers are moist and light brown and tend to be covered with a dense white mycelium and very characteristic large black sclerotia. In the field, stem cankers are observed originating from defoliation wounds, pith invasion, and various forms of leaf rot.",
+      "Key Plant Parts Affected": [
+        "Stem",
+        "Collar",
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10797",
+      "management": {
+        "prevention": [
+          "Reduce nursery humidity by maximum ventilation.",
+          "Avoid sprinkler irrigation or use it during the hottest parts of the day.",
+          "Destroy infected plants and sclerotia.",
+          "Disinfect soil with a fumigant if outbreaks have occurred.",
+          "Ensure fields are well drained.",
+          "Plant healthy seedlings in fields that did not have crops sensitive to this fungus."
+        ],
+        "monitoring": [
+          "Check for moist, light brown stem cankers on seedlings.",
+          "Look for dense white mycelium and large black sclerotia on cankers.",
+          "In the field, monitor for stem cankers and leaf rot."
+        ],
+        "direct_control": [
+          "Remove sclerotia bearing seedlings and dead plants from nurseries.",
+          "Use fungicides in nurseries if outbreaks occur.",
+          "A biopesticide could be incorporated into the soil in areas of high risk."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Fusariosis, Fusarium wilt",
+      "Causal Agents": "Fusarium oxysporum f. sp. nicotianae",
+      "Primary Visual Symptoms": "One to several leaves on infected plants turn yellow and dry up, usually on one side of the plant. A longitudinal section of the vessels reveals a homogeneous chocolate brown color. Occasionally young leaves and the bud area may be distorted.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Vessels",
+        "Bud"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10807",
+      "management": {
+        "prevention": [
+          "Eliminate crop residues.",
+          "Clean farm equipment thoroughly before use in other fields.",
+          "Use long crop rotations that do not include susceptible hosts.",
+          "Use resistant varieties.",
+          "Control root-knot or cyst nematodes."
+        ],
+        "monitoring": [
+          "Look for yellowing and drying of leaves, usually on one side of the plant.",
+          "Check for a homogeneous chocolate brown color in the vessels by making a longitudinal section.",
+          "Look for distortion of young leaves and the bud area."
+        ],
+        "direct_control": [
+          "No control methods are currently available in France. In some countries, soaking the nursery soil with a solution of benomyl is recommended."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Verticilliosis, Verticillium wilt",
+      "Causal Agents": "Verticillium dahliae",
+      "Primary Visual Symptoms": "Wilting and/or a distinct yellowing affecting the lower leaves of tobacco plants, usually unilaterally. The infected lamina tissues later dry up. A longitudinal cut of the petioles of infected leaves and stem reveals that the vessels have turned yellowish to light brown.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Vessels",
+        "Petioles",
+        "Stem"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10806",
+      "management": {
+        "prevention": [
+          "Clean tools and equipment before use in other fields.",
+          "Use long crop rotations with non-susceptible crops like cereals.",
+          "Control weeds.",
+          "Consider soil disinfection with a fumigant or solarization in nurseries.",
+          "Flooding of contaminated plots may help limit the number of microsclerotia.",
+          "Use resistant varieties."
+        ],
+        "monitoring": [
+          "Look for wilting and/or yellowing of lower leaves, often on one side of the plant.",
+          "Check for yellowish to light brown discoloration of vessels in petioles and stems."
+        ],
+        "direct_control": [
+          "No control methods are currently available in France. Elimination of crop residues after harvest limits the inoculum source."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Black soft rot of stem and leaves, Hollow stalk",
+      "Causal Agents": "Pectobacterium spp., Erwinia spp., Pectobacterium carotovorum subsp. carotovorum, Pectobacterium chrysanthemi",
+      "Primary Visual Symptoms": "Infects young plants in nurseries causing a wet and black rot of seedlings at the soil line (black leg or soft rot). In the later growing season, the bacteria may penetrate the stem through topping wounds and cause a stem rot (hollow stalk). During curing, infected leaves develop a wet and black appearance as the rot spreads through the petiole and gradually progresses to the ribs and the inter-veinal tissues.",
+      "Key Plant Parts Affected": [
+        "Stem",
+        "Leaves",
+        "Petioles"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10811",
+      "management": {
+        "prevention": [
+          "Avoid sprinkler irrigation whenever possible, or irrigate in the morning rather than in the evening.",
+          "Avoid topping or suckering by hand or mechanically during cloudy, wet days.",
+          "Disinfect seeds by soaking them for 12 minutes in hot water at 50°C or by treating them in a microwave for 20 minutes."
+        ],
+        "monitoring": [
+          "Monitor for wet and black rot of seedlings at the soil line in nurseries.",
+          "Check for stem rot after topping.",
+          "Monitor for wet and black appearance of leaves during curing."
+        ],
+        "direct_control": [
+          "Remove diseased seedlings from the nursery quickly.",
+          "Apply bacteriostatic solutions based on copper or cryptonol at the collar level of seedlings.",
+          "Lower the humidity level in the nursery."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Black spot disease",
+      "Causal Agents": "Pseudomonas cichorii",
+      "Primary Visual Symptoms": "Greasy spots appear on mature leaves. They turn brown and black and quite quickly show concentric rings. When the conditions are very favorable, large areas of the lamina are affected.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10809",
+      "management": {
+        "prevention": [
+          "Avoid irrigation with sprinklers whenever possible, or irrigate in the morning rather than in the evening.",
+          "Use crop rotations of three years."
+        ],
+        "monitoring": [
+          "Monitor for greasy spots on mature leaves that turn brown and black with concentric rings."
+        ],
+        "direct_control": [
+          "Avoid hanging too damaged tobacco plants for curing."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Stolbur, big bud",
+      "Causal Agents": "Candidatus Phytoplasma solani",
+      "Primary Visual Symptoms": "Yellowing between the veins, most frequently on mature or intermediate leaves. The whole plant may gradually become yellow. Young shoots have a reduced growth, much shorter internodes, chlorotic leaves of reduced size with tips tending to curve down. Flowers are usually sterile and may show anomalies such as small size, enlarged calyx, and green colour of the petals.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Bud",
+        "Flowers"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10776",
+      "management": {
+        "prevention": [
+          "Protect nursery plants with agrotextiles.",
+          "Careful weeding of nurseries, plots and their surroundings.",
+          "Do not place tobacco crops near other susceptible crops such as tomato, potato, pepper."
+        ],
+        "monitoring": [
+          "Monitor for yellowing between the veins on mature or intermediate leaves.",
+          "Check for stunted growth, short internodes, and small, chlorotic, curved leaves on young shoots.",
+          "Inspect flowers for anomalies."
+        ],
+        "direct_control": [
+          "There is no method to control phytoplasma during cultivation. If symptoms are observed in seedlings, they should not be planted."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Alfalfa mosaic virus (AMV)",
+      "Causal Agents": "Alfalfa mosaic virus",
+      "Primary Visual Symptoms": "Bright yellow mosaic (calico), spots, and rings on the leaves. Sometimes white necrotic patterns are observed. Leaf distortion and stunting of plants may also occur.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/C/10816/Tobacco-Alfalfa-mosaic-virus-AMV",
+      "management": {
+        "prevention": [
+          "Control aphid populations.",
+          "Remove weed reservoirs around the fields.",
+          "Use healthy seedlings for planting."
+        ],
+        "monitoring": [
+          "Monitor for bright yellow mosaic, spots, and rings on leaves.",
+          "Check for leaf distortion and stunting."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Beet curly top virus (BCTV)",
+      "Causal Agents": "Beet curly top virus",
+      "Primary Visual Symptoms": "Young leaves are small, yellow, and curl upwards. Veins may appear translucent. Plants are generally stunted.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "https://ephytia.inra.fr/en/C/10901/Tobacco-Beet-curly-top-virus-BCTV",
+      "management": {
+        "prevention": [
+          "Control leafhopper vectors.",
+          "Manage weed hosts in and around the field."
+        ],
+        "monitoring": [
+          "Monitor for small, yellow, upward-curling leaves.",
+          "Check for translucent veins and stunted plants."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Peanut stunt virus (PSV)",
+      "Causal Agents": "Peanut stunt virus",
+      "Primary Visual Symptoms": "Chlorotic rings and patterns on leaves, leaf distortion, and development of filiform (thread-like) leaves. Infected plants are stunted.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "https://ephytia.inra.fr/en/C/10909/Tobacco-Peanut-stunt-virus-PSV",
+      "management": {
+        "prevention": [
+          "Control aphid populations, as they are the primary vectors.",
+          "Control measures are similar to those for Cucumber Mosaic Virus (CMV)."
+        ],
+        "monitoring": [
+          "Monitor for chlorotic rings, leaf distortion, and stunting."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Potato virus X (PVX)",
+      "Causal Agents": "Potato virus X",
+      "Primary Visual Symptoms": "Often asymptomatic. When symptoms are present, they typically include mild mottling and sometimes necrotic rings on the leaves.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/C/10906/Tobacco-Potato-virus-X-PVX",
+      "management": {
+        "prevention": [
+          "Use virus-free seed or transplants.",
+          "Disinfect tools and hands regularly to prevent mechanical transmission."
+        ],
+        "monitoring": [
+          "Monitor for mild mottling or necrotic rings, although plants may show no symptoms."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Tobacco bushy top virus (TBTV)",
+      "Causal Agents": "Tobacco bushy top virus, often in complex with Tobacco vein distorting virus (TVDV)",
+      "Primary Visual Symptoms": "Shortened internodes and proliferation of axillary buds, which gives the plant a 'bushy top' appearance. Leaves are small, yellow, and may have necrotic spots.",
+      "Key Plant Parts Affected": [
+        "Whole plant",
+        "Leaves",
+        "Stem"
+      ],
+      "url": "http://ephytia.inra.fr/en/C/10908/Tobacco-Tobacco-bushy-top-virus-TBTV",
+      "management": {
+        "prevention": [
+          "Control aphid populations, which transmit the virus complex."
+        ],
+        "monitoring": [
+          "Monitor for stunted, bushy plants with small, yellow leaves."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Tobacco etch virus (TEV)",
+      "Causal Agents": "Tobacco etch virus",
+      "Primary Visual Symptoms": "Mottling, chlorotic spots, and characteristic necrotic lines or 'etching' along the veins. Infected plants are often stunted.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/C/10815/Tobacco-Tobacco-etch-virus-TEV",
+      "management": {
+        "prevention": [
+          "Use resistant varieties if available.",
+          "Control aphid vectors.",
+          "Remove weed hosts from the vicinity of the crop."
+        ],
+        "monitoring": [
+          "Monitor for mottling, chlorotic spots, and necrotic etching along veins."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Tobacco mosaic virus (TMV)",
+      "Causal Agents": "Tobacco mosaic virus",
+      "Primary Visual Symptoms": "Mosaic (light and dark green areas) and mottling on leaves, often accompanied by blistering, yellowing, and stunting. In hot weather, 'mosaic burn' (large necrotic areas) can occur.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Whole plant"
+      ],
+      "url": "http://ephytia.inra.fr/en/C/10812/Tobacco-Tobacco-mosaic-virus-TMV",
+      "management": {
+        "prevention": [
+          "Use resistant varieties.",
+          "Practice strict sanitation: wash hands with soap and water, and disinfect tools, especially when moving from one field to another.",
+          "Workers should avoid using tobacco products (cigarettes, snuff) while working with plants.",
+          "Soaking hands in non-fat milk can help inactivate the virus."
+        ],
+        "monitoring": [
+          "Monitor for mosaic patterns, blistering, and stunting.",
+          "Be aware that symptoms can be variable."
+        ],
+        "direct_control": [
+          "Remove and destroy infected plants immediately to prevent spread."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Tobacco ring spot virus (TRSV)",
+      "Causal Agents": "Tobacco ring spot virus",
+      "Primary Visual Symptoms": "Irregular, often circular and concentric lines on leaves. These lines are initially chlorotic and then become necrotic. They are often located along the veins. Infected plants are stunted.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/C/10819/Tobacco-Tobacco-ring-spot-virus-TRSV",
+      "management": {
+        "prevention": [
+          "Control nematode vectors (Xiphinema spp.) in the soil.",
+          "Eliminate weed reservoirs that can host the virus.",
+          "Disinfect tools to prevent mechanical transmission."
+        ],
+        "monitoring": [
+          "Monitor for concentric, chlorotic, and necrotic rings on leaves.",
+          "Check for stunting of plants."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Tobacco rattle virus (TRV)",
+      "Causal Agents": "Tobacco rattle virus",
+      "Primary Visual Symptoms": "Leaves are curved and spoon-shaped, with spots, necrotic rings, and patterns. Leaf tissue has a brittle texture. Systemic necrotic lesions can be visible on the stem and leaves.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Stem"
+      ],
+      "url": "https://ephytia.inra.fr/en/C/10903/Tobacco-Tobacco-rattle-virus-TRV",
+      "management": {
+        "prevention": [
+          "Control nematode vectors (Trichodorus and Paratrichodorus spp.)."
+        ],
+        "monitoring": [
+          "Monitor for curved, brittle leaves with necrotic rings and patterns."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Tobacco stunt virus (TStV)",
+      "Causal Agents": "Tobacco stunt virus",
+      "Primary Visual Symptoms": "Curling of younger leaves, vein chlorosis and necrosis, mottling, filiform leaves, shorter internodes, and stunting of plants.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Whole plant"
+      ],
+      "url": "https://ephytia.inra.fr/en/C/10904/Tobacco-Tobacco-stunt-virus-TStV",
+      "management": {
+        "prevention": [
+          "The virus is transmitted by the soil fungus Olpidium brassicae, so management should focus on soil health and preventing pathogen spread."
+        ],
+        "monitoring": [
+          "Monitor for a combination of stunting, leaf curling, and vein necrosis."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Tobacco necrosis virus (TNV)",
+      "Causal Agents": "Tobacco necrosis virus",
+      "Primary Visual Symptoms": "Brown necrotic spots appear near the veins, which may coalesce. Symptoms are mainly on lower leaves. Can cause death of young seedlings.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Seedlings"
+      ],
+      "url": "https://ephytia.inra.fr/en/C/10905/Tobacco-Tobacco-necrosis-virus-TNV",
+      "management": {
+        "prevention": [
+          "The virus is transmitted by the soil fungus Olpidium brassicae. Managing soil moisture and health is key."
+        ],
+        "monitoring": [
+          "Monitor for brown necrotic spots on lower leaves."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Tobacco yellow dwarf virus (TYDV)",
+      "Causal Agents": "Tobacco yellow dwarf virus",
+      "Primary Visual Symptoms": "Leaves are chlorotic, small, and tend to curve downward. Plant growth is significantly reduced, resulting in stunting.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Whole plant"
+      ],
+      "url": "https://ephytia.inra.fr/en/C/10900/Tobacco-Tobacco-yellow-dwarf-virus-TYDV",
+      "management": {
+        "prevention": [
+          "Control the leafhopper vector (Orosius argentatus).",
+          "Control measures are similar to those for Stolbur."
+        ],
+        "monitoring": [
+          "Monitor for small, yellow, downward-curling leaves and stunted plants."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Tobacco leaf curl virus (TLCV)",
+      "Causal Agents": "Tobacco leaf curl virus",
+      "Primary Visual Symptoms": "Leaves are small, curled, and twisted. Enations (leafy outgrowths) may be present on the underside of the lamina along the veins. Plants are often stunted.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "https://ephytia.inra.fr/en/C/10902/Tobacco-Tobacco-leaf-curl-virus-TLCV",
+      "management": {
+        "prevention": [
+          "Control the whitefly vector (Bemisia tabaci).",
+          "Remove and destroy weed hosts.",
+          "Use resistant varieties if available."
+        ],
+        "monitoring": [
+          "Monitor for small, curled, twisted leaves with potential enations."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Tobacco vein banding mosaic virus (TVBMV)",
+      "Causal Agents": "Tobacco vein banding mosaic virus",
+      "Primary Visual Symptoms": "Bands of dark green tissue along the veins (vein banding). Small white to brown spots can also be observed on the upper surface of younger leaves.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "https://ephytia.inra.fr/en/C/10907/Tobacco-Tobacco-vein-banding-mosaic-virus-TVBMV",
+      "management": {
+        "prevention": [
+          "Control aphid vectors.",
+          "Control measures are similar to those for Cucumber Mosaic Virus (CMV)."
+        ],
+        "monitoring": [
+          "Monitor for dark green bands along veins."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Tobacco streak virus (TSV)",
+      "Causal Agents": "Tobacco streak virus",
+      "Primary Visual Symptoms": "Necrotic rings and patterns on leaves, often in connection with the veins. Young leaves can be necrotic, folded, and deformed.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "https://ephytia.inra.fr/en/C/10910/Tobacco-Tobacco-streak-virus-TSV",
+      "management": {
+        "prevention": [
+          "Control thrips vectors.",
+          "Control measures are similar to those for Tomato Spotted Wilt Virus (TSWV)."
+        ],
+        "monitoring": [
+          "Monitor for necrotic rings and patterns on leaves."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Pests of air-cured tobacco leaves",
+      "Causal Agents": "Alternaria alternata, Botrytis cinerea, Botryosporium spp., Rhizopus spp., Mucor spp., Sclerotinia sclerotiorum, Cladosporium spp., Fusarium spp., Penicillium spp., Aspergillus spp., Pythium spp., Pseudomonas cichorii",
+      "Primary Visual Symptoms": "Various types of mould (grey, white, colored) and rot on leaves during air-curing, especially under high humidity conditions.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10838",
+      "management": {
+        "prevention": [
+          "Ensure good ventilation in curing barns to manage temperature and moisture.",
+          "Avoid high humidity, which is favorable for the development of micro-organisms."
+        ],
+        "monitoring": [
+          "Monitor leaves during the curing process for signs of mould and rot."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Pests of flue-cured tobacco leaves",
+      "Causal Agents": "Rhizopus spp., Mucor spp., Alternaria alternata, Botrytis cinerea, Sclerotinia sclerotiorum, Cercospora nicotianae, Gibberella tricincta, Pseudomonas syringae pv. angulata, Pectobacterium spp.",
+      "Primary Visual Symptoms": "Various types of mould and rot on leaves during flue-curing. Different micro-organisms are involved compared to air-curing due to higher temperatures.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10838",
+      "management": {
+        "prevention": [
+          "Maintain precise control of moisture and temperature during the curing process.",
+          "Ensure curing temperatures range from 35 to 70°C as required."
+        ],
+        "monitoring": [
+          "Monitor leaves for damage from micro-organisms, which can be different from those in air-curing."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Pest Common Name": "Bugs",
+      "Scientific Name": "Carpocoris verbasci, Carpocoris lunula, Nezara viridula, Palomena prasina, Strachia oleracea, Lygus spp.",
+      "Feeding Guild": "Sucking Pest",
+      "Characteristic Visual Damage": "Total or partial wilting of leaves, which may turn yellow and necrotic. Lamina deformations and curling can occur after a bug bite on the midrib.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10861",
+      "management": {
+        "prevention": [],
+        "monitoring": [
+          "Monitor for wilting, yellowing, and necrotic leaves.",
+          "Check for lamina deformations."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Pest Common Name": "Leaf-cutting insects",
+      "Scientific Name": "Conocephalus mandibulasis, Lacusta viridissima, Manduca sexta, Manduca quemanculata, Popillia japonica",
+      "Feeding Guild": "Defoliator",
+      "Characteristic Visual Damage": "Consumption of significant portions of the lamina. With high pest populations, only midribs may remain.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/11069",
+      "management": {
+        "prevention": [],
+        "monitoring": [
+          "Monitor for holes in leaves and defoliation."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Pest Common Name": "Soil pests",
+      "Scientific Name": "Agriotes spp., Melolontha melolontha, Korscheltellus lupulinus, Forficula auricularia, Deroceras reticulatum, Gryllotalpa gryllotalpa, Neocurtilla sp.",
+      "Feeding Guild": "Root Feeder, Stem Feeder, Defoliator",
+      "Characteristic Visual Damage": "Damage varies by pest, but can include emptying of the stem, perforation and cutting of the stem at the soil level, consumption of roots, and cutting of leaves.",
+      "Key Plant Parts Affected": [
+        "Roots",
+        "Stem",
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/11040",
+      "management": {
+        "prevention": [],
+        "monitoring": [
+          "Monitor for various types of damage to roots, stems, and leaves."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Pest Common Name": "Pests of stored leaves",
+      "Scientific Name": "Lasioderma serricorne, Ephestia elutella",
+      "Feeding Guild": "Stored Product Pest",
+      "Characteristic Visual Damage": "Larvae make galleries in piles of tobacco leaves. Adult beetles emerge from pupal chambers by making small holes to the outside.",
+      "Key Plant Parts Affected": [
+        "Stored Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/11071",
+      "management": {
+        "prevention": [],
+        "monitoring": [
+          "Monitor for galleries and holes in stored tobacco leaves."
+        ],
+        "direct_control": []
       }
     }
   ],
@@ -593,6 +1413,91 @@
           "Apply appropriate insecticides like flubendiamide or indoxacarb, following all label directions."
         ]
       }
+    },
+    {
+      "Pest Common Name": "Chrysanthemum foliar nematode, Checkered leaf disease",
+      "Scientific Name": "Aphelenchoides ritzemabosi",
+      "Feeding Guild": "Leaf Feeder",
+      "Characteristic Visual Damage": "Causes large polygonal spots on the leaves which are first light green to yellow, then turn to brown or black, giving the leaves the appearance of a checkerboard.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10820",
+      "management": {
+        "prevention": [
+          "Remove plant debris during and at the end of the crop to avoid the survival of the nematode in the soil.",
+          "Disinfect shelters carefully if they will be used to produce seedlings.",
+          "Control weeds, as the nematode is hosted by a large number of them."
+        ],
+        "monitoring": [
+          "Monitor for large, polygonal, discolored spots on leaves."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Pest Common Name": "Stem-break nematode",
+      "Scientific Name": "Ditylenchus dipsaci",
+      "Feeding Guild": "Stem Feeder",
+      "Characteristic Visual Damage": "Newly developed leaves grow asymmetrically and are 'twisted'. The cortical tissue at the collar level is swollen and distorted, and can decompose, leading to stem breakage.",
+      "Key Plant Parts Affected": [
+        "Stem",
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10821",
+      "management": {
+        "prevention": [
+          "Promptly remove and destroy stems at the end of the season.",
+          "Choose crop rotations carefully, avoiding susceptible crops like beets."
+        ],
+        "monitoring": [
+          "Monitor for asymmetrical and twisted new leaves.",
+          "Check for swollen and distorted tissue at the collar."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Pest Common Name": "Tobacco cyst nematodes",
+      "Scientific Name": "Globodera tabacum",
+      "Feeding Guild": "Root Feeder",
+      "Characteristic Visual Damage": "Produces cysts on the roots that are first white and then gradually darken. The root system shows numerous brown lesions and reduced growth. Affected plants show restricted development and wilt during the hottest periods of the day.",
+      "Key Plant Parts Affected": [
+        "Roots"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10823",
+      "management": {
+        "prevention": [
+          "Many methods for managing Meloidogyne spp. can also be used to control Globodera spp."
+        ],
+        "monitoring": [
+          "Monitor for white to dark cysts on the roots.",
+          "Check for brown lesions and reduced growth of the root system.",
+          "Look for stunted plants that wilt in the heat."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Pest Common Name": "Brown root rot",
+      "Scientific Name": "Pratylenchus spp.",
+      "Feeding Guild": "Root Feeder",
+      "Characteristic Visual Damage": "Causes lesions of varying size on the roots, with colors from yellowish to reddish-brown or black. Portions of the cortex decay, and in severe cases, a large proportion of the root system may disappear. Plants are stunted, may turn yellow, and wilt on hot days.",
+      "Key Plant Parts Affected": [
+        "Roots"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10824",
+      "management": {
+        "prevention": [
+          "Choose crop rotations carefully due to the wide host range of these nematodes.",
+          "Varieties resistant to Meloidogyne incognita may show some resistance."
+        ],
+        "monitoring": [
+          "Monitor for lesions on the roots.",
+          "Check for stunted, yellowing, and wilting plants."
+        ],
+        "direct_control": []
+      }
     }
   ],
   "weeds_and_parasitic_plants": [
@@ -622,6 +1527,427 @@
           "Conduct fortnightly spot weeding as necessary.",
           "Apply appropriate herbicides like Clomazone or Fluazifop-P-butyl, following all label directions."
         ]
+      }
+    },
+    {
+      "Weed Name": "Dodder",
+      "Scientific Name": "Cuscuta spp.",
+      "Primary Visual Symptoms": "The parasite gradually colonises the tobacco plant by its voluble, leafless stems. On the stems, there are haustoria that enable dodder to absorb nutrients from its host. Dodder also has clusters of small flowers with different colours depending on the species (white, yellow, pink).",
+      "Key Plant Parts Affected": [
+        "Whole plant"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/11043",
+      "management": {
+        "prevention": [
+          "Use crop rotations with non-host plants.",
+          "Use herbicides against pre-emergence."
+        ],
+        "monitoring": [
+          "Monitor for voluble, leafless stems colonising the tobacco plant."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Weed Name": "Broomrape",
+      "Scientific Name": "Orobanche ramosa",
+      "Primary Visual Symptoms": "This plant produces neither roots nor chlorophyll and parasitises the roots of tobacco. It first occurs in summer by the appearance of flowering spikes from fifteen to forty centimeters in height. These flower spikes have pale-blue to purplish-blue flowers.",
+      "Key Plant Parts Affected": [
+        "Roots"
+      ],
+      "url": "http://ephytia.inra.fr/en/contents/view/10784",
+      "management": {
+        "prevention": [
+          "Avoid short rotations with known host crops (e.g., colza).",
+          "Manage weeds, as many are also hosts.",
+          "Clean tools carefully after use in an infested plot."
+        ],
+        "monitoring": [
+          "Monitor for the appearance of flowering spikes near tobacco plants.",
+          "Look for growth abnormalities (yellowing, stunting) in cases of severe infestation."
+        ],
+        "direct_control": [
+          "Use soil tools after harvest to separate the broomrape from tobacco before it seeds.",
+          "Apply appropriate herbicides.",
+          "Plant a trap crop (e.g., colza, mustard) and destroy it before the parasite can produce seeds."
+        ]
+      }
+    }
+  ],
+  "non_parasitic_diseases": [
+    {
+      "Disease Name": "Diseases related to agricultural practices",
+      "Causal Agents": "Abiotic",
+      "Primary Visual Symptoms": "Reduction in seedling growth, yellowing, browning along the leaf blade, and drying up. Can be caused by excessive irrigation, high calcium bicarbonate in water, poor mineral content, or high concentration of soluble salts.",
+      "Key Plant Parts Affected": [
+        "Whole plant",
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/11039",
+      "management": {
+        "prevention": [
+          "Ensure proper irrigation.",
+          "Use water with balanced mineral content.",
+          "Avoid excessive use of pesticides."
+        ],
+        "monitoring": [
+          "Monitor for reduced growth and discoloration of leaves."
+        ],
+        "direct_control": [
+          "Several consecutive waterings over the top can solve problems related to high soluble salts."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Genetic abnormalities",
+      "Causal Agents": "Genetic",
+      "Primary Visual Symptoms": "Modified habit, colour and shape of some of its organs. Examples include 'ruffle leaf' (leaves curved downward, some with only a midrib), 'toad-skin' (dark green leaves with protrusions), and 'leaf curl' (leaves rolled upward).",
+      "Key Plant Parts Affected": [
+        "Whole plant",
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10862",
+      "management": {
+        "prevention": [
+          "Breeders should avoid introducing these abnormalities into cultivated genotypes."
+        ],
+        "monitoring": [
+          "Monitor for plants with unusual growth habits or leaf shapes."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Root asphyxia",
+      "Causal Agents": "Abiotic (waterlogging)",
+      "Primary Visual Symptoms": "Sudden wilting of plants after heavy rain or waterlogging. The lamina turns more or less yellow and then dries up. In severe cases, plants may wilt and completely dry up.",
+      "Key Plant Parts Affected": [
+        "Roots",
+        "Whole plant"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10976",
+      "management": {
+        "prevention": [
+          "Ensure fields are well-drained.",
+          "Plant tobacco on relatively high ridges.",
+          "Avoid heavy soils."
+        ],
+        "monitoring": [
+          "Monitor for wilting and yellowing of plants after heavy rain."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Sunburn (sunscald)",
+      "Causal Agents": "Abiotic (heat and sun)",
+      "Primary Visual Symptoms": "Wide parts of tissues turning brown and gradually drying up on some growing tobacco leaves, particularly exposed to sunlight during periods of extreme heat. Leaves are very succulent and may partially wilt and dry up, especially on the leaf margins and at the tip.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10977",
+      "management": {
+        "prevention": [],
+        "monitoring": [
+          "Monitor for browning and drying of leaves during hot weather."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Corky collar disease",
+      "Causal Agents": "Abiotic (micro-asphyxia)",
+      "Primary Visual Symptoms": "Corky lesions at the base of the tobacco stem. Slight chlorosis and wilting of plants during the hottest periods of the day, a slowdown in growth. Suberisation and collar rot and taproot that have more or less important bursts.",
+      "Key Plant Parts Affected": [
+        "Stem",
+        "Collar",
+        "Roots"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10991",
+      "management": {
+        "prevention": [
+          "Avoid agricultural practices causing water stagnation."
+        ],
+        "monitoring": [
+          "Monitor for chlorosis, wilting, and corky lesions on the collar."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Hail injuries",
+      "Causal Agents": "Abiotic (hail)",
+      "Primary Visual Symptoms": "Holes, splits, and localised necrotic lesions on leaves, stems and inflorescences, corresponding to the points of impact. Some leaves can be completely shredded.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Stem",
+        "Flowers"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10878",
+      "management": {
+        "prevention": [],
+        "monitoring": [
+          "Monitor for physical damage to plants after hailstorms."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Climate-related diseases",
+      "Causal Agents": "Abiotic (cold)",
+      "Primary Visual Symptoms": "Affected young leaves are partially or completely translucent and tend to become spoon-shaped. Subsequently, affected leaves may be distorted and show discolorations.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/11038",
+      "management": {
+        "prevention": [
+          "Protect seedlings from cold, as tobacco is a plant of tropical origin."
+        ],
+        "monitoring": [
+          "Monitor for translucent, spoon-shaped, and discolored leaves on seedlings."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Nutritional deficiencies",
+      "Causal Agents": "Abiotic (nutrient imbalance)",
+      "Primary Visual Symptoms": "Symptoms vary depending on the deficient nutrient, but often include yellowing, chlorosis, and necrosis on leaves, as well as stunting and deformation. Symptoms can appear on lower or younger leaves depending on the nutrient.",
+      "Key Plant Parts Affected": [
+        "Whole plant",
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10967",
+      "management": {
+        "prevention": [
+          "Ensure balanced fertilization based on soil tests."
+        ],
+        "monitoring": [
+          "Monitor for discoloration and deformation of leaves.",
+          "Consult a specialist and carry out soil and vegetation analyses if deficiencies are suspected."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Root primordia",
+      "Causal Agents": "Abiotic (stress)",
+      "Primary Visual Symptoms": "Adventitious roots gradually appear on tobacco plant stems. One can first observe the development of many isolated protrusions along the stem. They will later open, giving birth to a very short root, a primordium.",
+      "Key Plant Parts Affected": [
+        "Stem"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/11011",
+      "management": {
+        "prevention": [
+          "Ensure the root system and stem are in good condition, as this phenomenon can be a marker of plant malfunction."
+        ],
+        "monitoring": [
+          "Monitor for the appearance of adventitious roots on the stem."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Stem split (Physiological split)",
+      "Causal Agents": "Abiotic (stress)",
+      "Primary Visual Symptoms": "Longitudinal stem splits in a few tobacco plants. They often reflect an excess of plant vigour which may occur especially after a climatic and water stress.",
+      "Key Plant Parts Affected": [
+        "Stem"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/11012",
+      "management": {
+        "prevention": [],
+        "monitoring": [
+          "Monitor for longitudinal splits in the stem."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Scabby stalk",
+      "Causal Agents": "Genetic",
+      "Primary Visual Symptoms": "Flattening and broadening of the stem, which tends to be grooved (fasciation). Superficial moist lesions on the midrib, the stem and occasionally the flower spikes, that first turn grey-brown and are later covered with cracks.",
+      "Key Plant Parts Affected": [
+        "Stem",
+        "Midrib",
+        "Flowers"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/11013",
+      "management": {
+        "prevention": [
+          "Breeders should be careful when doing crosses, as these flaws are easily passed on to offspring."
+        ],
+        "monitoring": [
+          "Monitor for flattened, grooved stems and lesions on various plant parts."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Lightning injuries",
+      "Causal Agents": "Abiotic (lightning)",
+      "Primary Visual Symptoms": "Circular areas in tobacco fields that suddenly wilt. Leaves are distorted, their midribs and veins are often brown and necrotic, and interveinal tissues tend to become necrotic. The stem is also injured and it may have superficial brown lesions. The pith shrinks and takes the appearance of several stacked discs.",
+      "Key Plant Parts Affected": [
+        "Whole plant",
+        "Leaves",
+        "Stem",
+        "Pith"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10975",
+      "management": {
+        "prevention": [],
+        "monitoring": [
+          "Monitor for circular areas of wilting plants after a storm."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Non-parasitic diseases of cured tobacco",
+      "Causal Agents": "Abiotic (curing conditions)",
+      "Primary Visual Symptoms": "Various lesions on cured leaves, such as green spots, greenish tissues, dark or greyish colors, and browning or blackening of tissues adjacent to veins. These are caused by issues during cultivation, harvesting, or curing.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10839",
+      "management": {
+        "prevention": [
+          "Ensure good quality of leaves at harvest.",
+          "Handle leaves carefully during harvest.",
+          "Manage curing conditions properly."
+        ],
+        "monitoring": [
+          "Monitor for lesions on leaves during and after curing."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Chemical injuries",
+      "Causal Agents": "Abiotic (pesticides, herbicides)",
+      "Primary Visual Symptoms": "Symptoms vary widely but can include yellowing, bleaching, spotting, and deformation of leaves, as well as changes in plant habit. The distribution of symptoms can be general or localized depending on the source of the injury.",
+      "Key Plant Parts Affected": [
+        "Whole plant",
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10968",
+      "management": {
+        "prevention": [
+          "Use pesticides and herbicides at appropriate doses and stages of plant growth.",
+          "Rinse treatment equipment thoroughly.",
+          "Be aware of the potential for herbicide residues in the soil."
+        ],
+        "monitoring": [
+          "Monitor for unusual symptoms after pesticide or herbicide application."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Polyphylla (or 'Frenching')",
+      "Causal Agents": "Abiotic (toxin from Bacillus cereus)",
+      "Primary Visual Symptoms": "Marked yellowing of interveinal tissues, with veins remaining green. New leaves are slender, with the tip curled down and wavy edges. Proliferation of axillary buds gives the plant a 'witches broom' appearance.",
+      "Key Plant Parts Affected": [
+        "Leaves",
+        "Whole plant"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/11072",
+      "management": {
+        "prevention": [
+          "Drain the plot to avoid excessive moisture.",
+          "Avoid excessive intake of soil alkalising elements.",
+          "Ensure balanced fertilisation."
+        ],
+        "monitoring": [
+          "Monitor for yellowing of interveinal tissues and abnormal leaf shape."
+        ],
+        "direct_control": [
+          "Soil disinfection usually results in control of this problem in nursery."
+        ]
+      }
+    },
+    {
+      "Disease Name": "Rusts (Physiological spots)",
+      "Causal Agents": "Abiotic (physiological)",
+      "Primary Visual Symptoms": "In France, the name 'rust' is frequently improperly used to designate brown spots, often of physiological nature. For more information, see 'Pollution spots (weather fleck)'.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10957",
+      "management": {
+        "prevention": [],
+        "monitoring": [],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Hardpan",
+      "Causal Agents": "Abiotic (soil compaction)",
+      "Primary Visual Symptoms": "The root system of tobacco commonly presents a very shallow configuration. The impermeable pan can induce waterlogging, causing alteration and browning of roots and wilting of the plant.",
+      "Key Plant Parts Affected": [
+        "Roots",
+        "Whole plant"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10984",
+      "management": {
+        "prevention": [
+          "Avoid soil cultivation in bad conditions."
+        ],
+        "monitoring": [
+          "Monitor for shallow root systems and wilting plants."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Wet spots",
+      "Causal Agents": "Abiotic (water on leaves)",
+      "Primary Visual Symptoms": "Wet, then brown, isolated or confluent spots on the underside of tobacco leaves, sometimes localised along the veins. The spots lighten quite rapidly.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10915",
+      "management": {
+        "prevention": [],
+        "monitoring": [
+          "Monitor for wet, brown spots on the underside of leaves."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Pollution spots (weather fleck)",
+      "Causal Agents": "Abiotic (ozone, other pollutants)",
+      "Primary Visual Symptoms": "Many small spots, located mostly on the upper side of lamina, sometimes contiguous and located along the midrib and secondary veins. Their colour changes over time and turns fairly quickly from brown at first, to greyish white afterwards.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10914",
+      "management": {
+        "prevention": [
+          "Grow least sensitive varieties in areas where air pollution is high."
+        ],
+        "monitoring": [
+          "Monitor for small, discolored spots on the upper side of leaves."
+        ],
+        "direct_control": []
+      }
+    },
+    {
+      "Disease Name": "Drought spots",
+      "Causal Agents": "Abiotic (drought)",
+      "Primary Visual Symptoms": "Red-brown necrosis between the veins of the lower leaves of tobacco plants. Often occurs simultaneously in several fields of the same production area.",
+      "Key Plant Parts Affected": [
+        "Leaves"
+      ],
+      "url": "http://ephytia.inra.fr/en/Contents/view/10974",
+      "management": {
+        "prevention": [],
+        "monitoring": [
+          "Monitor for red-brown necrosis on lower leaves."
+        ],
+        "direct_control": []
       }
     }
   ]
