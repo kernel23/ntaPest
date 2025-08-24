@@ -167,6 +167,9 @@
                         By signing in, you agree to our <a href="#" id="privacy-policy-link" class="underline hover:text-white">Privacy Policy</a>. All personal data is encrypted in transit.
                     </div>
                 </div>
+                <div id="weather-dashboard-container" class="w-full md:w-1/2 p-6 hidden md:flex flex-col justify-center items-center">
+                    <!-- Weather dashboard will be inserted here -->
+                </div>
                 <div id="pest-cards-container" class="w-full md:w-1/2 p-6 hidden md:flex md:flex-wrap md:justify-center overflow-y-auto">
                     <!-- Pest and disease cards will be inserted here by JavaScript -->
                 </div>
@@ -1274,6 +1277,80 @@
             }, 300); // Match transition duration
         });
 
+        // --- Weather Dashboard Logic ---
+        async function loadWeatherDashboard() {
+            const container = document.getElementById('weather-dashboard-container');
+            if (!container) return;
+
+            // Default location: Vigan City, Ilocos Sur, Philippines
+            const lat = 17.5747;
+            const lon = 120.3869;
+
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m,precipitation_probability&timezone=Asia/Manila`;
+
+            container.innerHTML = `<div class="text-center text-white p-6"><p>Loading weather...</p></div>`;
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error('Weather data not available');
+                }
+                const data = await response.json();
+                const weather = data.current;
+
+                const { text, icon } = getWeatherInfo(weather.weather_code);
+
+                const weatherHTML = `
+                    <div class="bg-black bg-opacity-20 p-6 rounded-lg text-center shadow-lg backdrop-blur-sm border border-white/10 w-full max-w-sm">
+                        <h3 class="text-2xl font-bold text-white mb-2">Current Weather</h3>
+                        <p class="text-lg text-gray-300 mb-4">Vigan City, Ilocos Sur</p>
+                        <div class="flex items-center justify-center space-x-4 mb-4">
+                            <i data-lucide="${icon}" class="w-16 h-16 text-[#f1c232]"></i>
+                            <p class="text-5xl font-bold text-white">${Math.round(weather.temperature_2m)}°C</p>
+                        </div>
+                        <p class="text-xl text-gray-200 capitalize mb-6">${text}</p>
+                        <div class="flex justify-around text-sm w-full">
+                            <div class="text-center">
+                                <p class="font-bold text-gray-300">Precipitation</p>
+                                <p>${weather.precipitation_probability}%</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="font-bold text-gray-300">Wind</p>
+                                <p>${weather.wind_speed_10m} km/h</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML = weatherHTML;
+                lucide.createIcons();
+
+            } catch (error) {
+                console.error('Error fetching weather data:', error);
+                container.innerHTML = `<div class="text-center text-white p-6 bg-red-500/30 rounded-lg"><p>Could not load weather data.</p></div>`;
+            }
+        }
+
+        function getWeatherInfo(code) {
+            const weatherMap = {
+                0: { text: "Clear sky", icon: "sun" },
+                1: { text: "Mainly clear", icon: "sun" },
+                2: { text: "Partly cloudy", icon: "cloud-sun" },
+                3: { text: "Overcast", icon: "cloud" },
+                45: { text: "Fog", icon: "cloud-fog" },
+                46: { text: "Depositing rime fog", icon: "cloud-fog" },
+                51: { text: "Light drizzle", icon: "cloud-drizzle" },
+                53: { text: "Moderate drizzle", icon: "cloud-drizzle" },
+                55: { text: "Dense drizzle", icon: "cloud-drizzle" },
+                61: { text: "Slight rain", icon: "cloud-rain" },
+                63: { text: "Moderate rain", icon: "cloud-rain" },
+                65: { text: "Heavy rain", icon: "cloud-rain" },
+                80: { text: "Slight rain showers", icon: "cloud-hail" },
+                81: { text: "Moderate rain showers", icon: "cloud-hail" },
+                82: { text: "Violent rain showers", icon: "cloud-hail" },
+            };
+            return weatherMap[code] || { text: "Unknown", icon: "cloud-question" };
+        }
+
 
         // --- Sidebar is now fixed, toggle logic removed ---
 
@@ -2163,6 +2240,7 @@
                 userProfile = null;
                 showScreen('login');
                 await loadPestAndDiseaseCards();
+                loadWeatherDashboard();
             }
         });
 
