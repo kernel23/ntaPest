@@ -31,6 +31,38 @@
     {
       "name": "Root-Knot Nematodes",
       "image_url": "https://bugwoodcloud.org/images/384x256/5442741.jpg"
+    },
+    {
+      "name": "Bugs",
+      "image_url": "http://ephytia.inra.fr/en/IC/17983/tabac093"
+    },
+    {
+      "name": "Leaf-cutting insects",
+      "image_url": "http://ephytia.inra.fr/en/IC/25528/Leaf-cutting-insects"
+    },
+    {
+      "name": "Soil pests",
+      "image_url": "http://ephytia.inra.fr/en/IC/25442/Soil-pests"
+    },
+    {
+      "name": "Pests of stored leaves",
+      "image_url": "http://ephytia.inra.fr/en/IC/25537/Pests-of-stored-leaves"
+    },
+    {
+      "name": "Chrysanthemum foliar nematode, Checkered leaf disease",
+      "image_url": "http://ephytia.inra.fr/en/IC/24490/Aphelenchoides-ritzemabosi"
+    },
+    {
+      "name": "Stem-break nematode",
+      "image_url": "https://ephytia.inra.fr/en/I/19051/ditylenchus-oignon"
+    },
+    {
+      "name": "Tobacco cyst nematodes",
+      "image_url": "http://ephytia.inra.fr/en/IC/24503/Globodera-tabacum"
+    },
+    {
+      "name": "Brown root rot",
+      "image_url": "http://ephytia.inra.fr/en/IC/24508/Pratylenchus-spp"
     }
   ],
   "diseases": [
@@ -73,6 +105,154 @@
     {
       "name": "Wildfire and Angular Leaf Spot",
       "image_url": "https://bugwoodcloud.org/images/384x256/1402023.jpg"
+    },
+    {
+      "name": "Damping-off, Basal root rots",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24321"
+    },
+    {
+      "name": "Grey mould",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24283"
+    },
+    {
+      "name": "Black root rot",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24347"
+    },
+    {
+      "name": "Anthracnose",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/25014"
+    },
+    {
+      "name": "White mould, Powdery mildew",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24271"
+    },
+    {
+      "name": "Ragged leaf spot, Phoma leaf blight",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/25008"
+    },
+    {
+      "name": "Athelia stem rot, Southern stem rot",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/25211"
+    },
+    {
+      "name": "Calonectria crotalariae",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/25218"
+    },
+    {
+      "name": "Helicobasidium monpa",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/25216"
+    },
+    {
+      "name": "Macrophomina phaseolina",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/25214"
+    },
+    {
+      "name": "Root burn disease",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24318"
+    },
+    {
+      "name": "Collar rot",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24289"
+    },
+    {
+      "name": "Fusariosis, Fusarium wilt",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24364"
+    },
+    {
+      "name": "Verticilliosis, Verticillium wilt",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24359"
+    },
+    {
+      "name": "Black soft rot of stem and leaves, Hollow stalk",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24412"
+    },
+    {
+      "name": "Black spot disease",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24376"
+    },
+    {
+      "name": "Stolbur, big bud",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24185"
+    },
+    {
+      "name": "Alfalfa mosaic virus (AMV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/18125/tabac138b"
+    },
+    {
+      "name": "Beet curly top virus (BCTV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/24934/Beet-curly-top-virus-BCTV"
+    },
+    {
+      "name": "Peanut stunt virus (PSV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/24972/Peanut-stunt-virus-PSV"
+    },
+    {
+      "name": "Potato virus X (PVX)",
+      "image_url": "http://ephytia.inra.fr/en/IC/24959/Potato-virus-X-PVX"
+    },
+    {
+      "name": "Tobacco bushy top virus (TBTV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/24968/Tobacco-bushy-top-virus-TBTV"
+    },
+    {
+      "name": "Tobacco etch virus (TEV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/18040/tabac196-197"
+    },
+    {
+      "name": "Tobacco mosaic virus (TMV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/18041/tabac198-199"
+    },
+    {
+      "name": "Tobacco ring spot virus (TRSV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/18128/tabac141b"
+    },
+    {
+      "name": "Tobacco rattle virus (TRV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/24944/Tobacco-rattle-virus-TRV"
+    },
+    {
+      "name": "Tobacco stunt virus (TStV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/24949/Tobacco-stunt-virus-TStV"
+    },
+    {
+      "name": "Tobacco necrosis virus (TNV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/24954/Tobacco-necrosis-virus-TNV"
+    },
+    {
+      "name": "Tobacco yellow dwarf virus (TYDV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/24930/Tobacco-yellow-dwarf-virus-TYDV"
+    },
+    {
+      "name": "Tobacco leaf curl virus (TLCV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/24939/Tobacco-leaf-curl-virus-TLCV"
+    },
+    {
+      "name": "Tobacco vein banding mosaic virus (TVBMV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/24963/Tobacco-vein-banding-mosaic-virus-TVBMV"
+    },
+    {
+      "name": "Tobacco streak virus (TSV)",
+      "image_url": "http://ephytia.inra.fr/en/IC/24977/Tobacco-streak-virus-TSV"
+    },
+    {
+      "name": "Pests of air-cured tobacco leaves",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24614"
+    },
+    {
+      "name": "Pests of flue-cured tobacco leaves",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24614"
+    },
+    {
+      "name": "Purple Nutsedge",
+      "image_url": "https://www.cabi.org/isc/images/datasheet/17538_1.jpg"
+    },
+    {
+      "name": "Dodder",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/25458"
+    },
+    {
+      "name": "Broomrape",
+      "image_url": "http://ephytia.inra.fr/en/Images/view/24225"
     }
   ]
 }
