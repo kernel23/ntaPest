@@ -1324,7 +1324,7 @@
             }
 
             // 2. Fetch comprehensive weather data
-            const weatherParams = "temperature_2m,relative_humidity_2m,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,soil_moisture_0_to_1cm,et_0_fao_evapotranspiration";
+            const weatherParams = "temperature_2m,relative_humidity_2m,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,soil_moisture_0_to_1cm,et0_fao_evapotranspiration";
             const dailyParams = "sunrise,sunset";
             const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=${weatherParams}&daily=${dailyParams}&timezone=Asia/Manila&forecast_days=1`;
 
