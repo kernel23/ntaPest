@@ -559,18 +559,31 @@
 
                     <fieldset id="symptoms-checklist" class="mt-6">
                         <legend class="text-base font-medium text-gray-900">Observed Symptoms</legend>
-                        <div class="mt-4 grid grid-cols-2 gap-4">
-                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-spots" value="spots" type="checkbox" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-spots" class="font-medium text-gray-700">Leaf Spots</label></div></div>
-                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-wilting" value="wilting" type="checkbox" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-wilting" class="font-medium text-gray-700">Wilting</label></div></div>
-                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-yellowing" value="yellowing" type="checkbox" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-yellowing" class="font-medium text-gray-700">Yellowing</label></div></div>
+                        <div class="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-leaf-spots" value="leaf-spots" type="checkbox" class="symptom-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-leaf-spots" class="font-medium text-gray-700">Leaf Spots</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-wilting" value="wilting" type="checkbox" class="symptom-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-wilting" class="font-medium text-gray-700">Wilting</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-yellowing" value="yellowing" type="checkbox" class="symptom-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-yellowing" class="font-medium text-gray-700">Yellowing</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-stunted-growth" value="stunted-growth" type="checkbox" class="symptom-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-stunted-growth" class="font-medium text-gray-700">Stunted Growth</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-holes-in-leaves" value="holes-in-leaves" type="checkbox" class="symptom-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-holes-in-leaves" class="font-medium text-gray-700">Holes in Leaves</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-galls" value="galls" type="checkbox" class="symptom-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-galls" class="font-medium text-gray-700">Galls (swellings)</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-mosaic" value="mosaic" type="checkbox" class="symptom-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-mosaic" class="font-medium text-gray-700">Mosaic/Mottling</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-leaf-curl" value="leaf-curl" type="checkbox" class="symptom-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-leaf-curl" class="font-medium text-gray-700">Leaf Curling/Distortion</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-sooty-mold" value="sooty-mold" type="checkbox" class="symptom-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-sooty-mold" class="font-medium text-gray-700">Sooty Mould</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-rust" value="rust" type="checkbox" class="symptom-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-rust" class="font-medium text-gray-700">Rust</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-stem-lesions" value="stem-lesions" type="checkbox" class="symptom-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-stem-lesions" class="font-medium text-gray-700">Stem Lesions/Cankers</label></div></div>
+                            <div class="flex items-start"><div class="flex items-center h-5"><input id="symptom-root-rot" value="root-rot" type="checkbox" class="symptom-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="symptom-root-rot" class="font-medium text-gray-700">Root Rot</label></div></div>
                         </div>
                     </fieldset>
 
                     <fieldset id="distribution-radios" class="mt-6">
-                        <legend class="text-base font-medium text-gray-900">Pest/Disease Distribution</legend>
-                        <div class="mt-4 space-y-4">
-                            <div class="flex items-center"><input id="dist-isolated" name="distribution" value="isolated" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="dist-isolated" class="ml-3 block text-sm font-medium text-gray-700">Isolated Plants</label></div>
-                            <div class="flex items-center"><input id="dist-patches" name="distribution" value="patches" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="dist-patches" class="ml-3 block text-sm font-medium text-gray-700">In Patches</label></div>
+                        <legend class="text-base font-medium text-gray-900">Pest/Disease Distribution in the Field</legend>
+                        <div class="mt-4 grid grid-cols-2 gap-4">
+                            <div class="flex items-center"><input id="dist-isolated" name="distribution" value="isolated" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="dist-isolated" class="ml-3 block text-sm font-medium text-gray-700">Isolated / Random</label></div>
+                            <div class="flex items-center"><input id="dist-patches" name="distribution" value="patches" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="dist-patches" class="ml-3 block text-sm font-medium text-gray-700">In Patches (Foci)</label></div>
+                            <div class="flex items-center"><input id="dist-lines" name="distribution" value="lines" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="dist-lines" class="ml-3 block text-sm font-medium text-gray-700">In Lines / Rows</label></div>
+                            <div class="flex items-center"><input id="dist-overall" name="distribution" value="overall" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="dist-overall" class="ml-3 block text-sm font-medium text-gray-700">Overall (Whole Plot)</label></div>
+                            <div class="flex items-center"><input id="dist-edge" name="distribution" value="edge" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="dist-edge" class="ml-3 block text-sm font-medium text-gray-700">Edge of Field</label></div>
+                            <div class="flex items-center"><input id="dist-low-lying" name="distribution" value="low-lying" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="dist-low-lying" class="ml-3 block text-sm font-medium text-gray-700">Low-lying Areas</label></div>
                         </div>
                     </fieldset>
 
@@ -582,6 +595,38 @@
                             <div class="flex items-center"><input id="sev-high" name="severity" value="high" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="sev-high" class="ml-3 block text-sm font-medium text-gray-700">High</label></div>
                         </div>
                     </fieldset>
+
+                    <div id="additional-questions" class="mt-6 space-y-6">
+                        <fieldset>
+                            <legend class="text-base font-medium text-gray-900">Affected Plant Parts</legend>
+                            <div class="mt-4 grid grid-cols-2 gap-4">
+                                <div class="flex items-start"><div class="flex items-center h-5"><input id="part-leaves" value="leaves" type="checkbox" class="affected-part-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="part-leaves" class="font-medium text-gray-700">Leaves</label></div></div>
+                                <div class="flex items-start"><div class="flex items-center h-5"><input id="part-stems" value="stems" type="checkbox" class="affected-part-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="part-stems" class="font-medium text-gray-700">Stems</label></div></div>
+                                <div class="flex items-start"><div class="flex items-center h-5"><input id="part-roots" value="roots" type="checkbox" class="affected-part-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="part-roots" class="font-medium text-gray-700">Roots</label></div></div>
+                                <div class="flex items-start"><div class="flex items-center h-5"><input id="part-flowers" value="flowers" type="checkbox" class="affected-part-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="part-flowers" class="font-medium text-gray-700">Flowers / Buds</label></div></div>
+                                <div class="flex items-start"><div class="flex items-center h-5"><input id="part-whole" value="whole-plant" type="checkbox" class="affected-part-checkbox focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300 rounded"></div><div class="ml-3 text-sm"><label for="part-whole" class="font-medium text-gray-700">Whole Plant</label></div></div>
+                            </div>
+                        </fieldset>
+
+                        <div>
+                            <label for="symptom-onset-date" class="block text-sm font-medium text-gray-700">When did symptoms first appear?</label>
+                            <input type="date" id="symptom-onset-date" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                        </div>
+
+                        <fieldset>
+                            <legend class="text-base font-medium text-gray-900">Symptom Progression</legend>
+                            <div class="mt-4 space-y-4">
+                                <div class="flex items-center"><input id="prog-spreading" name="progression" value="spreading" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="prog-spreading" class="ml-3 block text-sm font-medium text-gray-700">Spreading</label></div>
+                                <div class="flex items-center"><input id="prog-improving" name="progression" value="improving" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="prog-improving" class="ml-3 block text-sm font-medium text-gray-700">Improving</glabel></div>
+                                <div class="flex items-center"><input id="prog-constant" name="progression" value="constant" type="radio" class="focus:ring-[#455b3c] h-4 w-4 text-[#455b3c] border-gray-300"><label for="prog-constant" class="ml-3 block text-sm font-medium text-gray-700">Constant</label></div>
+                            </div>
+                        </fieldset>
+
+                        <div>
+                            <label for="pest-signs" class="block text-sm font-medium text-gray-700">Signs of Pests</label>
+                            <textarea id="pest-signs" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]" placeholder="e.g., visible insects, eggs, webs, trails, etc."></textarea>
+                        </div>
+                    </div>
                     
                     <button id="save-submission-btn" class="mt-8 w-full bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-3 px-4 rounded-lg shadow-md">Save Submission</button>
                 </main>
