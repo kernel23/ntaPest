@@ -1282,13 +1282,35 @@
             const container = document.getElementById('weather-dashboard-container');
             if (!container) return;
 
-            // Default location: Vigan City, Ilocos Sur, Philippines
-            const lat = 17.5747;
-            const lon = 120.3869;
+            container.innerHTML = `<div class="text-center text-white p-6"><p>Fetching location...</p></div>`;
 
+            const locationSuccess = (position) => {
+                const { latitude, longitude } = position.coords;
+                fetchAndDisplayWeather(latitude, longitude, 'Your Location');
+            };
+
+            const locationError = (error) => {
+                console.warn(`Could not get location (${error.code}): ${error.message}`);
+                // Fallback to default location
+                fetchAndDisplayWeather(17.5747, 120.3869, 'Vigan City, Ilocos Sur');
+            };
+
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(locationSuccess, locationError, {
+                    enableHighAccuracy: false,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+            } else {
+                console.warn('Geolocation is not supported by this browser.');
+                locationError({ code: -1, message: "Geolocation not supported" });
+            }
+        }
+
+        async function fetchAndDisplayWeather(lat, lon, locationName) {
+            const container = document.getElementById('weather-dashboard-container');
             const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m,precipitation_probability&timezone=Asia/Manila`;
-
-            container.innerHTML = `<div class="text-center text-white p-6"><p>Loading weather...</p></div>`;
+            container.innerHTML = `<div class="text-center text-white p-6"><p>Loading weather for ${locationName}...</p></div>`;
 
             try {
                 const response = await fetch(apiUrl);
@@ -1303,7 +1325,7 @@
                 const weatherHTML = `
                     <div class="bg-black bg-opacity-20 p-6 rounded-lg text-center shadow-lg backdrop-blur-sm border border-white/10 w-full max-w-sm">
                         <h3 class="text-2xl font-bold text-white mb-2">Current Weather</h3>
-                        <p class="text-lg text-gray-300 mb-4">Vigan City, Ilocos Sur</p>
+                        <p class="text-lg text-gray-300 mb-4">${locationName}</p>
                         <div class="flex items-center justify-center space-x-4 mb-4">
                             <i data-lucide="${icon}" class="w-16 h-16 text-[#f1c232]"></i>
                             <p class="text-5xl font-bold text-white">${Math.round(weather.temperature_2m)}°C</p>
