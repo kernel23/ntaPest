@@ -167,6 +167,9 @@
                         By signing in, you agree to our <a href="#" id="privacy-policy-link" class="underline hover:text-white">Privacy Policy</a>. All personal data is encrypted in transit.
                     </div>
                 </div>
+                <div id="weather-dashboard-container" class="w-full md:w-1/2 p-6 hidden md:flex flex-col justify-center items-center">
+                    <!-- Weather dashboard will be inserted here -->
+                </div>
                 <div id="pest-cards-container" class="w-full md:w-1/2 p-6 hidden md:flex md:flex-wrap md:justify-center overflow-y-auto">
                     <!-- Pest and disease cards will be inserted here by JavaScript -->
                 </div>
@@ -1274,6 +1277,152 @@
             }, 300); // Match transition duration
         });
 
+        // --- Weather Dashboard Logic ---
+        async function loadWeatherDashboard() {
+            const container = document.getElementById('weather-dashboard-container');
+            if (!container) return;
+
+            container.innerHTML = `<div class="text-center text-white p-6"><p>Fetching location...</p></div>`;
+
+            const locationSuccess = (position) => {
+                const { latitude, longitude } = position.coords;
+                fetchAndDisplayWeather(latitude, longitude);
+            };
+
+            const locationError = (error) => {
+                console.warn(`Could not get location (${error.code}): ${error.message}`);
+                // Fallback to default location
+                fetchAndDisplayWeather(17.5747, 120.3869);
+            };
+
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(locationSuccess, locationError, {
+                    enableHighAccuracy: false,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+            } else {
+                console.warn('Geolocation is not supported by this browser.');
+                locationError({ code: -1, message: "Geolocation not supported" });
+            }
+        }
+
+        async function fetchAndDisplayWeather(lat, lon) {
+            const container = document.getElementById('weather-dashboard-container');
+            container.innerHTML = `<div class="text-center text-white p-6"><p>Loading weather data...</p></div>`;
+
+            // 1. Reverse Geocoding to get location name
+            let locationName = "Unknown Location";
+            try {
+                const geoResponse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                const geoData = await geoResponse.json();
+                if (geoData.address) {
+                    locationName = `${geoData.address.village || geoData.address.town || geoData.address.city}, ${geoData.address.country}`;
+                }
+            } catch (e) {
+                console.error("Reverse geocoding failed:", e);
+            }
+
+            // 2. Fetch comprehensive weather data
+            const weatherParams = "temperature_2m,relative_humidity_2m,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,soil_moisture_0_to_1cm,et0_fao_evapotranspiration";
+            const dailyParams = "sunrise,sunset";
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=${weatherParams}&daily=${dailyParams}&timezone=Asia/Manila&forecast_days=1`;
+
+            try {
+                const weatherResponse = await fetch(apiUrl);
+                if (!weatherResponse.ok) {
+                    throw new Error('Weather data not available');
+                }
+                const data = await weatherResponse.json();
+                const weather = data.current;
+                const daily = data.daily;
+
+                const { text, icon } = getWeatherInfo(weather.weather_code);
+                const sunrise = new Date(daily.sunrise[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const sunset = new Date(daily.sunset[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                const weatherHTML = `
+                    <div class="bg-black bg-opacity-20 p-6 rounded-lg shadow-lg backdrop-blur-sm border border-white/10 w-full max-w-md">
+                        <div class="text-center mb-4">
+                            <h3 class="text-2xl font-bold text-white">Weather Dashboard</h3>
+                            <p class="text-lg text-gray-300">${locationName}</p>
+                        </div>
+                        <div class="flex items-center justify-center space-x-4 mb-6">
+                            <i data-lucide="${icon}" class="w-20 h-20 text-[#f1c232]"></i>
+                            <div>
+                                <p class="text-6xl font-bold text-white">${Math.round(weather.temperature_2m)}°C</p>
+                                <p class="text-xl text-gray-200 capitalize -mt-1">${text}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-white">
+                            <div class="text-center bg-white/10 p-3 rounded-lg">
+                                <i data-lucide="droplets" class="w-6 h-6 mx-auto mb-1 text-blue-300"></i>
+                                <p class="font-bold text-gray-300 text-sm">Humidity</p>
+                                <p>${weather.relative_humidity_2m}%</p>
+                            </div>
+                            <div class="text-center bg-white/10 p-3 rounded-lg">
+                                <i data-lucide="wind" class="w-6 h-6 mx-auto mb-1 text-gray-300"></i>
+                                <p class="font-bold text-gray-300 text-sm">Wind</p>
+                                <p>${weather.wind_speed_10m} km/h</p>
+                            </div>
+                             <div class="text-center bg-white/10 p-3 rounded-lg">
+                                <i data-lucide="compass" class="w-6 h-6 mx-auto mb-1 text-gray-300" style="transform: rotate(${weather.wind_direction_10m}deg);"></i>
+                                <p class="font-bold text-gray-300 text-sm">Direction</p>
+                                <p>${weather.wind_direction_10m}°</p>
+                            </div>
+                            <div class="text-center bg-white/10 p-3 rounded-lg">
+                                <i data-lucide="thermometer-snowflake" class="w-6 h-6 mx-auto mb-1 text-green-300"></i>
+                                <p class="font-bold text-gray-300 text-sm">Soil Moisture</p>
+                                <p>${(weather.soil_moisture_0_to_1cm || 0).toFixed(3)} m³/m³</p>
+                            </div>
+                            <div class="text-center bg-white/10 p-3 rounded-lg">
+                                <i data-lucide="sunrise" class="w-6 h-6 mx-auto mb-1 text-orange-300"></i>
+                                <p class="font-bold text-gray-300 text-sm">Sunrise</p>
+                                <p>${sunrise}</p>
+                            </div>
+                            <div class="text-center bg-white/10 p-3 rounded-lg">
+                                <i data-lucide="sunset" class="w-6 h-6 mx-auto mb-1 text-purple-300"></i>
+                                <p class="font-bold text-gray-300 text-sm">Sunset</p>
+                                <p>${sunset}</p>
+                            </div>
+                        </div>
+                         <div class="text-center bg-white/10 p-3 rounded-lg mt-4">
+                            <i data-lucide="leaf" class="w-6 h-6 mx-auto mb-1 text-lime-300"></i>
+                            <p class="font-bold text-gray-300 text-sm">Evapotranspiration (FAO)</p>
+                            <p>${(weather.et_0_fao_evapotranspiration || 0).toFixed(3)} mm</p>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML = weatherHTML;
+                lucide.createIcons();
+
+            } catch (error) {
+                console.error('Error fetching weather data:', error);
+                container.innerHTML = `<div class="text-center text-white p-6 bg-red-500/30 rounded-lg"><p>Could not load weather data.</p></div>`;
+            }
+        }
+
+        function getWeatherInfo(code) {
+            const weatherMap = {
+                0: { text: "Clear sky", icon: "sun" },
+                1: { text: "Mainly clear", icon: "sun" },
+                2: { text: "Partly cloudy", icon: "cloud-sun" },
+                3: { text: "Overcast", icon: "cloud" },
+                45: { text: "Fog", icon: "cloud-fog" },
+                46: { text: "Depositing rime fog", icon: "cloud-fog" },
+                51: { text: "Light drizzle", icon: "cloud-drizzle" },
+                53: { text: "Moderate drizzle", icon: "cloud-drizzle" },
+                55: { text: "Dense drizzle", icon: "cloud-drizzle" },
+                61: { text: "Slight rain", icon: "cloud-rain" },
+                63: { text: "Moderate rain", icon: "cloud-rain" },
+                65: { text: "Heavy rain", icon: "cloud-rain" },
+                80: { text: "Slight rain showers", icon: "cloud-hail" },
+                81: { text: "Moderate rain showers", icon: "cloud-hail" },
+                82: { text: "Violent rain showers", icon: "cloud-hail" },
+            };
+            return weatherMap[code] || { text: "Unknown", icon: "cloud-question" };
+        }
+
 
         // --- Sidebar is now fixed, toggle logic removed ---
 
@@ -2163,6 +2312,7 @@
                 userProfile = null;
                 showScreen('login');
                 await loadPestAndDiseaseCards();
+                loadWeatherDashboard();
             }
         });
 
