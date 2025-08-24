@@ -2,77 +2,253 @@
   "pests": [
     {
       "name": "Thrips",
-      "image_url": "https://bugwoodcloud.org/images/384x256/5535855.jpg"
+      "image_url": "https://content.ces.ncsu.edu/media/images/Thrips_1.jpg"
     },
     {
       "name": "Cutworms",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1440105.jpg"
+      "image_url": "https://content.ces.ncsu.edu/media/images/Cutworm_1.jpg"
     },
     {
       "name": "Aphids",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1402116.jpg"
+      "image_url": "https://content.ces.ncsu.edu/media/images/Aphids_1.jpg"
     },
     {
       "name": "Whiteflies",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1147020.jpg"
+      "image_url": "https://content.ces.ncsu.edu/media/images/Whitefly_1.jpg"
     },
     {
       "name": "Budworm / Bollworm / Caterpillar Complex",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1440111.jpg"
+      "image_url": "https://content.ces.ncsu.edu/media/images/TobBudworm_2.jpg"
     },
     {
       "name": "Grasshoppers",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1402130.jpg"
+      "image_url": "https://content.ces.ncsu.edu/media/images/Grasshopper_1.jpg"
     },
     {
       "name": "Stem Borer",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1599625.jpg"
+      "image_url": "https://www.cabi.org/isc/images/datasheet/49117_1.jpg"
     },
     {
       "name": "Root-Knot Nematodes",
-      "image_url": "https://bugwoodcloud.org/images/384x256/5442741.jpg"
+      "image_url": "https://content.ces.ncsu.edu/media/images/RKN_1.jpg"
+    },
+    {
+      "name": "Bugs",
+      "image_url": "http://ephytia.inra.fr/en/I/24773/Bugs"
+    },
+    {
+      "name": "Leaf-cutting insects",
+      "image_url": "http://ephytia.inra.fr/en/I/25528/Leaf-cutting-insects"
+    },
+    {
+      "name": "Soil pests",
+      "image_url": "http://ephytia.inra.fr/en/I/25442/Soil-pests"
+    },
+    {
+      "name": "Pests of stored leaves",
+      "image_url": "http://ephytia.inra.fr/en/I/25537/Pests-of-stored-leaves"
+    },
+    {
+      "name": "Chrysanthemum foliar nematode, Checkered leaf disease",
+      "image_url": "http://ephytia.inra.fr/en/I/24490/Aphelenchoides-ritzemabosi"
+    },
+    {
+      "name": "Stem-break nematode",
+      "image_url": "http://ephytia.inra.fr/en/I/24494/Ditylenchus-dipsaci"
+    },
+    {
+      "name": "Tobacco cyst nematodes",
+      "image_url": "http://ephytia.inra.fr/en/I/24503/Globodera-tabacum"
+    },
+    {
+      "name": "Brown root rot",
+      "image_url": "http://ephytia.inra.fr/en/I/24508/Pratylenchus-spp"
     }
   ],
   "diseases": [
     {
       "name": "Black Shank",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1440050.jpg"
+      "image_url": "https://content.ces.ncsu.edu/media/images/Black%20Shank.jpg"
     },
     {
       "name": "Blue Mold (Downy Mildew)",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1402003.jpg"
+      "image_url": "https://content.ces.ncsu.edu/media/images/Blue_Mold_1.jpg"
     },
     {
       "name": "Brown Spot",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1524158.jpg"
+      "image_url": "http://ephytia.inra.fr/en/I/41681/Alternaria-China1"
     },
     {
       "name": "Frogeye Leaf Spot",
-      "image_url": "https://bugwoodcloud.org/images/384x256/5368552.jpg"
+      "image_url": "https://content.ces.ncsu.edu/media/images/Early_FLS.jpg"
     },
     {
       "name": "Granville Wilt (Bacterial Wilt)",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1402044.jpg"
+      "image_url": "https://content.ces.ncsu.edu/media/images/Granville.apng"
     },
     {
-      "name": "Damping-Off / Soft Rot / Hollow Stalk",
-      "image_url": "https://bugwoodcloud.org/images/384x256/5556309.jpg"
+      "name": "Damping-off, Basal root rots",
+      "image_url": "http://ephytia.inra.fr/en/I/24321/Pythium-spp-Phytophthora-spp"
     },
     {
       "name": "Cucumber Mosaic Virus (CMV)",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1402026.jpg"
+      "image_url": "http://ephytia.inra.fr/en/I/24436/Cucumber-mosaic-virus-CMV"
     },
     {
       "name": "Potato Virus Y (PVY)",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1402028.jpg"
+      "image_url": "http://ephytia.inra.fr/en/I/24445/Potato-virus-Y-PVY"
     },
     {
-      "name": "Target Spot (Sore Shin)",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1440025.jpg"
+      "name": "Damping-off, Collar cankers, Leaf spot (Target Spot)",
+      "image_url": "http://ephytia.inra.fr/en/I/24339/Thanatephorus-cucumeris"
     },
     {
       "name": "Wildfire and Angular Leaf Spot",
-      "image_url": "https://bugwoodcloud.org/images/384x256/1402023.jpg"
+      "image_url": "https://content.ces.ncsu.edu/media/images/Wildfire_2.jpg"
+    },
+    {
+      "name": "Grey mould",
+      "image_url": "http://ephytia.inra.fr/en/I/24283/Botrytis-cinerea"
+    },
+    {
+      "name": "Black root rot",
+      "image_url": "http://ephytia.inra.fr/en/I/24347/Thielaviopsis-basicola"
+    },
+    {
+      "name": "Anthracnose",
+      "image_url": "http://ephytia.inra.fr/en/I/25014/Colletotrichum-tabacum"
+    },
+    {
+      "name": "White mould, Powdery mildew",
+      "image_url": "http://ephytia.inra.fr/en/I/24271/Golovinomyces-cichoracearum-var-cichoracearum"
+    },
+    {
+      "name": "Ragged leaf spot, Phoma leaf blight",
+      "image_url": "http://ephytia.inra.fr/en/I/25008/Boeremia-exigua-var-exigua"
+    },
+    {
+      "name": "Athelia stem rot, Southern stem rot",
+      "image_url": "http://ephytia.inra.fr/en/I/25211/Athelia-rolfsii"
+    },
+    {
+      "name": "Calonectria crotalariae",
+      "image_url": "http://ephytia.inra.fr/en/I/25218/Calonectria-crotalariae"
+    },
+    {
+      "name": "Helicobasidium monpa",
+      "image_url": "http://ephytia.inra.fr/en/I/25216/Helicobasidium-monpa"
+    },
+    {
+      "name": "Macrophomina phaseolina",
+      "image_url": "http://ephytia.inra.fr/en/I/25214/Macrophomina-phaseolina"
+    },
+    {
+      "name": "Root burn disease",
+      "image_url": "http://ephytia.inra.fr/en/I/24318/Olpidium-brassicae"
+    },
+    {
+      "name": "Collar rot",
+      "image_url": "http://ephytia.inra.fr/en/I/24289/Sclerotinia-sclerotiorum"
+    },
+    {
+      "name": "Fusariosis, Fusarium wilt",
+      "image_url": "http://ephytia.inra.fr/en/I/24364/Fusarium-oxysporum-f-sp-nicotianae"
+    },
+    {
+      "name": "Verticilliosis, Verticillium wilt",
+      "image_url": "http://ephytia.inra.fr/en/I/24359/Verticillium-dahliae"
+    },
+    {
+      "name": "Black soft rot of stem and leaves, Hollow stalk",
+      "image_url": "http://ephytia.inra.fr/en/I/24412/Pectobacterium-spp"
+    },
+    {
+      "name": "Black spot disease",
+      "image_url": "http://ephytia.inra.fr/en/I/24376/Pseudomonas-cichorii"
+    },
+    {
+      "name": "Stolbur, big bud",
+      "image_url": "http://ephytia.inra.fr/en/I/24185/Candidatus-Phytoplasma-solani"
+    },
+    {
+      "name": "Alfalfa mosaic virus (AMV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24462/Alfalfa-mosaic-virus-AMV"
+    },
+    {
+      "name": "Beet curly top virus (BCTV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24933/Beet-curly-top-virus-BCTV"
+    },
+    {
+      "name": "Peanut stunt virus (PSV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24971/Peanut-stunt-virus-PSV"
+    },
+    {
+      "name": "Potato virus X (PVX)",
+      "image_url": "http://ephytia.inra.fr/en/I/24958/Potato-virus-X-PVX"
+    },
+    {
+      "name": "Tobacco bushy top virus (TBTV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24967/Tobacco-bushy-top-virus-TBTV"
+    },
+    {
+      "name": "Tobacco etch virus (TEV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24454/Tobacco-etch-virus-TEV"
+    },
+    {
+      "name": "Tobacco mosaic virus (TMV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24424/Tobacco-mosaic-virus-TMV"
+    },
+    {
+      "name": "Tobacco ring spot virus (TRSV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24483/Tobacco-ring-spot-virus-TRSV"
+    },
+    {
+      "name": "Tobacco rattle virus (TRV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24943/Tobacco-rattle-virus-TRV"
+    },
+    {
+      "name": "Tobacco stunt virus (TStV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24948/Tobacco-stunt-virus-TStV"
+    },
+    {
+      "name": "Tobacco necrosis virus (TNV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24953/Tobacco-necrosis-virus-TNV"
+    },
+    {
+      "name": "Tobacco yellow dwarf virus (TYDV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24929/Tobacco-yellow-dwarf-virus-TYDV"
+    },
+    {
+      "name": "Tobacco leaf curl virus (TLCV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24938/Tobacco-leaf-curl-virus-TLCV"
+    },
+    {
+      "name": "Tobacco vein banding mosaic virus (TVBMV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24962/Tobacco-vein-banding-mosaic-virus-TVBMV"
+    },
+    {
+      "name": "Tobacco streak virus (TSV)",
+      "image_url": "http://ephytia.inra.fr/en/I/24976/Tobacco-streak-virus-TSV"
+    },
+    {
+      "name": "Pests of air-cured tobacco leaves",
+      "image_url": "http://ephytia.inra.fr/en/I/24614/Pests-of-air-cured-leaves"
+    },
+    {
+      "name": "Pests of flue-cured tobacco leaves",
+      "image_url": "http://ephytia.inra.fr/en/I/24614/Pests-of-air-cured-leaves"
+    },
+    {
+      "name": "Purple Nutsedge",
+      "image_url": "https://www.cabi.org/isc/images/datasheet/17538_1.jpg"
+    },
+    {
+      "name": "Dodder",
+      "image_url": "http://ephytia.inra.fr/en/I/25458/Cuscuta-spp"
+    },
+    {
+      "name": "Broomrape",
+      "image_url": "http://ephytia.inra.fr/en/I/24225/Orobanche-ramosa"
     }
   ]
 }
