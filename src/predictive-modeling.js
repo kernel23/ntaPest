@@ -1,15 +1,26 @@
-import { provinceCoordinates, climateTriggers, triggerThresholds } from './climateTriggers.js';
+import { municipalityCoordinates } from './municipalityCoordinates.js';
+import { climateTriggers, triggerThresholds } from './climateTriggers.js';
 
 /**
- * Fetches 7-day weather forecast for a given province.
+ * Fetches 7-day weather forecast for a given municipality.
  * @param {string} provinceName - The name of the province.
+ * @param {string} municipalityName - The name of the municipality.
  * @returns {Promise<object>} - The weather forecast data from Open Meteo.
  */
-async function fetchWeatherForecast(provinceName) {
-  const coordinates = provinceCoordinates[provinceName];
-  if (!coordinates) {
-    throw new Error(`Coordinates not found for province: ${provinceName}`);
+async function fetchWeatherForecast(provinceName, municipalityName) {
+  const province = municipalityCoordinates[provinceName];
+  if (!province) {
+    throw new Error(`Province not found: ${provinceName}`);
   }
+  const municipality = province[municipalityName];
+  if (!municipality) {
+    throw new Error(`Municipality not found: ${municipalityName}`);
+  }
+
+  const coordinates = {
+    latitude: municipality.lat,
+    longitude: municipality.lng
+  };
 
   const params = [
     'temperature_2m_max',
@@ -25,7 +36,7 @@ async function fetchWeatherForecast(provinceName) {
   const response = await fetch(apiUrl);
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(`Failed to fetch weather data for ${provinceName}: ${errorData.reason}`);
+    throw new Error(`Failed to fetch weather data for ${municipalityName}, ${provinceName}: ${errorData.reason}`);
   }
   return await response.json();
 }
@@ -66,12 +77,13 @@ function checkConditions(dailyWeather, conditions) {
 }
 
 /**
- * Generates pest and disease advisories for a given province based on the 7-day forecast.
+ * Generates pest and disease advisories for a given municipality based on the 7-day forecast.
  * @param {string} provinceName - The name of the province.
+ * @param {string} municipalityName - The name of the municipality.
  * @returns {Promise<object>} - An object with advisories keyed by date.
  */
-export async function generateAdvisories(provinceName) {
-  const forecast = await fetchWeatherForecast(provinceName);
+export async function generateAdvisories(provinceName, municipalityName) {
+  const forecast = await fetchWeatherForecast(provinceName, municipalityName);
   const advisories = {};
 
   if (!forecast.daily || !forecast.daily.time) {
@@ -109,30 +121,42 @@ export async function generateAdvisories(provinceName) {
 }
 
 /**
- * Generates a summary of geographic risk areas.
- * @returns {Promise<object>} - An object with risk scores for each province.
+ * Generates a summary of geographic risk areas for all municipalities.
+ * @returns {Promise<object>} - An object with risk scores for each municipality, nested under its province.
  */
 export async function generateGeographicRisk() {
     const riskSummary = {};
-    const provinces = Object.keys(provinceCoordinates);
+    const promises = [];
 
-    // Use Promise.all to fetch and process weather data concurrently
-    await Promise.all(provinces.map(async (provinceName) => {
-        try {
-            const advisories = await generateAdvisories(provinceName);
-            let riskScore = 0;
-            // The risk score is the total number of pest/disease triggers over the forecast period.
-            Object.values(advisories).forEach(dailyAdvisories => {
-                if(Array.isArray(dailyAdvisories)) {
-                    riskScore += dailyAdvisories.length;
-                }
-            });
-            riskSummary[provinceName] = riskScore;
-        } catch (error) {
-            console.error(`Could not generate risk for ${provinceName}:`, error);
-            riskSummary[provinceName] = -1; // Indicate an error
+    for (const provinceName in municipalityCoordinates) {
+        riskSummary[provinceName] = {};
+        for (const municipalityName in municipalityCoordinates[provinceName]) {
+            const promise = generateAdvisories(provinceName, municipalityName)
+                .then(advisories => {
+                    let riskScore = 0;
+                    if (!advisories.error) {
+                        Object.values(advisories).forEach(dailyAdvisories => {
+                            riskScore += dailyAdvisories.length;
+                        });
+                    } else {
+                        riskScore = -1; // Indicate an error
+                    }
+                    riskSummary[provinceName][municipalityName] = {
+                        score: riskScore,
+                        coords: municipalityCoordinates[provinceName][municipalityName]
+                    };
+                })
+                .catch(error => {
+                    console.error(`Could not generate risk for ${municipalityName}, ${provinceName}:`, error);
+                    riskSummary[provinceName][municipalityName] = {
+                        score: -1,
+                        coords: municipalityCoordinates[provinceName][municipalityName]
+                    };
+                });
+            promises.push(promise);
         }
-    }));
+    }
 
+    await Promise.all(promises);
     return riskSummary;
 }

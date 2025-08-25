@@ -118,3 +118,15 @@ export const triggerThresholds = {
   cloudy: { sunshine_duration_max: 14400 }, // Sunshine duration < 4 hours (14400 seconds)
   sunny: { sunshine_duration_min: 28800 } // Sunshine duration > 8 hours (28800 seconds)
 };
+
+export const conditionGroups = {
+  "cool,wet,cloudy": "Fungal diseases favored by cool, wet, and cloudy weather",
+  "hot,dry": "Pests favored by hot and dry conditions",
+  "wet": "Pests and diseases favored by wet or humid conditions",
+  "hot": "Pests and diseases favored by hot conditions",
+  "cool": "Pests and diseases favored by cool conditions",
+  "warm": "Pests favored by warm conditions",
+  "very_wet": "Issues related to waterlogging",
+  "very_hot,sunny": "Issues related to extreme heat and sun",
+  "very_cool": "Issues related to cold snaps"
+};

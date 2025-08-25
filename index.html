@@ -795,6 +795,9 @@
                             <select id="province-select" class="px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
                                 <!-- Options will be populated by JavaScript -->
                             </select>
+                <select id="municipality-select" class="hidden ml-4 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                    <!-- Options will be populated by JavaScript -->
+                </select>
                         </div>
                     </div>
                 </header>
@@ -803,8 +806,13 @@
                         <i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i>
                         <p class="mt-4">Generating advisories...</p>
                     </div>
-                    <div id="advisory-content">
-                        <!-- Advisories will be rendered here -->
+                    <div id="advisory-content" class="h-full">
+                        <div id="advisory-list-container">
+                            <!-- Advisories will be rendered here -->
+                        </div>
+                        <div id="advisory-map-container" class="hidden h-full">
+                            <div id="advisory-map" class="w-full h-full rounded-lg shadow-inner"></div>
+                        </div>
                     </div>
                 </main>
             </div>
@@ -1085,7 +1093,8 @@
         import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
 
         // Import project-specific modules
-        import { provinceCoordinates } from './src/climateTriggers.js';
+        import { conditionGroups } from './src/climateTriggers.js';
+        import { municipalityCoordinates } from './src/municipalityCoordinates.js';
         import { generateAdvisories, generateGeographicRisk } from './src/predictive-modeling.js';
 
         // Import the functions you need from the SDKs you need
@@ -1570,10 +1579,11 @@
         // --- Advisory Screen Logic ---
         function initializeAdvisoryScreen() {
             const provinceSelect = document.getElementById('province-select');
-            if (!provinceSelect) return;
+            const municipalitySelect = document.getElementById('municipality-select');
+            if (!provinceSelect || !municipalitySelect) return;
 
             // Populate province dropdown
-            const provinces = Object.keys(provinceCoordinates);
+            const provinces = Object.keys(municipalityCoordinates);
             provinceSelect.innerHTML = '<option value="">Select a Province</option>';
             provinces.forEach(p => {
                 const option = document.createElement('option');
@@ -1581,30 +1591,60 @@
                 option.textContent = p;
                 provinceSelect.appendChild(option);
             });
-             // Add an option for the summary
             const summaryOption = document.createElement('option');
             summaryOption.value = "summary";
             summaryOption.textContent = "Geographic Risk Summary";
             provinceSelect.appendChild(summaryOption);
 
-
             provinceSelect.addEventListener('change', async (e) => {
                 const selectedProvince = e.target.value;
-                const advisoryContent = document.getElementById('advisory-content');
+                const advisoryListContainer = document.getElementById('advisory-list-container');
+                const advisoryMapContainer = document.getElementById('advisory-map-container');
                 const loadingIndicator = document.getElementById('advisory-loading');
 
-                advisoryContent.innerHTML = '';
+                // Reset everything
+                advisoryListContainer.innerHTML = '';
+                municipalitySelect.innerHTML = '<option value="">Select a Municipality</option>';
+                municipalitySelect.classList.add('hidden');
+                advisoryMapContainer.classList.add('hidden');
+                advisoryListContainer.classList.remove('hidden');
+
+
                 if (!selectedProvince) return;
+
+                if (selectedProvince === 'summary') {
+                    loadingIndicator.classList.remove('hidden');
+                    advisoryListContainer.classList.add('hidden');
+                    advisoryMapContainer.classList.remove('hidden');
+                    const riskData = await generateGeographicRisk();
+                    renderRiskMap(riskData);
+                    loadingIndicator.classList.add('hidden');
+                } else {
+                    // Populate municipality dropdown
+                    const municipalities = Object.keys(municipalityCoordinates[selectedProvince]);
+                    municipalities.forEach(m => {
+                        const option = document.createElement('option');
+                        option.value = m;
+                        option.textContent = m;
+                        municipalitySelect.appendChild(option);
+                    });
+                    municipalitySelect.classList.remove('hidden');
+                }
+            });
+
+            municipalitySelect.addEventListener('change', async (e) => {
+                const selectedMunicipality = e.target.value;
+                const selectedProvince = provinceSelect.value;
+                const advisoryListContainer = document.getElementById('advisory-list-container');
+                const loadingIndicator = document.getElementById('advisory-loading');
+
+                advisoryListContainer.innerHTML = '';
+                if (!selectedMunicipality) return;
 
                 loadingIndicator.classList.remove('hidden');
 
-                if (selectedProvince === 'summary') {
-                    const riskData = await generateGeographicRisk();
-                    renderGeographicRisk(riskData);
-                } else {
-                    const advisoryData = await generateAdvisories(selectedProvince);
-                    renderAdvisories(advisoryData);
-                }
+                const advisoryData = await generateAdvisories(selectedProvince, selectedMunicipality);
+                renderAdvisories(advisoryData);
 
                 loadingIndicator.classList.add('hidden');
                 lucide.createIcons();
@@ -1641,106 +1681,164 @@
         }
 
         function renderScoutingSection(data) {
-            let content = '';
-            const scoutingAdvisories = {};
+            const groupedAdvisories = {};
 
+            // Group advisories by condition set
             Object.entries(data).forEach(([date, advisories]) => {
                 advisories.forEach(advisory => {
-                    if (!scoutingAdvisories[advisory.name]) {
-                        scoutingAdvisories[advisory.name] = { advice: advisory.scoutingAdvice, dates: [] };
+                    const conditionKey = advisory.conditions.sort().join(',');
+                    if (!groupedAdvisories[conditionKey]) {
+                        groupedAdvisories[conditionKey] = {
+                            title: conditionGroups[conditionKey] || "General Advisory",
+                            pests: {}
+                        };
                     }
-                    scoutingAdvisories[advisory.name].dates.push(new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+                    if (!groupedAdvisories[conditionKey].pests[advisory.name]) {
+                        groupedAdvisories[conditionKey].pests[advisory.name] = {
+                            advice: advisory.scoutingAdvice,
+                            dates: new Set()
+                        };
+                    }
+                    groupedAdvisories[conditionKey].pests[advisory.name].dates.add(new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
                 });
             });
 
-            if (Object.keys(scoutingAdvisories).length === 0) return '<p>No scouting advisories for the next 7 days.</p>';
+            if (Object.keys(groupedAdvisories).length === 0) return '<p>No scouting advisories for the next 7 days.</p>';
 
-            for (const [name, info] of Object.entries(scoutingAdvisories)) {
+            let content = '';
+            for (const key in groupedAdvisories) {
+                const group = groupedAdvisories[key];
                 content += `
-                    <div class="bg-white p-4 rounded-lg shadow-sm mb-3">
-                        <p class="font-bold text-lg text-[#384532]">${name}</p>
-                        <p class="text-sm text-gray-600 mt-1">${info.advice}</p>
-                        <p class="text-sm font-semibold text-blue-600 mt-2">Favorable Conditions Expected On: ${info.dates.join(', ')}</p>
-                    </div>
-                `;
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+                        <p class="font-bold text-lg text-[#384532]">${group.title}</p>`;
+
+                for (const pestName in group.pests) {
+                    const pestInfo = group.pests[pestName];
+                    content += `
+                        <div class="mt-3 pl-4 border-l-4 border-gray-200">
+                            <p class="font-semibold text-md text-gray-800">${pestName}</p>
+                            <p class="text-sm text-gray-600 mt-1">${pestInfo.advice}</p>
+                            <p class="text-sm font-semibold text-blue-600 mt-2">Favorable On: ${[...pestInfo.dates].join(', ')}</p>
+                        </div>`;
+                }
+                content += `</div>`;
             }
             return content;
         }
 
         function renderTreatmentSection(data) {
-             let content = '';
-            const treatmentAdvisories = {};
+            const groupedAdvisories = {};
 
+            // Group advisories by condition set
             Object.entries(data).forEach(([date, advisories]) => {
                 advisories.forEach(advisory => {
-                    if (!treatmentAdvisories[advisory.name]) {
-                        treatmentAdvisories[advisory.name] = { advice: advisory.optimalTreatment, dates: [] };
+                    const conditionKey = advisory.conditions.sort().join(',');
+                    if (!groupedAdvisories[conditionKey]) {
+                        groupedAdvisories[conditionKey] = {
+                            title: conditionGroups[conditionKey] || "General Advisory",
+                            pests: {}
+                        };
                     }
-                    treatmentAdvisories[advisory.name].dates.push(new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+                    if (!groupedAdvisories[conditionKey].pests[advisory.name]) {
+                        groupedAdvisories[conditionKey].pests[advisory.name] = {
+                            advice: advisory.optimalTreatment,
+                            dates: new Set()
+                        };
+                    }
+                    groupedAdvisories[conditionKey].pests[advisory.name].dates.add(new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
                 });
             });
 
-             if (Object.keys(treatmentAdvisories).length === 0) return '<p>No specific treatment timing advisories for the next 7 days.</p>';
+            if (Object.keys(groupedAdvisories).length === 0) return '<p>No specific treatment timing advisories for the next 7 days.</p>';
 
-            for (const [name, info] of Object.entries(treatmentAdvisories)) {
-                content += `
-                    <div class="bg-white p-4 rounded-lg shadow-sm mb-3">
-                        <p class="font-bold text-lg text-[#384532]">${name}</p>
-                        <p class="text-sm text-gray-600 mt-1">${info.advice}</p>
-                        <p class="text-sm font-semibold text-red-600 mt-2">Highest Risk Period: ${info.dates.join(', ')}</p>
-                    </div>
-                `;
+            let content = '';
+            for (const key in groupedAdvisories) {
+                const group = groupedAdvisories[key];
+                 content += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+                        <p class="font-bold text-lg text-[#384532]">${group.title}</p>`;
+
+                for (const pestName in group.pests) {
+                    const pestInfo = group.pests[pestName];
+                    content += `
+                        <div class="mt-3 pl-4 border-l-4 border-gray-200">
+                            <p class="font-semibold text-md text-gray-800">${pestName}</p>
+                            <p class="text-sm text-gray-600 mt-1">${pestInfo.advice}</p>
+                            <p class="text-sm font-semibold text-red-600 mt-2">Highest Risk Period: ${[...pestInfo.dates].join(', ')}</p>
+                        </div>`;
+                }
+                 content += `</div>`;
             }
             return content;
         }
 
-        function renderGeographicRisk(data) {
-            const container = document.getElementById('advisory-content');
-            container.innerHTML = '';
+        let advisoryMap = null;
+        function renderRiskMap(data) {
+            const mapContainer = document.getElementById('advisory-map');
+            if (!mapContainer) return;
+
+            // Clear previous map instance
+            if (advisoryMap) {
+                advisoryMap.remove();
+                advisoryMap = null;
+            }
+
+            advisoryMap = L.map(mapContainer).setView([17.5, 121.0], 7); // Centered on Northern Luzon
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(advisoryMap);
 
             if (data.error) {
-                container.innerHTML = `<p class="text-red-500">${data.error}</p>`;
+                mapContainer.innerHTML = `<p class="text-red-500 p-4">${data.error}</p>`;
                 return;
             }
 
-            const maxRisk = Math.max(...Object.values(data).filter(v => v !== -1));
+            const allScores = Object.values(data).flatMap(province => Object.values(province).map(mun => mun.score)).filter(s => s > 0);
+            const maxScore = Math.max(...allScores, 1); // Avoid division by zero
 
-            let html = `
-                 <div class="space-y-6">
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-800 border-b-2 border-[#455b3c] pb-2 mb-4">Geographic Risk Areas (7-Day Outlook)</h3>
-                        <p class="text-sm text-gray-600 mb-4">This summary shows the total number of pest/disease risk events predicted for each province over the next 7 days. Higher numbers indicate a greater variety or persistence of risks.</p>
-                        <div class="space-y-3">
-            `;
+            for (const provinceName in data) {
+                for (const municipalityName in data[provinceName]) {
+                    const municipalityData = data[provinceName][municipalityName];
+                    if (municipalityData.score === -1) continue;
 
-            Object.entries(data).sort(([,a],[,b]) => b-a).forEach(([province, score]) => {
-                const riskPercentage = maxRisk > 0 ? (score / maxRisk) * 100 : 0;
-                let bgColor;
-                if (score === -1) {
-                    bgColor = 'bg-gray-400';
-                } else if (riskPercentage > 66) {
-                    bgColor = 'bg-red-500';
-                } else if (riskPercentage > 33) {
-                    bgColor = 'bg-yellow-500';
-                } else {
-                    bgColor = 'bg-green-500';
+                    const { lat, lng } = municipalityData.coords;
+                    const riskScore = municipalityData.score;
+
+                    let color = '#4ade80'; // green
+                    if (riskScore > maxScore * 0.66) {
+                        color = '#f87171'; // red
+                    } else if (riskScore > maxScore * 0.33) {
+                        color = '#facc15'; // yellow
+                    }
+
+                    const circle = L.circle([lat, lng], {
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.6,
+                        radius: 8000 // 8km radius
+                    }).addTo(advisoryMap);
+
+                    circle.bindPopup(`<b>${municipalityName}, ${provinceName}</b><br>Risk Score: ${riskScore}`);
                 }
+            }
 
-                html += `
-                    <div class="bg-white p-3 rounded-lg shadow-sm">
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-lg">${province}</span>
-                            <span class="text-sm font-semibold">${score === -1 ? 'Error' : `Risk Score: ${score}`}</span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-4 mt-2">
-                            <div class="${bgColor}" style="width: ${score === -1 ? 100 : riskPercentage}%; height: 100%; border-radius: 9999px;"></div>
-                        </div>
-                    </div>
-                `;
-            });
+            // Add legend
+            const legend = L.control({position: 'bottomright'});
+            legend.onAdd = function (map) {
+                const div = L.DomUtil.create('div', 'info legend bg-white p-2 rounded-md shadow-md');
+                const grades = [0, Math.ceil(maxScore * 0.33), Math.ceil(maxScore * 0.66)];
+                const labels = ['<strong>Risk Level</strong>'];
+                const colors = ['#4ade80', '#facc15', '#f87171'];
 
-            html += '</div></div></div>';
-            container.innerHTML = html;
+                for (let i = 0; i < grades.length; i++) {
+                    labels.push(
+                        `<i style="background:${colors[i]}; width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7;"></i> ` +
+                        grades[i] + (grades[i + 1] ? `&ndash;${grades[i + 1] - 1}` : '+'));
+                }
+                div.innerHTML = labels.join('<br>');
+                return div;
+            };
+            legend.addTo(advisoryMap);
         }
 
 
