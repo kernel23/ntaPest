@@ -7,7 +7,7 @@ import { climateTriggers, triggerThresholds } from './climateTriggers.js';
  * @param {string} municipalityName - The name of the municipality.
  * @returns {Promise<object>} - The weather forecast data from Open Meteo.
  */
-async function fetchWeatherForecast(provinceName, municipalityName) {
+export async function fetchWeatherForecast(provinceName, municipalityName) {
   const province = municipalityCoordinates[provinceName];
   if (!province) {
     throw new Error(`Province not found: ${provinceName}`);

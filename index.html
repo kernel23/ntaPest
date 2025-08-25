@@ -798,6 +798,7 @@
                 <select id="municipality-select" class="hidden ml-4 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
                     <!-- Options will be populated by JavaScript -->
                 </select>
+                <button id="view-risk-map-btn" class="ml-4 px-4 py-2 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700">View Geographic Risk</button>
                         </div>
                     </div>
                 </header>
@@ -808,7 +809,13 @@
                     </div>
                     <div id="advisory-content" class="h-full">
                         <div id="advisory-list-container">
-                            <!-- Advisories will be rendered here -->
+                             <div id="weather-dashboard" class="mb-6 bg-white p-4 rounded-lg shadow-sm hidden">
+                                <h3 class="text-xl font-bold text-gray-800 mb-4">7-Day Weather Forecast</h3>
+                                <canvas id="weather-chart-canvas-advisory"></canvas>
+                            </div>
+                            <div id="advisory-list">
+                                <!-- Advisories will be rendered here -->
+                            </div>
                         </div>
                         <div id="advisory-map-container" class="hidden h-full">
                             <div id="advisory-map" class="w-full h-full rounded-lg shadow-inner"></div>
@@ -1095,7 +1102,7 @@
         // Import project-specific modules
         import { conditionGroups } from './src/climateTriggers.js';
         import { municipalityCoordinates } from './src/municipalityCoordinates.js';
-        import { generateAdvisories, generateGeographicRisk } from './src/predictive-modeling.js';
+        import { generateAdvisories, generateGeographicRisk, fetchWeatherForecast } from './src/predictive-modeling.js';
 
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1591,63 +1598,80 @@
                 option.textContent = p;
                 provinceSelect.appendChild(option);
             });
-            const summaryOption = document.createElement('option');
-            summaryOption.value = "summary";
-            summaryOption.textContent = "Geographic Risk Summary";
-            provinceSelect.appendChild(summaryOption);
-
             provinceSelect.addEventListener('change', async (e) => {
                 const selectedProvince = e.target.value;
                 const advisoryListContainer = document.getElementById('advisory-list-container');
                 const advisoryMapContainer = document.getElementById('advisory-map-container');
-                const loadingIndicator = document.getElementById('advisory-loading');
+                const weatherDashboard = document.getElementById('weather-dashboard');
 
                 // Reset everything
-                advisoryListContainer.innerHTML = '';
+                advisoryListContainer.querySelector('#advisory-list').innerHTML = '';
+                weatherDashboard.classList.add('hidden');
                 municipalitySelect.innerHTML = '<option value="">Select a Municipality</option>';
                 municipalitySelect.classList.add('hidden');
                 advisoryMapContainer.classList.add('hidden');
                 advisoryListContainer.classList.remove('hidden');
 
-
                 if (!selectedProvince) return;
 
-                if (selectedProvince === 'summary') {
-                    loadingIndicator.classList.remove('hidden');
-                    advisoryListContainer.classList.add('hidden');
-                    advisoryMapContainer.classList.remove('hidden');
-                    const riskData = await generateGeographicRisk();
-                    renderRiskMap(riskData);
-                    loadingIndicator.classList.add('hidden');
-                } else {
-                    // Populate municipality dropdown
-                    const municipalities = Object.keys(municipalityCoordinates[selectedProvince]);
-                    municipalities.forEach(m => {
-                        const option = document.createElement('option');
-                        option.value = m;
-                        option.textContent = m;
-                        municipalitySelect.appendChild(option);
-                    });
-                    municipalitySelect.classList.remove('hidden');
-                }
+                // Populate municipality dropdown
+                const municipalities = Object.keys(municipalityCoordinates[selectedProvince]);
+                municipalities.forEach(m => {
+                    const option = document.createElement('option');
+                    option.value = m;
+                    option.textContent = m;
+                    municipalitySelect.appendChild(option);
+                });
+                municipalitySelect.classList.remove('hidden');
             });
 
             municipalitySelect.addEventListener('change', async (e) => {
                 const selectedMunicipality = e.target.value;
                 const selectedProvince = provinceSelect.value;
-                const advisoryListContainer = document.getElementById('advisory-list-container');
+                const advisoryListContainer = document.getElementById('advisory-list');
+                const weatherDashboard = document.getElementById('weather-dashboard');
                 const loadingIndicator = document.getElementById('advisory-loading');
 
                 advisoryListContainer.innerHTML = '';
+                weatherDashboard.classList.add('hidden');
                 if (!selectedMunicipality) return;
 
                 loadingIndicator.classList.remove('hidden');
 
-                const advisoryData = await generateAdvisories(selectedProvince, selectedMunicipality);
-                renderAdvisories(advisoryData);
+                try {
+                    const forecast = await fetchWeatherForecast(selectedProvince, selectedMunicipality);
+                    renderWeatherDashboard(forecast);
+                    weatherDashboard.classList.remove('hidden');
+
+                    const advisoryData = await generateAdvisories(selectedProvince, selectedMunicipality);
+                    renderAdvisories(advisoryData);
+                } catch (error) {
+                    console.error("Error fetching data for municipality:", error);
+                    advisoryListContainer.innerHTML = `<p class="text-red-500">Could not load data for ${selectedMunicipality}.</p>`;
+                }
+
 
                 loadingIndicator.classList.add('hidden');
                 lucide.createIcons();
+            });
+
+            document.getElementById('view-risk-map-btn').addEventListener('click', async () => {
+                const advisoryListContainer = document.getElementById('advisory-list-container');
+                const advisoryMapContainer = document.getElementById('advisory-map-container');
+                const loadingIndicator = document.getElementById('advisory-loading');
+                const weatherDashboard = document.getElementById('weather-dashboard');
+
+                // Reset UI
+                advisoryListContainer.querySelector('#advisory-list').innerHTML = '';
+                weatherDashboard.classList.add('hidden');
+                advisoryListContainer.classList.add('hidden');
+                advisoryMapContainer.classList.remove('hidden');
+                loadingIndicator.classList.remove('hidden');
+
+                const riskData = await generateGeographicRisk();
+                renderRiskMap(riskData);
+
+                loadingIndicator.classList.add('hidden');
             });
         }
 
@@ -1770,6 +1794,88 @@
                  content += `</div>`;
             }
             return content;
+        }
+
+        let advisoryWeatherChart = null;
+        function renderWeatherDashboard(forecast) {
+            const canvas = document.getElementById('weather-chart-canvas-advisory');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            if (advisoryWeatherChart) {
+                advisoryWeatherChart.destroy();
+            }
+
+            if (!forecast || !forecast.daily || !forecast.daily.time) {
+                return;
+            }
+
+            advisoryWeatherChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: forecast.daily.time.map(t => new Date(t).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })),
+                    datasets: [
+                        {
+                            label: 'Max Temp (°C)',
+                            data: forecast.daily.temperature_2m_max,
+                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            yAxisID: 'y_temp',
+                            type: 'line',
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Min Temp (°C)',
+                            data: forecast.daily.temperature_2m_min,
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            yAxisID: 'y_temp',
+                            type: 'line',
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Precipitation (mm)',
+                            data: forecast.daily.precipitation_sum,
+                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            yAxisID: 'y_precip',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y_temp: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Temperature (°C)'
+                            }
+                        },
+                        y_precip: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Precipitation (mm)'
+                            },
+                            grid: {
+                                drawOnChartArea: false, // only draw grid for temp axis
+                            },
+                        }
+                    }
+                }
+            });
         }
 
         let advisoryMap = null;
