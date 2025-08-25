@@ -1325,8 +1325,9 @@
 
             // 2. Fetch comprehensive weather data
             const weatherParams = "temperature_2m,relative_humidity_2m,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,soil_moisture_0_to_1cm,et0_fao_evapotranspiration";
+            const hourlyParams = "precipitation_probability";
             const dailyParams = "sunrise,sunset";
-            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=${weatherParams}&daily=${dailyParams}&timezone=Asia/Manila&forecast_days=1`;
+            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=${weatherParams}&hourly=${hourlyParams}&daily=${dailyParams}&timezone=Asia/Manila&forecast_days=1`;
 
             try {
                 const weatherResponse = await fetch(apiUrl);
@@ -1340,6 +1341,49 @@
                 const { text, icon } = getWeatherInfo(weather.weather_code);
                 const sunrise = new Date(daily.sunrise[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const sunset = new Date(daily.sunset[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const hourly = data.hourly;
+
+                const generateRainForecastHTML = (hourly) => {
+                    if (!hourly || !hourly.time || !hourly.precipitation_probability) {
+                        return '';
+                    }
+
+                    const now = new Date();
+                    // Find the index of the first future or current hour in the time array
+                    let startIndex = hourly.time.findIndex(time => new Date(time) >= now);
+                    if (startIndex === -1) { // If all times are in the past, just start from the last possible block
+                        startIndex = Math.max(0, hourly.time.length - 12);
+                    }
+
+                    let forecastHTML = '<div class="mt-4 pt-4 border-t border-white/20"><h4 class="text-lg font-bold text-white mb-2 text-center">12-Hour Rain Forecast</h4><div class="flex justify-between text-center">';
+
+                    let hoursAdded = 0;
+                    for (let i = 0; i < 6; i++) {
+                        const timeIndex1 = startIndex + (i * 2);
+                        const timeIndex2 = timeIndex1 + 1;
+
+                        if (timeIndex2 >= hourly.time.length) break;
+
+                        const label = i === 0 ? "Now" : `+${i*2}h`;
+                        const prob1 = hourly.precipitation_probability[timeIndex1];
+                        const prob2 = hourly.precipitation_probability[timeIndex2];
+                        const maxProb = Math.round(Math.max(prob1, prob2));
+
+                        forecastHTML += `
+                            <div class="flex-1">
+                                <p class="text-sm font-semibold">${label}</p>
+                                <i data-lucide="cloud-drizzle" class="w-6 h-6 mx-auto my-1 text-blue-200"></i>
+                                <p class="text-xs">${maxProb}%</p>
+                            </div>
+                        `;
+                        hoursAdded++;
+                    }
+
+                    if (hoursAdded === 0) return ''; // Do not show the section if no forecast could be generated
+
+                    forecastHTML += '</div></div>';
+                    return forecastHTML;
+                };
 
                 const weatherHTML = `
                     <div class="bg-black bg-opacity-20 p-6 rounded-lg shadow-lg backdrop-blur-sm border border-white/10 w-full max-w-md">
@@ -1391,6 +1435,7 @@
                             <p class="font-bold text-gray-300 text-sm">Evapotranspiration (FAO)</p>
                             <p>${(weather.et_0_fao_evapotranspiration || 0).toFixed(3)} mm</p>
                         </div>
+                        ${generateRainForecastHTML(hourly)}
                     </div>
                 `;
                 container.innerHTML = weatherHTML;
