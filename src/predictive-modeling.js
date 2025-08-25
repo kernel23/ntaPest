@@ -121,10 +121,47 @@ export async function generateAdvisories(provinceName, municipalityName) {
 }
 
 /**
- * Generates a summary of geographic risk areas for all municipalities.
- * @returns {Promise<object>} - An object with risk scores for each municipality, nested under its province.
+ * Calculates the distance between two lat/lng points in kilometers using the Haversine formula.
+ * @param {number} lat1 - Latitude of point 1.
+ * @param {number} lon1 - Longitude of point 1.
+ * @param {number} lat2 - Latitude of point 2.
+ * @param {number} lon2 - Longitude of point 2.
+ * @returns {number} The distance in kilometers.
  */
-export async function generateGeographicRisk() {
+function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+/**
+ * Calculates the center of a polygon.
+ * @param {Array<Object>} polygon - An array of {lat, lng} objects.
+ * @returns {Object} An object with {lat, lng} of the center.
+ */
+function getPolygonCenter(polygon) {
+    let lat = 0;
+    let lng = 0;
+    polygon.forEach(point => {
+        lat += point.lat;
+        lng += point.lng;
+    });
+    return { lat: lat / polygon.length, lng: lng / polygon.length };
+}
+
+
+/**
+ * Generates a summary of geographic risk areas and counts farms in each risk category.
+ * @param {Array<Object>} farmLots - An array of farm lot objects from Firestore.
+ * @returns {Promise<object>} - An object with risk scores and farm counts.
+ */
+export async function generateGeographicRisk(farmLots = []) {
     const riskSummary = {};
     const promises = [];
 
@@ -158,5 +195,55 @@ export async function generateGeographicRisk() {
     }
 
     await Promise.all(promises);
-    return riskSummary;
+
+    // --- New Farm Counting Logic ---
+    const farmRiskCounts = {
+        high: 0,
+        moderate: 0,
+        low: 0,
+        unknown: 0
+    };
+
+    if (farmLots.length > 0) {
+        const allScores = Object.values(riskSummary).flatMap(p => Object.values(p).map(m => m.score)).filter(s => s >= 0);
+        const maxScore = Math.max(...allScores, 1);
+
+        farmLots.forEach(farm => {
+            if (!farm.polygonCoordinates || farm.polygonCoordinates.length === 0) return;
+
+            const farmCenter = getPolygonCenter(farm.polygonCoordinates);
+            let closestMunicipality = null;
+            let minDistance = Infinity;
+
+            for (const provinceName in riskSummary) {
+                for (const municipalityName in riskSummary[provinceName]) {
+                    const munData = riskSummary[provinceName][municipalityName];
+                    const distance = getDistance(farmCenter.lat, farmCenter.lng, munData.coords.lat, munData.coords.lng);
+
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestMunicipality = munData;
+                    }
+                }
+            }
+
+            // Associate farm with the municipality if it's within the 8km risk radius
+            if (closestMunicipality && minDistance <= 8) {
+                const riskScore = closestMunicipality.score;
+                if (riskScore > maxScore * 0.66) {
+                    farmRiskCounts.high++;
+                } else if (riskScore > maxScore * 0.33) {
+                    farmRiskCounts.moderate++;
+                } else if (riskScore >= 0) {
+                    farmRiskCounts.low++;
+                } else {
+                    farmRiskCounts.unknown++;
+                }
+            } else {
+                farmRiskCounts.unknown++;
+            }
+        });
+    }
+
+    return { riskSummary, farmRiskCounts };
 }
