@@ -984,12 +984,70 @@
         </div>
     </div>
 
+    <!-- Weather Advance Settings Modal -->
+    <div id="weather-settings-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Advanced Weather Settings</h3>
+                <button id="close-weather-settings-btn" class="p-1"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 max-h-[80vh] overflow-y-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left Column: Settings -->
+                    <div>
+                        <h4 class="text-lg font-bold mb-2">Time Settings</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="forecast-days" class="block text-sm font-medium text-gray-700">Forecast Days</label>
+                                <input type="number" id="forecast-days" value="7" min="1" max="16" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                            </div>
+                            <div>
+                                <label for="past-days" class="block text-sm font-medium text-gray-700">Past Days</label>
+                                <input type="number" id="past-days" value="0" min="0" max="92" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+                            </div>
+                        </div>
+
+                        <h4 class="text-lg font-bold mt-4 mb-2">Hourly Weather Variables</h4>
+                        <div id="hourly-vars-multiselect-container" class="relative"></div>
+
+                        <h4 class="text-lg font-bold mt-4 mb-2">Daily Weather Variables</h4>
+                        <div id="daily-vars-multiselect-container" class="relative"></div>
+
+                        <h4 class="text-lg font-bold mt-4 mb-2">Current Weather</h4>
+                        <div id="current-vars-multiselect-container" class="relative"></div>
+
+                        <div class="hidden">
+                            <h4 class="text-lg font-bold mt-4 mb-2">API URL</h4>
+                            <textarea id="weather-api-url" rows="3" class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm" readonly></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Chart Preview -->
+                    <div>
+                        <h4 class="text-lg font-bold mb-2">Chart Preview</h4>
+                        <div class="bg-gray-100 p-4 rounded-lg min-h-[400px]">
+                            <canvas id="weather-chart-canvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button id="print-chart-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md">Print Chart</button>
+                    <button id="fullscreen-chart-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md">Full-screen</button>
+                    <button id="preview-chart-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Preview Chart</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Address Data -->
     <script src="address-provider.js"></script>
 
     <!-- Leaflet JS for mapping -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+    <!-- Chart.js for weather chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Firebase SDKs -->
     <script type="module">
@@ -1111,6 +1169,9 @@
         
         // --- 3. UI & STATE MANAGEMENT ---
         let activeListeners = [];
+        let currentLatitude = 17.5747; // Default fallback
+        let currentLongitude = 120.3869; // Default fallback
+
         function detachAllListeners() {
             console.log(`Detaching ${activeListeners.length} active listeners.`);
             activeListeners.forEach(unsubscribe => unsubscribe());
@@ -1137,6 +1198,270 @@
             expertDashboard: document.getElementById('expert-dashboard-screen'),
             adminDashboard: document.getElementById('admin-dashboard-screen')
         };
+
+        // --- Weather Settings Modal ---
+        let hourlyWeatherSelect, dailyWeatherSelect, currentWeatherSelect;
+        let weatherChart = null; // To hold the chart instance
+
+        function updateWeatherApiUrl() {
+            const lat = currentLatitude;
+            const lon = currentLongitude;
+
+            const forecastDays = document.getElementById('forecast-days').value;
+            const pastDays = document.getElementById('past-days').value;
+            const hourly = hourlyWeatherSelect.getSelectedValues();
+            const daily = dailyWeatherSelect.getSelectedValues();
+            const current = currentWeatherSelect.getSelectedValues();
+
+            let apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`;
+
+            if (hourly.length > 0) {
+                apiUrl += `&hourly=${hourly.join(',')}`;
+            }
+            if (daily.length > 0) {
+                apiUrl += `&daily=${daily.join(',')}`;
+            }
+            if (current.length > 0) {
+                apiUrl += `&current=${current.join(',')}`;
+            }
+
+            apiUrl += `&forecast_days=${forecastDays}`;
+            apiUrl += `&past_days=${pastDays}`;
+            apiUrl += `&timezone=Asia/Manila`;
+
+            document.getElementById('weather-api-url').value = apiUrl;
+        }
+
+        document.getElementById('preview-chart-btn').addEventListener('click', async () => {
+            const apiUrl = document.getElementById('weather-api-url').value;
+            if (!apiUrl) {
+                showToast('API URL is not generated yet.', 'error');
+                return;
+            }
+
+            showSavingOverlay('Loading chart data...');
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.reason || 'Failed to fetch weather data');
+                }
+                const data = await response.json();
+
+                const canvas = document.getElementById('weather-chart-canvas');
+                const ctx = canvas.getContext('2d');
+
+                if (weatherChart) {
+                    weatherChart.destroy();
+                }
+
+                if (!data.hourly || !data.hourly.time || Object.keys(data.hourly).length <= 1) {
+                    showToast('No hourly data available to plot a chart.', 'info');
+                    if(weatherChart) weatherChart.clear();
+                    hideSavingOverlay();
+                    return;
+                }
+
+                const datasets = [];
+                const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+                let colorIndex = 0;
+
+                for (const key in data.hourly) {
+                    if (key === 'time') continue;
+
+                    datasets.push({
+                        label: `${key} (${data.hourly_units[key] || ''})`,
+                        data: data.hourly[key],
+                        borderColor: colors[colorIndex % colors.length],
+                        backgroundColor: colors[colorIndex % colors.length] + '33', // with transparency
+                        fill: false,
+                        tension: 0.1,
+                        yAxisID: key.includes('temperature') ? 'y_temp' : (key.includes('precipitation') ? 'y_precip' : 'y_other')
+                    });
+                    colorIndex++;
+                }
+
+                weatherChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.hourly.time.map(t => new Date(t).toLocaleString()),
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Time'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Hourly Weather Data Preview'
+                            }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error('Error fetching or rendering chart:', error);
+                showToast(`Chart Error: ${error.message}`, 'error');
+            } finally {
+                hideSavingOverlay();
+            }
+        });
+
+        document.getElementById('fullscreen-chart-btn').addEventListener('click', () => {
+            const chartContainer = document.getElementById('weather-chart-canvas').parentElement;
+            if (chartContainer.requestFullscreen) {
+                chartContainer.requestFullscreen();
+            } else if (chartContainer.webkitRequestFullscreen) { /* Safari */
+                chartContainer.webkitRequestFullscreen();
+            } else if (chartContainer.msRequestFullscreen) { /* IE11 */
+                chartContainer.msRequestFullscreen();
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && weatherChart) {
+                // A short timeout can help ensure the DOM has fully exited fullscreen
+                // before we ask the chart to resize.
+                setTimeout(() => {
+                    weatherChart.resize();
+                }, 100);
+            }
+        });
+
+        document.getElementById('print-chart-btn').addEventListener('click', () => {
+            const chartCanvas = document.getElementById('weather-chart-canvas');
+            if (!chartCanvas || !weatherChart) {
+                showToast('Please generate a chart first.', 'error');
+                return;
+            }
+
+            const printStyle = document.createElement('style');
+            printStyle.id = 'print-styles';
+            printStyle.innerHTML = `
+                @media print {
+                    body * {
+                        visibility: hidden;
+                    }
+                    .chart-container-for-print, .chart-container-for-print * {
+                        visibility: visible;
+                    }
+                    .chart-container-for-print {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100vw;
+                        height: 100vh;
+                    }
+                }
+            `;
+            document.head.appendChild(printStyle);
+            chartCanvas.parentElement.classList.add('chart-container-for-print');
+            window.print();
+        });
+
+        window.onafterprint = () => {
+            const printStyle = document.getElementById('print-styles');
+            if (printStyle) {
+                printStyle.remove();
+            }
+            const chartContainer = document.querySelector('.chart-container-for-print');
+            if(chartContainer) {
+                chartContainer.classList.remove('chart-container-for-print');
+            }
+        };
+
+        function initializeWeatherSettings() {
+            function formatVariableName(str) {
+                const overrides = {
+                    'temperature_2m': 'Temperature (2m)',
+                    'relative_humidity_2m': 'Relative Humidity (2m)',
+                    'dew_point_2m': 'Dew Point (2m)',
+                    'et0_fao_evapotranspiration': 'Reference Evapotranspiration (ET₀)',
+                    'wind_speed_10m': 'Wind Speed (10m)',
+                    'wind_direction_10m': 'Wind Direction (10m)',
+                    'wind_gusts_10m': 'Wind Gusts (10m)',
+                    'soil_temperature_0cm': 'Soil Temperature (0cm)',
+                    'soil_moisture_0_to_1cm': 'Soil Moisture (0-1cm)',
+                    'temperature_2m_max': 'Max Temperature (2m)',
+                    'temperature_2m_min': 'Min Temperature (2m)',
+                    'apparent_temperature_max': 'Max Apparent Temperature',
+                    'apparent_temperature_min': 'Min Apparent Temperature',
+                    'uv_index_max': 'Max UV Index',
+                    'precipitation_probability_max': 'Max Precipitation Probability',
+                    'wind_speed_10m_max': 'Max Wind Speed (10m)',
+                    'wind_gusts_10m_max': 'Max Wind Gusts (10m)',
+                    'wind_direction_10m_dominant': 'Dominant Wind Direction (10m)',
+                    'shortwave_radiation_sum': 'Shortwave Radiation Sum'
+                };
+                if (overrides[str]) {
+                    return overrides[str];
+                }
+                const result = str.replace(/_/g, ' ');
+                return result.charAt(0).toUpperCase() + result.slice(1);
+            }
+
+            const hourlyVariableNames = [
+                'temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'apparent_temperature',
+                'precipitation_probability', 'precipitation', 'rain', 'showers', 'snowfall', 'snow_depth',
+                'weather_code', 'pressure_msl', 'surface_pressure', 'cloud_cover', 'cloud_cover_low',
+                'cloud_cover_mid', 'cloud_cover_high', 'visibility', 'evapotranspiration',
+                'et0_fao_evapotranspiration', 'vapour_pressure_deficit', 'wind_speed_10m', 'wind_direction_10m',
+                'wind_gusts_10m', 'soil_temperature_0cm', 'soil_moisture_0_to_1cm', 'is_day', 'sunshine_duration',
+                'uv_index'
+            ];
+            const dailyVariableNames = [
+                'weather_code', 'temperature_2m_max', 'temperature_2m_min', 'apparent_temperature_max',
+                'apparent_temperature_min', 'sunrise', 'sunset', 'daylight_duration', 'sunshine_duration',
+                'uv_index_max', 'precipitation_sum', 'rain_sum', 'showers_sum', 'snowfall_sum',
+                'precipitation_hours', 'precipitation_probability_max', 'wind_speed_10m_max',
+                'wind_gusts_10m_max', 'wind_direction_10m_dominant', 'shortwave_radiation_sum',
+                'et0_fao_evapotranspiration'
+            ];
+             const currentVariableNames = [
+                'temperature_2m', 'relative_humidity_2m', 'apparent_temperature', 'is_day', 'precipitation',
+                'rain', 'showers', 'snowfall', 'weather_code', 'cloud_cover', 'pressure_msl',
+                'surface_pressure', 'wind_speed_10m', 'wind_direction_10m', 'wind_gusts_10m'
+            ];
+
+            const hourlyVariables = hourlyVariableNames.map(v => ({ value: v, label: formatVariableName(v) })).sort((a, b) => a.label.localeCompare(b.label));
+            const dailyVariables = dailyVariableNames.map(v => ({ value: v, label: formatVariableName(v) })).sort((a, b) => a.label.localeCompare(b.label));
+            const currentVariables = currentVariableNames.map(v => ({ value: v, label: formatVariableName(v) })).sort((a, b) => a.label.localeCompare(b.label));
+
+            hourlyWeatherSelect = createMultiSelect('hourly-vars-multiselect-container', 'Select Hourly Variables', true);
+            hourlyWeatherSelect.populate(hourlyVariables);
+
+            dailyWeatherSelect = createMultiSelect('daily-vars-multiselect-container', 'Select Daily Variables', true);
+            dailyWeatherSelect.populate(dailyVariables);
+
+            currentWeatherSelect = createMultiSelect('current-vars-multiselect-container', 'Select Current Variables', true);
+            currentWeatherSelect.populate(currentVariables);
+
+            const inputs = ['forecast-days', 'past-days'];
+            inputs.forEach(id => {
+                document.getElementById(id).addEventListener('input', updateWeatherApiUrl);
+            });
+
+            hourlyWeatherSelect.onChange(updateWeatherApiUrl);
+            dailyWeatherSelect.onChange(updateWeatherApiUrl);
+            currentWeatherSelect.onChange(updateWeatherApiUrl);
+
+            // Also call it once to populate the URL initially
+            updateWeatherApiUrl();
+        }
+
+        initializeWeatherSettings();
 
         // --- Privacy Policy Navigation ---
         document.getElementById('privacy-policy-link').addEventListener('click', (e) => {
@@ -1322,6 +1647,11 @@
             }, 300); // Match transition duration
         });
 
+        document.getElementById('close-weather-settings-btn').addEventListener('click', () => {
+            document.getElementById('weather-settings-modal').classList.add('hidden');
+            document.getElementById('weather-settings-modal').classList.remove('flex');
+        });
+
         // --- Weather Dashboard Logic ---
         async function loadWeatherDashboard() {
             const container = document.getElementById('weather-dashboard-container');
@@ -1353,6 +1683,8 @@
         }
 
         async function fetchAndDisplayWeather(lat, lon) {
+            currentLatitude = lat;
+            currentLongitude = lon;
             const container = document.getElementById('weather-dashboard-container');
             container.innerHTML = `<div class="text-center text-white p-6"><p>Loading weather data...</p></div>`;
 
@@ -1481,10 +1813,21 @@
                             <p>${(weather.et_0_fao_evapotranspiration || 0).toFixed(3)} mm</p>
                         </div>
                         ${generateRainForecastHTML(hourly)}
+                         <div class="mt-4 text-center">
+                            <button id="open-weather-settings-btn" class="text-white font-bold py-2 px-4 rounded-lg shadow-md bg-white/20 hover:bg-white/30">
+                                Advance Settings
+                            </button>
+                        </div>
                     </div>
                 `;
                 container.innerHTML = weatherHTML;
                 lucide.createIcons();
+
+                document.getElementById('open-weather-settings-btn').addEventListener('click', () => {
+                    document.getElementById('weather-settings-modal').classList.remove('hidden');
+                    document.getElementById('weather-settings-modal').classList.add('flex');
+                    lucide.createIcons(); // Re-render icons in the modal
+                });
 
             } catch (error) {
                 console.error('Error fetching weather data:', error);
@@ -2020,7 +2363,7 @@
             let changeCallback = () => {};
 
             const instance = {
-                populate: (items) => {
+                populate: (items) => { // items is an array of {value, label} objects
                     list.innerHTML = '';
                     options = items;
                     if (!items || items.length === 0) {
@@ -2029,7 +2372,7 @@
                         items.forEach(item => {
                             const li = document.createElement('li');
                             li.className = 'px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center';
-                            li.dataset.value = item;
+                            li.dataset.value = item.value;
 
                             const checkbox = document.createElement('input');
                             checkbox.type = 'checkbox';
@@ -2043,7 +2386,7 @@
 
                             const span = document.createElement('span');
                             span.className = 'font-normal block truncate';
-                            span.textContent = item;
+                            span.textContent = item.label;
                             li.appendChild(span);
 
                             list.appendChild(li);
@@ -2055,7 +2398,7 @@
                                 }
 
                                 if (!isMultiSelect) {
-                                     list.querySelectorAll('input').forEach(rb => {
+                                    list.querySelectorAll('input').forEach(rb => {
                                         if (rb !== checkbox) rb.checked = false;
                                     });
                                     dropdown.classList.add('hidden');
@@ -2082,17 +2425,21 @@
                     instance.updateButtonText();
                 },
                 updateButtonText: () => {
-                    const selected = instance.getSelectedValues();
-                    if (selected.length === 0) {
+                    const selectedValues = instance.getSelectedValues();
+                    if (selectedValues.length === 0) {
                         buttonText.textContent = placeholder;
                         buttonText.classList.add('text-gray-500');
-                         buttonText.classList.remove('text-gray-900');
-                    } else if (selected.length <= 2) {
-                        buttonText.textContent = selected.join(', ');
-                        buttonText.classList.remove('text-gray-500');
-                        buttonText.classList.add('text-gray-900');
+                        buttonText.classList.remove('text-gray-900');
                     } else {
-                        buttonText.textContent = `${selected.length} items selected`;
+                        const selectedLabels = options
+                            .filter(opt => selectedValues.includes(opt.value))
+                            .map(opt => opt.label);
+
+                        if (selectedLabels.length <= 2) {
+                            buttonText.textContent = selectedLabels.join(', ');
+                        } else {
+                            buttonText.textContent = `${selectedLabels.length} items selected`;
+                        }
                         buttonText.classList.remove('text-gray-500');
                         buttonText.classList.add('text-gray-900');
                     }
