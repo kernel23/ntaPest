@@ -1030,10 +1030,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-6 flex justify-end space-x-2">
-                    <button id="print-chart-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md">Print Chart</button>
-                    <button id="fullscreen-chart-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md">Full-screen</button>
-                    <button id="preview-chart-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Preview Chart</button>
+                <div class="mt-6 flex justify-between items-center">
+                    <button id="clear-selections-btn" class="text-sm text-blue-600 hover:underline">Clear All Selections</button>
+                    <div class="space-x-2">
+                        <button id="print-chart-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md">Print Chart</button>
+                        <button id="fullscreen-chart-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md">Full-screen</button>
+                        <button id="preview-chart-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Preview Chart</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1381,6 +1384,13 @@
                 chartContainer.classList.remove('chart-container-for-print');
             }
         };
+
+        document.getElementById('clear-selections-btn').addEventListener('click', () => {
+            hourlyWeatherSelect.setSelectedValues([]);
+            dailyWeatherSelect.setSelectedValues([]);
+            currentWeatherSelect.setSelectedValues([]);
+            updateWeatherApiUrl();
+        });
 
         function initializeWeatherSettings() {
             function formatVariableName(str) {
