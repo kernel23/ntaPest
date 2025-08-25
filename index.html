@@ -70,6 +70,36 @@
             50% { transform: translateY(-10px); }
             100% { transform: translateY(0px); }
         }
+
+        .pest-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.5); /* White with 50% transparency */
+            color: black;
+            font-size: 0.875rem; /* 14px, text-sm */
+            line-height: 1.25rem; /* 20px */
+            overflow: hidden;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .pest-name p {
+            margin: 0;
+            padding: 0.25rem;
+            display: inline-block;
+        }
+
+        .pest-name.is-long p {
+            padding-left: 100%;
+            animation: marquee 10s linear infinite;
+        }
+
+        @keyframes marquee {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
     </style>
 </head>
 <body class="bg-[#fff2c9]">
@@ -1197,6 +1227,21 @@
                 card.innerHTML = `
                     <img src="${imageUrl}" alt="${name}" class="w-full h-full object-cover">
                 `;
+
+                const nameContainer = document.createElement('div');
+                nameContainer.className = 'pest-name';
+
+                const nameText = document.createElement('p');
+                nameText.textContent = name;
+                nameContainer.appendChild(nameText);
+
+                // Check if the text is long and add the animation class
+                // This is a rough estimation. A better way would be to measure the text width in the DOM.
+                if (name.length > 20) {
+                    nameContainer.classList.add('is-long');
+                }
+
+                card.appendChild(nameContainer);
 
                 card.addEventListener('click', () => {
                     const modal = document.getElementById('pest-details-modal');
