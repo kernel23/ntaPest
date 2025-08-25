@@ -1016,8 +1016,10 @@
                         <h4 class="text-lg font-bold mt-4 mb-2">Current Weather</h4>
                         <div id="current-vars-multiselect-container" class="relative"></div>
 
-                        <h4 class="text-lg font-bold mt-4 mb-2">API URL</h4>
-                        <textarea id="weather-api-url" rows="3" class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm" readonly></textarea>
+                        <div class="hidden">
+                            <h4 class="text-lg font-bold mt-4 mb-2">API URL</h4>
+                            <textarea id="weather-api-url" rows="3" class="mt-1 block w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md shadow-sm" readonly></textarea>
+                        </div>
                     </div>
 
                     <!-- Right Column: Chart Preview -->
@@ -1028,7 +1030,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-6 text-right">
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button id="print-chart-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md">Print Chart</button>
+                    <button id="fullscreen-chart-btn" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md">Full-screen</button>
                     <button id="preview-chart-btn" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Preview Chart</button>
                 </div>
             </div>
@@ -1315,8 +1319,90 @@
             }
         });
 
+        document.getElementById('fullscreen-chart-btn').addEventListener('click', () => {
+            const chartContainer = document.getElementById('weather-chart-canvas').parentElement;
+            if (chartContainer.requestFullscreen) {
+                chartContainer.requestFullscreen();
+            } else if (chartContainer.webkitRequestFullscreen) { /* Safari */
+                chartContainer.webkitRequestFullscreen();
+            } else if (chartContainer.msRequestFullscreen) { /* IE11 */
+                chartContainer.msRequestFullscreen();
+            }
+        });
+
+        document.getElementById('print-chart-btn').addEventListener('click', () => {
+            const chartCanvas = document.getElementById('weather-chart-canvas');
+            if (!chartCanvas || !weatherChart) {
+                showToast('Please generate a chart first.', 'error');
+                return;
+            }
+
+            const printStyle = document.createElement('style');
+            printStyle.id = 'print-styles';
+            printStyle.innerHTML = `
+                @media print {
+                    body * {
+                        visibility: hidden;
+                    }
+                    .chart-container-for-print, .chart-container-for-print * {
+                        visibility: visible;
+                    }
+                    .chart-container-for-print {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100vw;
+                        height: 100vh;
+                    }
+                }
+            `;
+            document.head.appendChild(printStyle);
+            chartCanvas.parentElement.classList.add('chart-container-for-print');
+            window.print();
+        });
+
+        window.onafterprint = () => {
+            const printStyle = document.getElementById('print-styles');
+            if (printStyle) {
+                printStyle.remove();
+            }
+            const chartContainer = document.querySelector('.chart-container-for-print');
+            if(chartContainer) {
+                chartContainer.classList.remove('chart-container-for-print');
+            }
+        };
+
         function initializeWeatherSettings() {
-            const hourlyVariables = [
+            function formatVariableName(str) {
+                const overrides = {
+                    'temperature_2m': 'Temperature (2m)',
+                    'relative_humidity_2m': 'Relative Humidity (2m)',
+                    'dew_point_2m': 'Dew Point (2m)',
+                    'et0_fao_evapotranspiration': 'Reference Evapotranspiration (ET₀)',
+                    'wind_speed_10m': 'Wind Speed (10m)',
+                    'wind_direction_10m': 'Wind Direction (10m)',
+                    'wind_gusts_10m': 'Wind Gusts (10m)',
+                    'soil_temperature_0cm': 'Soil Temperature (0cm)',
+                    'soil_moisture_0_to_1cm': 'Soil Moisture (0-1cm)',
+                    'temperature_2m_max': 'Max Temperature (2m)',
+                    'temperature_2m_min': 'Min Temperature (2m)',
+                    'apparent_temperature_max': 'Max Apparent Temperature',
+                    'apparent_temperature_min': 'Min Apparent Temperature',
+                    'uv_index_max': 'Max UV Index',
+                    'precipitation_probability_max': 'Max Precipitation Probability',
+                    'wind_speed_10m_max': 'Max Wind Speed (10m)',
+                    'wind_gusts_10m_max': 'Max Wind Gusts (10m)',
+                    'wind_direction_10m_dominant': 'Dominant Wind Direction (10m)',
+                    'shortwave_radiation_sum': 'Shortwave Radiation Sum'
+                };
+                if (overrides[str]) {
+                    return overrides[str];
+                }
+                const result = str.replace(/_/g, ' ');
+                return result.charAt(0).toUpperCase() + result.slice(1);
+            }
+
+            const hourlyVariableNames = [
                 'temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'apparent_temperature',
                 'precipitation_probability', 'precipitation', 'rain', 'showers', 'snowfall', 'snow_depth',
                 'weather_code', 'pressure_msl', 'surface_pressure', 'cloud_cover', 'cloud_cover_low',
@@ -1325,7 +1411,7 @@
                 'wind_gusts_10m', 'soil_temperature_0cm', 'soil_moisture_0_to_1cm', 'is_day', 'sunshine_duration',
                 'uv_index'
             ];
-            const dailyVariables = [
+            const dailyVariableNames = [
                 'weather_code', 'temperature_2m_max', 'temperature_2m_min', 'apparent_temperature_max',
                 'apparent_temperature_min', 'sunrise', 'sunset', 'daylight_duration', 'sunshine_duration',
                 'uv_index_max', 'precipitation_sum', 'rain_sum', 'showers_sum', 'snowfall_sum',
@@ -1333,20 +1419,24 @@
                 'wind_gusts_10m_max', 'wind_direction_10m_dominant', 'shortwave_radiation_sum',
                 'et0_fao_evapotranspiration'
             ];
-             const currentVariables = [
+             const currentVariableNames = [
                 'temperature_2m', 'relative_humidity_2m', 'apparent_temperature', 'is_day', 'precipitation',
                 'rain', 'showers', 'snowfall', 'weather_code', 'cloud_cover', 'pressure_msl',
                 'surface_pressure', 'wind_speed_10m', 'wind_direction_10m', 'wind_gusts_10m'
             ];
 
+            const hourlyVariables = hourlyVariableNames.map(v => ({ value: v, label: formatVariableName(v) })).sort((a, b) => a.label.localeCompare(b.label));
+            const dailyVariables = dailyVariableNames.map(v => ({ value: v, label: formatVariableName(v) })).sort((a, b) => a.label.localeCompare(b.label));
+            const currentVariables = currentVariableNames.map(v => ({ value: v, label: formatVariableName(v) })).sort((a, b) => a.label.localeCompare(b.label));
+
             hourlyWeatherSelect = createMultiSelect('hourly-vars-multiselect-container', 'Select Hourly Variables', true);
-            hourlyWeatherSelect.populate(hourlyVariables.sort());
+            hourlyWeatherSelect.populate(hourlyVariables);
 
             dailyWeatherSelect = createMultiSelect('daily-vars-multiselect-container', 'Select Daily Variables', true);
-            dailyWeatherSelect.populate(dailyVariables.sort());
+            dailyWeatherSelect.populate(dailyVariables);
 
             currentWeatherSelect = createMultiSelect('current-vars-multiselect-container', 'Select Current Variables', true);
-            currentWeatherSelect.populate(currentVariables.sort());
+            currentWeatherSelect.populate(currentVariables);
 
             const inputs = ['forecast-days', 'past-days'];
             inputs.forEach(id => {
@@ -2263,7 +2353,7 @@
             let changeCallback = () => {};
 
             const instance = {
-                populate: (items) => {
+                populate: (items) => { // items is an array of {value, label} objects
                     list.innerHTML = '';
                     options = items;
                     if (!items || items.length === 0) {
@@ -2272,7 +2362,7 @@
                         items.forEach(item => {
                             const li = document.createElement('li');
                             li.className = 'px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center';
-                            li.dataset.value = item;
+                            li.dataset.value = item.value;
 
                             const checkbox = document.createElement('input');
                             checkbox.type = 'checkbox';
@@ -2286,7 +2376,7 @@
 
                             const span = document.createElement('span');
                             span.className = 'font-normal block truncate';
-                            span.textContent = item;
+                            span.textContent = item.label;
                             li.appendChild(span);
 
                             list.appendChild(li);
@@ -2298,7 +2388,7 @@
                                 }
 
                                 if (!isMultiSelect) {
-                                     list.querySelectorAll('input').forEach(rb => {
+                                    list.querySelectorAll('input').forEach(rb => {
                                         if (rb !== checkbox) rb.checked = false;
                                     });
                                     dropdown.classList.add('hidden');
@@ -2325,17 +2415,21 @@
                     instance.updateButtonText();
                 },
                 updateButtonText: () => {
-                    const selected = instance.getSelectedValues();
-                    if (selected.length === 0) {
+                    const selectedValues = instance.getSelectedValues();
+                    if (selectedValues.length === 0) {
                         buttonText.textContent = placeholder;
                         buttonText.classList.add('text-gray-500');
-                         buttonText.classList.remove('text-gray-900');
-                    } else if (selected.length <= 2) {
-                        buttonText.textContent = selected.join(', ');
-                        buttonText.classList.remove('text-gray-500');
-                        buttonText.classList.add('text-gray-900');
+                        buttonText.classList.remove('text-gray-900');
                     } else {
-                        buttonText.textContent = `${selected.length} items selected`;
+                        const selectedLabels = options
+                            .filter(opt => selectedValues.includes(opt.value))
+                            .map(opt => opt.label);
+
+                        if (selectedLabels.length <= 2) {
+                            buttonText.textContent = selectedLabels.join(', ');
+                        } else {
+                            buttonText.textContent = `${selectedLabels.length} items selected`;
+                        }
                         buttonText.classList.remove('text-gray-500');
                         buttonText.classList.add('text-gray-900');
                     }
