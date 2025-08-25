@@ -1330,6 +1330,16 @@
             }
         });
 
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement && weatherChart) {
+                // A short timeout can help ensure the DOM has fully exited fullscreen
+                // before we ask the chart to resize.
+                setTimeout(() => {
+                    weatherChart.resize();
+                }, 100);
+            }
+        });
+
         document.getElementById('print-chart-btn').addEventListener('click', () => {
             const chartCanvas = document.getElementById('weather-chart-canvas');
             if (!chartCanvas || !weatherChart) {
