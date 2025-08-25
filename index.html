@@ -808,13 +808,15 @@
                         <p class="mt-4">Generating advisories...</p>
                     </div>
                     <div id="advisory-content" class="h-full">
-                        <div id="advisory-list-container">
-                             <div id="weather-dashboard" class="mb-6 bg-white p-4 rounded-lg shadow-sm hidden">
-                                <h3 class="text-xl font-bold text-gray-800 mb-4">7-Day Weather Forecast</h3>
-                                <canvas id="weather-chart-canvas-advisory"></canvas>
-                            </div>
-                            <div id="advisory-list">
+                        <div id="advisory-list-container" class="flex flex-row gap-4 h-full">
+                            <div id="advisory-list" class="w-2/3 h-full overflow-y-auto space-y-4">
                                 <!-- Advisories will be rendered here -->
+                            </div>
+                            <div id="weather-dashboard" class="w-1/3 bg-white p-4 rounded-lg shadow-sm hidden">
+                                <h3 class="text-xl font-bold text-gray-800 mb-4">7-Day Weather Forecast</h3>
+                                <div class="relative h-[50vh]"> <!-- Constrain chart height -->
+                                    <canvas id="weather-chart-canvas-advisory"></canvas>
+                                </div>
                             </div>
                         </div>
                         <div id="advisory-map-container" class="hidden h-full">
@@ -1733,7 +1735,7 @@
             for (const key in groupedAdvisories) {
                 const group = groupedAdvisories[key];
                 content += `
-                    <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
                         <p class="font-bold text-lg text-[#384532]">${group.title}</p>`;
 
                 for (const pestName in group.pests) {
