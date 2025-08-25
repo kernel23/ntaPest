@@ -1595,7 +1595,21 @@
         function initializeAdvisoryScreen() {
             const provinceSelect = document.getElementById('province-select');
             const municipalitySelect = document.getElementById('municipality-select');
-            if (!provinceSelect || !municipalitySelect) return;
+            const advisoryList = document.getElementById('advisory-list');
+
+            if (!provinceSelect || !municipalitySelect || !advisoryList) return;
+
+            // Add the delegated event listener for pest/disease links
+            advisoryList.addEventListener('click', (e) => {
+                const link = e.target.closest('.pest-advisory-link');
+                if (link) {
+                    e.preventDefault();
+                    const pestName = link.dataset.pestName;
+                    if (pestName) {
+                        showPestDetailsByName(pestName);
+                    }
+                }
+            });
 
             // Populate province dropdown
             const provinces = Object.keys(municipalityCoordinates);
@@ -1767,7 +1781,7 @@
                     const pestInfo = group.pests[pestName];
                     content += `
                         <div class="mt-3 pl-4 border-l-4 border-gray-200">
-                            <p class="font-semibold text-md text-gray-800">${pestName}</p>
+                            <a href="#" class="font-semibold text-md text-gray-800 hover:underline pest-advisory-link" data-pest-name="${pestName}">${pestName}</a>
                             <p class="text-sm text-gray-600 mt-1">${pestInfo.advice}</p>
                             <p class="text-sm font-semibold text-blue-600 mt-2">Favorable On: ${[...pestInfo.dates].join(', ')}</p>
                         </div>`;
@@ -1813,7 +1827,7 @@
                     const pestInfo = group.pests[pestName];
                     content += `
                         <div class="mt-3 pl-4 border-l-4 border-gray-200">
-                            <p class="font-semibold text-md text-gray-800">${pestName}</p>
+                            <a href="#" class="font-semibold text-md text-gray-800 hover:underline pest-advisory-link" data-pest-name="${pestName}">${pestName}</a>
                             <p class="text-sm text-gray-600 mt-1">${pestInfo.advice}</p>
                             <p class="text-sm font-semibold text-red-600 mt-2">Highest Risk Period: ${[...pestInfo.dates].join(', ')}</p>
                         </div>`;
@@ -2003,6 +2017,83 @@
 
 
         // --- Pest/Disease Card Logic ---
+        function showPestDetailsByName(name) {
+            const allItems = [
+                ...(pestAndDiseaseData.major_insect_pests || []).map(p => ({...p, type: 'Pest'})),
+                ...(pestAndDiseaseData.fungal_and_bacterial_diseases || []).map(d => ({...d, type: 'Disease'}))
+            ];
+            const item = allItems.find(i => (i['Pest Common Name'] || i['Disease Name']) === name);
+
+            if (!item) {
+                console.error(`Details for "${name}" not found.`);
+                showToast(`Details for "${name}" not found.`, 'error');
+                return;
+            }
+
+            const modal = document.getElementById('pest-details-modal');
+            const title = document.getElementById('pest-modal-title');
+            const content = document.getElementById('pest-modal-content');
+
+            title.textContent = name;
+            let contentHTML = `<p class="text-sm text-gray-600 mb-4">${item['Characteristic Visual Damage'] || item['Primary Visual Symptoms']}</p>`;
+
+            if (item.management) {
+                contentHTML += '<h5 class="font-bold mt-4 text-lg border-b pb-1 mb-2">Management</h5>';
+                const { prevention, monitoring, direct_control } = item.management;
+
+                if (prevention && prevention.length > 0) {
+                    contentHTML += `
+                        <div class="mt-3">
+                            <div class="flex items-center">
+                                <i data-lucide="shield" class="w-5 h-5 mr-2 text-blue-600"></i>
+                                <h6 class="font-semibold text-gray-800">Prevention</h6>
+                            </div>
+                            <ul class="list-disc list-inside pl-7 text-sm text-gray-700 mt-1 space-y-1">
+                                ${prevention.map(i => `<li>${i}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                if (monitoring && monitoring.length > 0) {
+                    contentHTML += `
+                        <div class="mt-4">
+                            <div class="flex items-center">
+                                <i data-lucide="search" class="w-5 h-5 mr-2 text-yellow-600"></i>
+                                <h6 class="font-semibold text-gray-800">Monitoring</h6>
+                            </div>
+                            <ul class="list-disc list-inside pl-7 text-sm text-gray-700 mt-1 space-y-1">
+                                ${monitoring.map(i => `<li>${i}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                if (direct_control && direct_control.length > 0) {
+                    contentHTML += `
+                        <div class="mt-4">
+                            <div class="flex items-center">
+                                <i data-lucide="syringe" class="w-5 h-5 mr-2 text-red-600"></i>
+                                <h6 class="font-semibold text-gray-800">Direct Control</h6>
+                            </div>
+                            <ul class="list-disc list-inside pl-7 text-sm text-gray-700 mt-1 space-y-1">
+                                ${direct_control.map(i => `<li>${i}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+            }
+
+            content.innerHTML = contentHTML;
+            lucide.createIcons();
+
+            const panel = document.getElementById('pest-details-panel');
+            modal.classList.remove('hidden');
+            setTimeout(() => { // Allow display:block to take effect before starting transition
+                panel.classList.remove('translate-x-full');
+            }, 10);
+        }
+
         async function loadPestAndDiseaseCards() {
             const container = document.getElementById('pest-cards-container');
             if (!container) return;
@@ -2055,68 +2146,7 @@
                 card.appendChild(nameContainer);
 
                 card.addEventListener('click', () => {
-                    const modal = document.getElementById('pest-details-modal');
-                    const title = document.getElementById('pest-modal-title');
-                    const content = document.getElementById('pest-modal-content');
-
-                    title.textContent = name;
-                    let contentHTML = `<p class="text-sm text-gray-600 mb-4">${item['Characteristic Visual Damage'] || item['Primary Visual Symptoms']}</p>`;
-
-                    if (item.management) {
-                        contentHTML += '<h5 class="font-bold mt-4 text-lg border-b pb-1 mb-2">Management</h5>';
-                        const { prevention, monitoring, direct_control } = item.management;
-
-                        if (prevention && prevention.length > 0) {
-                            contentHTML += `
-                                <div class="mt-3">
-                                    <div class="flex items-center">
-                                        <i data-lucide="shield" class="w-5 h-5 mr-2 text-blue-600"></i>
-                                        <h6 class="font-semibold text-gray-800">Prevention</h6>
-                                    </div>
-                                    <ul class="list-disc list-inside pl-7 text-sm text-gray-700 mt-1 space-y-1">
-                                        ${prevention.map(i => `<li>${i}</li>`).join('')}
-                                    </ul>
-                                </div>
-                            `;
-                        }
-
-                        if (monitoring && monitoring.length > 0) {
-                            contentHTML += `
-                                <div class="mt-4">
-                                    <div class="flex items-center">
-                                        <i data-lucide="search" class="w-5 h-5 mr-2 text-yellow-600"></i>
-                                        <h6 class="font-semibold text-gray-800">Monitoring</h6>
-                                    </div>
-                                    <ul class="list-disc list-inside pl-7 text-sm text-gray-700 mt-1 space-y-1">
-                                        ${monitoring.map(i => `<li>${i}</li>`).join('')}
-                                    </ul>
-                                </div>
-                            `;
-                        }
-
-                        if (direct_control && direct_control.length > 0) {
-                            contentHTML += `
-                                <div class="mt-4">
-                                    <div class="flex items-center">
-                                        <i data-lucide="syringe" class="w-5 h-5 mr-2 text-red-600"></i>
-                                        <h6 class="font-semibold text-gray-800">Direct Control</h6>
-                                    </div>
-                                    <ul class="list-disc list-inside pl-7 text-sm text-gray-700 mt-1 space-y-1">
-                                        ${direct_control.map(i => `<li>${i}</li>`).join('')}
-                                    </ul>
-                                </div>
-                            `;
-                        }
-                    }
-
-                    content.innerHTML = contentHTML;
-                    lucide.createIcons();
-
-                    const panel = document.getElementById('pest-details-panel');
-                    modal.classList.remove('hidden');
-                    setTimeout(() => { // Allow display:block to take effect before starting transition
-                        panel.classList.remove('translate-x-full');
-                    }, 10);
+                    showPestDetailsByName(name);
                 });
 
                 container.appendChild(card);
