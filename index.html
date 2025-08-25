@@ -819,8 +819,14 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="advisory-map-container" class="hidden h-full">
+                        <div id="advisory-map-container" class="hidden h-full relative">
                             <div id="advisory-map" class="w-full h-full rounded-lg shadow-inner"></div>
+                            <div id="farm-risk-stats" class="absolute top-2 right-2 bg-white bg-opacity-80 p-3 rounded-lg shadow-md z-[1000]">
+                                <h4 class="font-bold text-sm mb-2 text-gray-800">Farm Risk Analysis</h4>
+                                <div id="farm-risk-stats-content">
+                                    <p class="text-xs text-gray-600">Loading farm data...</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </main>
@@ -1670,8 +1676,27 @@
                 advisoryMapContainer.classList.remove('hidden');
                 loadingIndicator.classList.remove('hidden');
 
-                const riskData = await generateGeographicRisk();
-                renderRiskMap(riskData);
+                // Fetch all farm lots from all users
+                const farmLots = [];
+                try {
+                    const usersSnapshot = await getDocs(collection(db, 'users'));
+                    for (const userDoc of usersSnapshot.docs) {
+                        const farmLotsCollection = collection(db, 'users', userDoc.id, 'farmLots');
+                        const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                        farmLotsSnapshot.forEach(farmDoc => {
+                            const farmData = farmDoc.data();
+                            if (farmData.polygonCoordinates && farmData.polygonCoordinates.length > 0) {
+                                farmLots.push(farmData);
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error("Error fetching farm lots for risk analysis:", error);
+                    // Continue without farm data if it fails
+                }
+
+                const riskData = await generateGeographicRisk(farmLots);
+                renderRiskMap(riskData.riskSummary, riskData.farmRiskCounts);
 
                 loadingIndicator.classList.add('hidden');
             });
@@ -1881,7 +1906,7 @@
         }
 
         let advisoryMap = null;
-        function renderRiskMap(data) {
+        function renderRiskMap(data, farmRiskCounts) {
             const mapContainer = document.getElementById('advisory-map');
             if (!mapContainer) return;
 
@@ -1947,6 +1972,33 @@
                 return div;
             };
             legend.addTo(advisoryMap);
+
+            // --- New: Update Farm Risk Stats ---
+            const statsContainer = document.getElementById('farm-risk-stats-content');
+            if (statsContainer && farmRiskCounts) {
+                statsContainer.innerHTML = `
+                    <div class="flex items-center text-sm mb-1">
+                        <span class="w-4 h-4 rounded-full mr-2" style="background-color: #f87171;"></span>
+                        <span class="font-medium text-gray-700">High Risk:</span>
+                        <span class="ml-auto font-bold text-gray-900">${farmRiskCounts.high} farms</span>
+                    </div>
+                    <div class="flex items-center text-sm mb-1">
+                        <span class="w-4 h-4 rounded-full mr-2" style="background-color: #facc15;"></span>
+                        <span class="font-medium text-gray-700">Moderate Risk:</span>
+                        <span class="ml-auto font-bold text-gray-900">${farmRiskCounts.moderate} farms</span>
+                    </div>
+                    <div class="flex items-center text-sm">
+                        <span class="w-4 h-4 rounded-full mr-2" style="background-color: #4ade80;"></span>
+                        <span class="font-medium text-gray-700">Low Risk:</span>
+                        <span class="ml-auto font-bold text-gray-900">${farmRiskCounts.low} farms</span>
+                    </div>
+                     ${farmRiskCounts.unknown > 0 ? `
+                    <div class="flex items-center text-xs mt-2 text-gray-500">
+                        <span class="w-3 h-3 rounded-full mr-2 bg-gray-400"></span>
+                        <span>${farmRiskCounts.unknown} farms couldn't be located.</span>
+                    </div>` : ''}
+                `;
+            }
         }
 
 
