@@ -17,6 +17,9 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <!-- Chart.js for weather chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <!-- Leaflet CSS for mapping -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
@@ -69,36 +72,6 @@
             0% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
             100% { transform: translateY(0px); }
-        }
-
-        .pest-name {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: rgba(255, 255, 255, 0.5); /* White with 50% transparency */
-            color: black;
-            font-size: 0.875rem; /* 14px, text-sm */
-            line-height: 1.25rem; /* 20px */
-            overflow: hidden;
-            white-space: nowrap;
-            text-align: center;
-        }
-
-        .pest-name p {
-            margin: 0;
-            padding: 0.25rem;
-            display: inline-block;
-        }
-
-        .pest-name.is-long p {
-            padding-left: 100%;
-            animation: marquee 10s linear infinite;
-        }
-
-        @keyframes marquee {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(-100%, 0); }
         }
     </style>
 </head>
@@ -197,7 +170,7 @@
                         By signing in, you agree to our <a href="#" id="privacy-policy-link" class="underline hover:text-white">Privacy Policy</a>. All personal data is encrypted in transit.
                     </div>
                 </div>
-                <div id="weather-dashboard-container" class="w-full md:w-1/2 p-6 hidden md:flex flex-col justify-center items-center">
+                <div id="weather-dashboard-container" class="w-full md:w-1/2 p-6 hidden md:flex flex-col items-center overflow-y-auto">
                     <!-- Weather dashboard will be inserted here -->
                 </div>
                 <div id="pest-cards-container" class="w-full md:w-1/2 p-6 hidden md:flex md:flex-wrap md:justify-center overflow-y-auto">
@@ -1228,21 +1201,6 @@
                     <img src="${imageUrl}" alt="${name}" class="w-full h-full object-cover">
                 `;
 
-                const nameContainer = document.createElement('div');
-                nameContainer.className = 'pest-name';
-
-                const nameText = document.createElement('p');
-                nameText.textContent = name;
-                nameContainer.appendChild(nameText);
-
-                // Check if the text is long and add the animation class
-                // This is a rough estimation. A better way would be to measure the text width in the DOM.
-                if (name.length > 20) {
-                    nameContainer.classList.add('is-long');
-                }
-
-                card.appendChild(nameContainer);
-
                 card.addEventListener('click', () => {
                     const modal = document.getElementById('pest-details-modal');
                     const title = document.getElementById('pest-modal-title');
@@ -1354,11 +1312,117 @@
 
         async function fetchAndDisplayWeather(lat, lon) {
             const container = document.getElementById('weather-dashboard-container');
-            container.innerHTML = `<div class="text-center text-white p-6"><p>Loading weather data...</p></div>`;
+            if (!container) return; // Exit if the container is not on the current screen
 
-            // 1. Reverse Geocoding to get location name
+            // --- Define Weather Variables ---
+            const hourlyVariables = [
+                "temperature_2m", "relative_humidity_2m", "dew_point_2m", "apparent_temperature", "precipitation_probability",
+                "precipitation", "rain", "showers", "snowfall", "snow_depth", "weather_code", "pressure_msl", "surface_pressure",
+                "cloud_cover", "cloud_cover_low", "cloud_cover_mid", "cloud_cover_high", "visibility", "evapotranspiration",
+                "et0_fao_evapotranspiration", "vapour_pressure_deficit", "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m",
+                "soil_temperature_0cm", "soil_moisture_0_to_1cm", "is_day"
+            ];
+            const dailyVariables = [
+                "weather_code", "temperature_2m_max", "temperature_2m_min", "apparent_temperature_max", "apparent_temperature_min",
+                "sunrise", "sunset", "daylight_duration", "sunshine_duration", "uv_index_max", "precipitation_sum", "rain_sum",
+                "showers_sum", "snowfall_sum", "precipitation_hours", "precipitation_probability_max", "wind_speed_10m_max",
+                "wind_gusts_10m_max", "wind_direction_10m_dominant", "shortwave_radiation_sum", "et0_fao_evapotranspiration"
+            ];
+
+            // --- Initial UI setup (if not already done) ---
+            if (!container.innerHTML.includes('Weather Dashboard')) {
+                 container.innerHTML = `
+                    <div id="main-weather-display" class="bg-black bg-opacity-20 p-6 rounded-lg shadow-lg backdrop-blur-sm border border-white/10 w-full max-w-md">
+                        <!-- Main weather info will be injected here -->
+                        <div class="text-center text-white p-6"><p>Loading weather data...</p></div>
+                    </div>
+                    <div id="advanced-weather-settings" class="bg-black bg-opacity-30 p-6 rounded-lg shadow-lg backdrop-blur-sm border border-white/10 w-full max-w-md mt-4">
+                        <h4 class="text-xl font-bold text-white mb-4">Chart & API Generator</h4>
+                        <div>
+                            <h5 class="font-semibold text-white mb-2">Hourly Weather Variables</h5>
+                            <div id="hourly-options-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm text-gray-100"></div>
+                        </div>
+                        <div class="mt-4">
+                            <h5 class="font-semibold text-white mb-2">Daily Weather Variables</h5>
+                            <div id="daily-options-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm text-gray-100"></div>
+                        </div>
+                        <div class="mt-4">
+                            <h5 class="font-semibold text-white mb-2">Chart Preview</h5>
+                            <div class="bg-white/10 p-2 rounded-lg"><canvas id="weather-chart-canvas"></canvas></div>
+                        </div>
+                        <div class="mt-4">
+                            <h5 class="font-semibold text-white mb-2">Generated API URL</h5>
+                            <pre id="api-url-display" class="bg-gray-900 text-green-400 p-3 rounded-lg text-xs overflow-x-auto whitespace-pre-wrap break-all">Select variables to generate URL</pre>
+                        </div>
+                    </div>`;
+            }
+
+            // --- Populate Checkboxes ---
+            const populateCheckboxes = (gridId, varList, type) => {
+                const grid = document.getElementById(gridId);
+                if (!grid || grid.childElementCount > 0) return; // Don't repopulate
+                grid.innerHTML = varList.map(v => `
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" value="${v}" data-type="${type}" class="weather-variable-cb h-4 w-4 rounded bg-gray-700 border-gray-500 text-green-500 focus:ring-green-500">
+                        <span>${v.replace(/_/g, ' ')}</span>
+                    </label>
+                `).join('');
+            };
+            populateCheckboxes('hourly-options-grid', hourlyVariables, 'hourly');
+            populateCheckboxes('daily-options-grid', dailyVariables, 'daily');
+
+            // --- Logic to build URL and fetch data ---
+            const buildUrlAndFetch = async () => {
+                // 1. Get selected variables
+                const selectedHourly = Array.from(document.querySelectorAll('#hourly-options-grid input:checked')).map(cb => cb.value);
+                const selectedDaily = Array.from(document.querySelectorAll('#daily-options-grid input:checked')).map(cb => cb.value);
+
+                // Ensure required params for main display are always included
+                const currentParams = "temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,soil_moisture_0_to_1cm,et0_fao_evapotranspiration";
+                const hourlyForRain = "precipitation_probability";
+                const dailyForSun = "sunrise,sunset";
+
+                const finalHourlyParams = [...new Set([hourlyForRain, ...selectedHourly])].join(',');
+                const finalDailyParams = [...new Set([dailyForSun, ...selectedDaily])].join(',');
+
+                // 2. Build API URL
+                const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=${currentParams}&hourly=${finalHourlyParams}&daily=${finalDailyParams}&timezone=Asia/Manila&forecast_days=7`;
+                document.getElementById('api-url-display').textContent = apiUrl;
+
+                // 3. Fetch data and update UI
+                try {
+                    const weatherResponse = await fetch(apiUrl);
+                    if (!weatherResponse.ok) throw new Error('Weather data not available');
+                    const data = await weatherResponse.json();
+
+                    updateMainWeatherDisplay(data, lat, lon); // Update the top card
+                    updateWeatherChart(data); // Update the chart (to be implemented)
+
+                } catch (error) {
+                    console.error('Error fetching weather data:', error);
+                    document.getElementById('main-weather-display').innerHTML = `<div class="text-center text-white p-6 bg-red-500/30 rounded-lg"><p>Could not load weather data.</p></div>`;
+                }
+            };
+
+            // --- Attach Event Listeners ---
+            document.getElementById('advanced-weather-settings').addEventListener('change', buildUrlAndFetch);
+
+            // --- Initial Fetch ---
+            buildUrlAndFetch();
+        }
+
+        async function updateMainWeatherDisplay(data, lat, lon) {
+            const displayContainer = document.getElementById('main-weather-display');
+            const weather = data.current;
+            const daily = data.daily;
+            if (!weather || !daily) {
+                displayContainer.innerHTML = `<div class="text-center text-white p-6"><p>Incomplete weather data.</p></div>`;
+                return;
+            }
+
+            // Get location name
             let locationName = "Unknown Location";
-            try {
+             try {
                 const geoResponse = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
                 const geoData = await geoResponse.json();
                 if (geoData.address) {
@@ -1368,128 +1432,169 @@
                 console.error("Reverse geocoding failed:", e);
             }
 
-            // 2. Fetch comprehensive weather data
-            const weatherParams = "temperature_2m,relative_humidity_2m,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,soil_moisture_0_to_1cm,et0_fao_evapotranspiration";
-            const hourlyParams = "precipitation_probability";
-            const dailyParams = "sunrise,sunset";
-            const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=${weatherParams}&hourly=${hourlyParams}&daily=${dailyParams}&timezone=Asia/Manila&forecast_days=1`;
+            const { text, icon } = getWeatherInfo(weather.weather_code);
+            const sunrise = new Date(daily.sunrise[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const sunset = new Date(daily.sunset[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            try {
-                const weatherResponse = await fetch(apiUrl);
-                if (!weatherResponse.ok) {
-                    throw new Error('Weather data not available');
+            const generateRainForecastHTML = (hourly) => {
+                if (!hourly || !hourly.time || !hourly.precipitation_probability) return '';
+                const now = new Date();
+                let startIndex = hourly.time.findIndex(time => new Date(time) >= now);
+                if (startIndex === -1) startIndex = Math.max(0, hourly.time.length - 12);
+
+                let forecastHTML = '<div class="mt-4 pt-4 border-t border-white/20"><h4 class="text-lg font-bold text-white mb-2 text-center">12-Hour Rain Forecast</h4><div class="flex justify-between text-center">';
+                let hoursAdded = 0;
+                for (let i = 0; i < 6; i++) {
+                    const timeIndex1 = startIndex + (i * 2);
+                    const timeIndex2 = timeIndex1 + 1;
+                    if (timeIndex2 >= hourly.time.length) break;
+                    const label = i === 0 ? "Now" : `+${i*2}h`;
+                    const maxProb = Math.round(Math.max(hourly.precipitation_probability[timeIndex1], hourly.precipitation_probability[timeIndex2]));
+                    forecastHTML += `<div class="flex-1"><p class="text-sm font-semibold">${label}</p><i data-lucide="cloud-drizzle" class="w-6 h-6 mx-auto my-1 text-blue-200"></i><p class="text-xs">${maxProb}%</p></div>`;
+                    hoursAdded++;
                 }
-                const data = await weatherResponse.json();
-                const weather = data.current;
-                const daily = data.daily;
+                if (hoursAdded === 0) return '';
+                forecastHTML += '</div></div>';
+                return forecastHTML;
+            };
 
-                const { text, icon } = getWeatherInfo(weather.weather_code);
-                const sunrise = new Date(daily.sunrise[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const sunset = new Date(daily.sunset[0]).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const hourly = data.hourly;
-
-                const generateRainForecastHTML = (hourly) => {
-                    if (!hourly || !hourly.time || !hourly.precipitation_probability) {
-                        return '';
-                    }
-
-                    const now = new Date();
-                    // Find the index of the first future or current hour in the time array
-                    let startIndex = hourly.time.findIndex(time => new Date(time) >= now);
-                    if (startIndex === -1) { // If all times are in the past, just start from the last possible block
-                        startIndex = Math.max(0, hourly.time.length - 12);
-                    }
-
-                    let forecastHTML = '<div class="mt-4 pt-4 border-t border-white/20"><h4 class="text-lg font-bold text-white mb-2 text-center">12-Hour Rain Forecast</h4><div class="flex justify-between text-center">';
-
-                    let hoursAdded = 0;
-                    for (let i = 0; i < 6; i++) {
-                        const timeIndex1 = startIndex + (i * 2);
-                        const timeIndex2 = timeIndex1 + 1;
-
-                        if (timeIndex2 >= hourly.time.length) break;
-
-                        const label = i === 0 ? "Now" : `+${i*2}h`;
-                        const prob1 = hourly.precipitation_probability[timeIndex1];
-                        const prob2 = hourly.precipitation_probability[timeIndex2];
-                        const maxProb = Math.round(Math.max(prob1, prob2));
-
-                        forecastHTML += `
-                            <div class="flex-1">
-                                <p class="text-sm font-semibold">${label}</p>
-                                <i data-lucide="cloud-drizzle" class="w-6 h-6 mx-auto my-1 text-blue-200"></i>
-                                <p class="text-xs">${maxProb}%</p>
-                            </div>
-                        `;
-                        hoursAdded++;
-                    }
-
-                    if (hoursAdded === 0) return ''; // Do not show the section if no forecast could be generated
-
-                    forecastHTML += '</div></div>';
-                    return forecastHTML;
-                };
-
-                const weatherHTML = `
-                    <div class="bg-black bg-opacity-20 p-6 rounded-lg shadow-lg backdrop-blur-sm border border-white/10 w-full max-w-md">
-                        <div class="text-center mb-4">
-                            <h3 class="text-2xl font-bold text-white">Weather Dashboard</h3>
-                            <p class="text-lg text-gray-300">${locationName}</p>
-                        </div>
-                        <div class="flex items-center justify-center space-x-4 mb-6">
-                            <i data-lucide="${icon}" class="w-20 h-20 text-[#f1c232]"></i>
-                            <div>
-                                <p class="text-6xl font-bold text-white">${Math.round(weather.temperature_2m)}°C</p>
-                                <p class="text-xl text-gray-200 capitalize -mt-1">${text}</p>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-white">
-                            <div class="text-center bg-white/10 p-3 rounded-lg">
-                                <i data-lucide="droplets" class="w-6 h-6 mx-auto mb-1 text-blue-300"></i>
-                                <p class="font-bold text-gray-300 text-sm">Humidity</p>
-                                <p>${weather.relative_humidity_2m}%</p>
-                            </div>
-                            <div class="text-center bg-white/10 p-3 rounded-lg">
-                                <i data-lucide="wind" class="w-6 h-6 mx-auto mb-1 text-gray-300"></i>
-                                <p class="font-bold text-gray-300 text-sm">Wind</p>
-                                <p>${weather.wind_speed_10m} km/h</p>
-                            </div>
-                             <div class="text-center bg-white/10 p-3 rounded-lg">
-                                <i data-lucide="compass" class="w-6 h-6 mx-auto mb-1 text-gray-300" style="transform: rotate(${weather.wind_direction_10m}deg);"></i>
-                                <p class="font-bold text-gray-300 text-sm">Direction</p>
-                                <p>${weather.wind_direction_10m}°</p>
-                            </div>
-                            <div class="text-center bg-white/10 p-3 rounded-lg">
-                                <i data-lucide="thermometer-snowflake" class="w-6 h-6 mx-auto mb-1 text-green-300"></i>
-                                <p class="font-bold text-gray-300 text-sm">Soil Moisture</p>
-                                <p>${(weather.soil_moisture_0_to_1cm || 0).toFixed(3)} m³/m³</p>
-                            </div>
-                            <div class="text-center bg-white/10 p-3 rounded-lg">
-                                <i data-lucide="sunrise" class="w-6 h-6 mx-auto mb-1 text-orange-300"></i>
-                                <p class="font-bold text-gray-300 text-sm">Sunrise</p>
-                                <p>${sunrise}</p>
-                            </div>
-                            <div class="text-center bg-white/10 p-3 rounded-lg">
-                                <i data-lucide="sunset" class="w-6 h-6 mx-auto mb-1 text-purple-300"></i>
-                                <p class="font-bold text-gray-300 text-sm">Sunset</p>
-                                <p>${sunset}</p>
-                            </div>
-                        </div>
-                         <div class="text-center bg-white/10 p-3 rounded-lg mt-4">
-                            <i data-lucide="leaf" class="w-6 h-6 mx-auto mb-1 text-lime-300"></i>
-                            <p class="font-bold text-gray-300 text-sm">Evapotranspiration (FAO)</p>
-                            <p>${(weather.et_0_fao_evapotranspiration || 0).toFixed(3)} mm</p>
-                        </div>
-                        ${generateRainForecastHTML(hourly)}
+            const displayHTML = `
+                <div class="text-center mb-4">
+                    <h3 class="text-2xl font-bold text-white">Weather Dashboard</h3>
+                    <p class="text-lg text-gray-300">${locationName}</p>
+                </div>
+                <div class="flex items-center justify-center space-x-4 mb-6">
+                    <i data-lucide="${icon}" class="w-20 h-20 text-[#f1c232]"></i>
+                    <div>
+                        <p class="text-6xl font-bold text-white">${Math.round(weather.temperature_2m)}°C</p>
+                        <p class="text-xl text-gray-200 capitalize -mt-1">${text}</p>
                     </div>
-                `;
-                container.innerHTML = weatherHTML;
-                lucide.createIcons();
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-white">
+                    <div class="text-center bg-white/10 p-3 rounded-lg"><i data-lucide="droplets" class="w-6 h-6 mx-auto mb-1 text-blue-300"></i><p class="font-bold text-gray-300 text-sm">Humidity</p><p>${weather.relative_humidity_2m}%</p></div>
+                    <div class="text-center bg-white/10 p-3 rounded-lg"><i data-lucide="wind" class="w-6 h-6 mx-auto mb-1 text-gray-300"></i><p class="font-bold text-gray-300 text-sm">Wind</p><p>${weather.wind_speed_10m} km/h</p></div>
+                    <div class="text-center bg-white/10 p-3 rounded-lg"><i data-lucide="compass" class="w-6 h-6 mx-auto mb-1 text-gray-300" style="transform: rotate(${weather.wind_direction_10m}deg);"></i><p class="font-bold text-gray-300 text-sm">Direction</p><p>${weather.wind_direction_10m}°</p></div>
+                    <div class="text-center bg-white/10 p-3 rounded-lg"><i data-lucide="thermometer-snowflake" class="w-6 h-6 mx-auto mb-1 text-green-300"></i><p class="font-bold text-gray-300 text-sm">Soil Moisture</p><p>${(weather.soil_moisture_0_to_1cm || 0).toFixed(3)} m³/m³</p></div>
+                    <div class="text-center bg-white/10 p-3 rounded-lg"><i data-lucide="sunrise" class="w-6 h-6 mx-auto mb-1 text-orange-300"></i><p class="font-bold text-gray-300 text-sm">Sunrise</p><p>${sunrise}</p></div>
+                    <div class="text-center bg-white/10 p-3 rounded-lg"><i data-lucide="sunset" class="w-6 h-6 mx-auto mb-1 text-purple-300"></i><p class="font-bold text-gray-300 text-sm">Sunset</p><p>${sunset}</p></div>
+                </div>
+                <div class="text-center bg-white/10 p-3 rounded-lg mt-4"><i data-lucide="leaf" class="w-6 h-6 mx-auto mb-1 text-lime-300"></i><p class="font-bold text-gray-300 text-sm">Evapotranspiration (FAO)</p><p>${(weather.et0_fao_evapotranspiration || 0).toFixed(3)} mm</p></div>
+                ${generateRainForecastHTML(data.hourly)}
+            `;
+            displayContainer.innerHTML = displayHTML;
+            lucide.createIcons();
+        }
 
-            } catch (error) {
-                console.error('Error fetching weather data:', error);
-                container.innerHTML = `<div class="text-center text-white p-6 bg-red-500/30 rounded-lg"><p>Could not load weather data.</p></div>`;
+        let weatherChart = null; // Keep a reference to the chart to destroy it later
+        function updateWeatherChart(data) {
+            const ctx = document.getElementById('weather-chart-canvas');
+            if (!ctx) return;
+
+            // Destroy the old chart instance if it exists
+            if (weatherChart) {
+                weatherChart.destroy();
             }
+
+            const selectedHourly = Array.from(document.querySelectorAll('#hourly-options-grid input:checked')).map(cb => cb.value);
+            const selectedDaily = Array.from(document.querySelectorAll('#daily-options-grid input:checked')).map(cb => cb.value);
+
+            const datasets = [];
+            const colors = ['#f1c232', '#34d399', '#60a5fa', '#f87171', '#a78bfa', '#fb923c', '#4ade80'];
+            let colorIndex = 0;
+
+            const timeLabels = data.hourly?.time || data.daily?.time;
+            if (!timeLabels) return; // No data to chart
+
+            // Add hourly data
+            if (data.hourly && selectedHourly.length > 0) {
+                selectedHourly.forEach(variable => {
+                    if (data.hourly[variable]) {
+                        datasets.push({
+                            label: `Hourly: ${variable.replace(/_/g, ' ')}`,
+                            data: data.hourly[variable],
+                            borderColor: colors[colorIndex % colors.length],
+                            backgroundColor: `${colors[colorIndex % colors.length]}33`, // semi-transparent fill
+                            tension: 0.1,
+                            yAxisID: variable.includes('temperature') ? 'y_temp' : (variable.includes('rain') || variable.includes('snow') ? 'y_precip' : 'y_other'),
+                        });
+                        colorIndex++;
+                    }
+                });
+            }
+
+            // Add daily data
+            if (data.daily && selectedDaily.length > 0) {
+                selectedDaily.forEach(variable => {
+                     if (data.daily[variable]) {
+                        datasets.push({
+                            label: `Daily: ${variable.replace(/_/g, ' ')}`,
+                            data: data.daily[variable],
+                            borderColor: colors[colorIndex % colors.length],
+                            backgroundColor: `${colors[colorIndex % colors.length]}33`,
+                            tension: 0.1,
+                            stepped: true, // Daily data is often better visualized as stepped
+                            yAxisID: variable.includes('temperature') ? 'y_temp' : (variable.includes('sum') ? 'y_precip' : 'y_other'),
+                        });
+                        colorIndex++;
+                    }
+                });
+            }
+
+            if (datasets.length === 0) {
+                return; // Nothing to chart
+            }
+
+            weatherChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels.map(t => new Date(t).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit' })),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#e5e7eb' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y_temp: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Temperature (°C)', color: '#e5e7eb' },
+                            ticks: { color: '#e5e7eb' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                         y_precip: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Precipitation (mm)', color: '#e5e7eb' },
+                            ticks: { color: '#e5e7eb' },
+                            grid: { drawOnChartArea: false, }, // only show grid for left axis
+                        },
+                        y_other: {
+                            type: 'linear',
+                            display: false, // Hide by default to avoid clutter
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e5e7eb' }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 12 },
+                        }
+                    }
+                }
+            });
         }
 
         function getWeatherInfo(code) {
