@@ -38,15 +38,15 @@
     },
     {
       "name": "Leaf-cutting insects",
-      "image_url": "http://ephytia.inra.fr/en/IC/25528/Leaf-cutting-insects"
+      "image_url": "https://ephytia.inra.fr/en/I/18015/tabac122-123"
     },
     {
       "name": "Soil pests",
-      "image_url": "http://ephytia.inra.fr/en/IC/25442/Soil-pests"
+      "image_url": "https://ephytia.inra.fr/en/I/18926/tabac63"
     },
     {
       "name": "Pests of stored leaves",
-      "image_url": "http://ephytia.inra.fr/en/IC/25537/Pests-of-stored-leaves"
+      "image_url": "https://ephytia.inra.fr/en/I/19024/tabac482"
     },
     {
       "name": "Chrysanthemum foliar nematode, Checkered leaf disease",
@@ -62,7 +62,9 @@
     },
     {
       "name": "Brown root rot",
-      "image_url": "http://ephytia.inra.fr/en/IC/24508/Pratylenchus-spp"
+      "image_url": "https://ephytia.inra.fr/en/I/18816/tabac068",
+      "image_url1": "https://ephytia.inra.fr/en/I/18806/tabac385",
+      "image_url2": "https://ephytia.inra.fr/en/I/18807/tabac386"
     }
   ],
   "diseases": [
@@ -128,23 +130,23 @@
     },
     {
       "name": "Ragged leaf spot, Phoma leaf blight",
-      "image_url": "http://ephytia.inra.fr/en/Images/view/25008"
+      "image_url": "http://ephytia.inra.fr/en/I/18692/tabac302",
+      "image_url1": "http://ephytia.inra.fr/en/I/18693/tabac303",
+      "image_url2": "http://ephytia.inra.fr/en/I/19124/Pycnide-Ascochyta"
     },
     {
       "name": "Athelia stem rot, Southern stem rot",
-      "image_url": "http://ephytia.inra.fr/en/Images/view/25211"
-    },
-    {
-      "name": "Calonectria crotalariae",
-      "image_url": "http://ephytia.inra.fr/en/Images/view/25218"
+      "image_url": "https://ephytia.inra.fr/en/I/18850/Sclerotium-rolfsii1",
+      "image_url1": "https://ephytia.inra.fr/en/I/18851/Anse-anastomose-arolfsii",
+      "image_url2": "https://ephytia.inra.fr/en/I/18849/sclerotium-rolfsii3"
     },
     {
       "name": "Helicobasidium monpa",
-      "image_url": "http://ephytia.inra.fr/en/Images/view/25216"
+      "image_url": "https://ephytia.inra.fr/en/Images/view/18786"
     },
     {
       "name": "Macrophomina phaseolina",
-      "image_url": "http://ephytia.inra.fr/en/Images/view/25214"
+      "image_url": "https://ephytia.inra.fr/en/Images/view/24325"
     },
     {
       "name": "Root burn disease",
@@ -156,7 +158,7 @@
     },
     {
       "name": "Fusariosis, Fusarium wilt",
-      "image_url": "http://ephytia.inra.fr/en/Images/view/24364"
+      "image_url": "https://ephytia.inra.fr/en/I/41972/Fusarium-wilt-Zimbabwe"
     },
     {
       "name": "Verticilliosis, Verticillium wilt",
@@ -172,7 +174,8 @@
     },
     {
       "name": "Stolbur, big bud",
-      "image_url": "http://ephytia.inra.fr/en/Images/view/24185"
+      "image_url": "https://ephytia.inra.fr/en/I/18675/tabac205-206-207",
+      "image_url1": "https://ephytia.inra.fr/en/I/18077/tabac209"
     },
     {
       "name": "Alfalfa mosaic virus (AMV)",
@@ -180,23 +183,25 @@
     },
     {
       "name": "Beet curly top virus (BCTV)",
-      "image_url": "http://ephytia.inra.fr/en/IC/24934/Beet-curly-top-virus-BCTV"
+      "image_url": "https://ephytia.inra.fr/en/I/19404/geminivirus-BCTV"
     },
     {
       "name": "Peanut stunt virus (PSV)",
-      "image_url": "http://ephytia.inra.fr/en/IC/24972/Peanut-stunt-virus-PSV"
+      "image_url": "https://ephytia.inra.fr/en/I/19412/cucumovirus-PSV"
     },
     {
       "name": "Potato virus X (PVX)",
-      "image_url": "http://ephytia.inra.fr/en/IC/24959/Potato-virus-X-PVX"
+      "image_url": "https://ephytia.inra.fr/en/I/18990/datura"
     },
     {
       "name": "Tobacco bushy top virus (TBTV)",
-      "image_url": "http://ephytia.inra.fr/en/IC/24968/Tobacco-bushy-top-virus-TBTV"
+      "image_url": "https://ephytia.inra.fr/en/I/41955/Bushytop-1",
+      "image_url1": "https://ephytia.inra.fr/en/I/41956/Bushytop-2"
     },
     {
       "name": "Tobacco etch virus (TEV)",
-      "image_url": "http://ephytia.inra.fr/en/IC/18040/tabac196-197"
+      "image_url": "https://ephytia.inra.fr/en/I/18131/tabac193"
+      
     },
     {
       "name": "Tobacco mosaic virus (TMV)",
@@ -204,19 +209,20 @@
     },
     {
       "name": "Tobacco ring spot virus (TRSV)",
-      "image_url": "http://ephytia.inra.fr/en/IC/18128/tabac141b"
+      "image_url": "https://ephytia.inra.fr/en/I/18045/tabac179-181"
     },
     {
       "name": "Tobacco rattle virus (TRV)",
-      "image_url": "http://ephytia.inra.fr/en/IC/24944/Tobacco-rattle-virus-TRV"
+      "image_url": "http://ephytia.inra.fr/en/I/31780/TRV-14-2",
+      "image_url1": "http://ephytia.inra.fr/en/I/31779/TRV-14"
     },
     {
       "name": "Tobacco stunt virus (TStV)",
-      "image_url": "http://ephytia.inra.fr/en/IC/24949/Tobacco-stunt-virus-TStV"
+      "image_url": "http://ephytia.inra.fr/en/I/19386/varicosavirus-TStV"
     },
     {
       "name": "Tobacco necrosis virus (TNV)",
-      "image_url": "http://ephytia.inra.fr/en/IC/24954/Tobacco-necrosis-virus-TNV"
+      "image_url": "http://ephytia.inra.fr/en/I/18128/cucurbit143"
     },
     {
       "name": "Tobacco yellow dwarf virus (TYDV)",
@@ -228,11 +234,12 @@
     },
     {
       "name": "Tobacco vein banding mosaic virus (TVBMV)",
-      "image_url": "http://ephytia.inra.fr/en/IC/24963/Tobacco-vein-banding-mosaic-virus-TVBMV"
+      "image_url": "http://ephytia.inra.fr/en/I/18126/veinbanding2",
+      "image_url": "http://ephytia.inra.fr/en/I/18710/tabac238-247"
     },
     {
       "name": "Tobacco streak virus (TSV)",
-      "image_url": "http://ephytia.inra.fr/en/IC/24977/Tobacco-streak-virus-TSV"
+      "image_url": "http://ephytia.inra.fr/en/I/18990/datura"
     },
     {
       "name": "Pests of air-cured tobacco leaves",
@@ -253,6 +260,13 @@
     {
       "name": "Broomrape",
       "image_url": "http://ephytia.inra.fr/en/Images/view/24225"
+    },
+    {
+      "name": "Damping-off, Collar cankers, Leaf spot (Target Spot)",
+      "image_url": "https://ephytia.inra.fr/en/I/18206/tabac014",
+      "image_url1": "https://ephytia.inra.fr/en/I/18195/tabac29-30",
+      "image_url2": "https://ephytia.inra.fr/en/I/31767/Rhizoctonia-6-2"
     }
+      
   ]
 }
