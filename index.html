@@ -155,6 +155,9 @@
                  <a href="#" id="nav-admin" class="nav-item p-2 rounded-lg hover:bg-[#455b3c]" title="Admin Dashboard">
                     <i data-lucide="shield-alert" class="w-6 h-6"></i>
                 </a>
+                <a href="#" id="nav-advisory" class="nav-item p-2 rounded-lg hover:bg-[#455b3c]" title="Predictive Advisory">
+                    <i data-lucide="cloud-lightning" class="w-6 h-6"></i>
+                </a>
             </nav>
 
             <!-- Logout Button -->
@@ -782,6 +785,30 @@
                 </main>
             </div>
 
+            <!-- Advisory Screen -->
+            <div id="advisory-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
+                <header class="bg-white p-4 shadow-md">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold">Predictive Advisories</h2>
+                        <div>
+                            <label for="province-select" class="text-sm font-medium text-gray-700 mr-2">Select Province:</label>
+                            <select id="province-select" class="px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                </header>
+                <main id="advisory-container" class="flex-1 p-4 overflow-y-auto">
+                    <div id="advisory-loading" class="text-center text-gray-500 mt-20 hidden">
+                        <i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i>
+                        <p class="mt-4">Generating advisories...</p>
+                    </div>
+                    <div id="advisory-content">
+                        <!-- Advisories will be rendered here -->
+                    </div>
+                </main>
+            </div>
+
             <!-- Farm Setup Screen -->
             <div id="farm-setup-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
@@ -1057,6 +1084,10 @@
         // Import the IDB library for offline storage
         import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
 
+        // Import project-specific modules
+        import { provinceCoordinates } from './src/climateTriggers.js';
+        import { generateAdvisories, generateGeographicRisk } from './src/predictive-modeling.js';
+
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { 
@@ -1199,7 +1230,8 @@
             ewDashboard: document.getElementById('ew-dashboard-screen'),
             coordinatorDashboard: document.getElementById('coordinator-dashboard-screen'),
             expertDashboard: document.getElementById('expert-dashboard-screen'),
-            adminDashboard: document.getElementById('admin-dashboard-screen')
+            adminDashboard: document.getElementById('admin-dashboard-screen'),
+            advisory: document.getElementById('advisory-screen')
         };
 
         // --- Weather Settings Modal ---
@@ -1532,7 +1564,185 @@
         document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic', { isFreshNavigation: true, label: 'Online Clinic' }));
         document.getElementById('nav-notifications').addEventListener('click', () => showScreen('notifications', { isFreshNavigation: true, label: 'Notifications' }));
         document.getElementById('nav-admin').addEventListener('click', () => showScreen('adminDashboard', { isFreshNavigation: true, label: 'Admin Dashboard' }));
+        document.getElementById('nav-advisory').addEventListener('click', () => showScreen('advisory', { isFreshNavigation: true, label: 'Predictive Advisory' }));
         document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
+
+        // --- Advisory Screen Logic ---
+        function initializeAdvisoryScreen() {
+            const provinceSelect = document.getElementById('province-select');
+            if (!provinceSelect) return;
+
+            // Populate province dropdown
+            const provinces = Object.keys(provinceCoordinates);
+            provinceSelect.innerHTML = '<option value="">Select a Province</option>';
+            provinces.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p;
+                option.textContent = p;
+                provinceSelect.appendChild(option);
+            });
+             // Add an option for the summary
+            const summaryOption = document.createElement('option');
+            summaryOption.value = "summary";
+            summaryOption.textContent = "Geographic Risk Summary";
+            provinceSelect.appendChild(summaryOption);
+
+
+            provinceSelect.addEventListener('change', async (e) => {
+                const selectedProvince = e.target.value;
+                const advisoryContent = document.getElementById('advisory-content');
+                const loadingIndicator = document.getElementById('advisory-loading');
+
+                advisoryContent.innerHTML = '';
+                if (!selectedProvince) return;
+
+                loadingIndicator.classList.remove('hidden');
+
+                if (selectedProvince === 'summary') {
+                    const riskData = await generateGeographicRisk();
+                    renderGeographicRisk(riskData);
+                } else {
+                    const advisoryData = await generateAdvisories(selectedProvince);
+                    renderAdvisories(advisoryData);
+                }
+
+                loadingIndicator.classList.add('hidden');
+                lucide.createIcons();
+            });
+        }
+
+        function renderAdvisories(data) {
+            const container = document.getElementById('advisory-content');
+            container.innerHTML = '';
+
+            if (data.error) {
+                container.innerHTML = `<p class="text-red-500">${data.error}</p>`;
+                return;
+            }
+
+            if (Object.keys(data).length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-600 mt-8">No specific pest or disease risks detected in the 7-day forecast for this province.</p>`;
+                return;
+            }
+
+            let html = `
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 border-b-2 border-[#455b3c] pb-2 mb-4">When to Scout</h3>
+                        ${renderScoutingSection(data)}
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 border-b-2 border-[#455b3c] pb-2 mb-4">Optimal Timing for Treatment</h3>
+                        ${renderTreatmentSection(data)}
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function renderScoutingSection(data) {
+            let content = '';
+            const scoutingAdvisories = {};
+
+            Object.entries(data).forEach(([date, advisories]) => {
+                advisories.forEach(advisory => {
+                    if (!scoutingAdvisories[advisory.name]) {
+                        scoutingAdvisories[advisory.name] = { advice: advisory.scoutingAdvice, dates: [] };
+                    }
+                    scoutingAdvisories[advisory.name].dates.push(new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+                });
+            });
+
+            if (Object.keys(scoutingAdvisories).length === 0) return '<p>No scouting advisories for the next 7 days.</p>';
+
+            for (const [name, info] of Object.entries(scoutingAdvisories)) {
+                content += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-3">
+                        <p class="font-bold text-lg text-[#384532]">${name}</p>
+                        <p class="text-sm text-gray-600 mt-1">${info.advice}</p>
+                        <p class="text-sm font-semibold text-blue-600 mt-2">Favorable Conditions Expected On: ${info.dates.join(', ')}</p>
+                    </div>
+                `;
+            }
+            return content;
+        }
+
+        function renderTreatmentSection(data) {
+             let content = '';
+            const treatmentAdvisories = {};
+
+            Object.entries(data).forEach(([date, advisories]) => {
+                advisories.forEach(advisory => {
+                    if (!treatmentAdvisories[advisory.name]) {
+                        treatmentAdvisories[advisory.name] = { advice: advisory.optimalTreatment, dates: [] };
+                    }
+                    treatmentAdvisories[advisory.name].dates.push(new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+                });
+            });
+
+             if (Object.keys(treatmentAdvisories).length === 0) return '<p>No specific treatment timing advisories for the next 7 days.</p>';
+
+            for (const [name, info] of Object.entries(treatmentAdvisories)) {
+                content += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-3">
+                        <p class="font-bold text-lg text-[#384532]">${name}</p>
+                        <p class="text-sm text-gray-600 mt-1">${info.advice}</p>
+                        <p class="text-sm font-semibold text-red-600 mt-2">Highest Risk Period: ${info.dates.join(', ')}</p>
+                    </div>
+                `;
+            }
+            return content;
+        }
+
+        function renderGeographicRisk(data) {
+            const container = document.getElementById('advisory-content');
+            container.innerHTML = '';
+
+            if (data.error) {
+                container.innerHTML = `<p class="text-red-500">${data.error}</p>`;
+                return;
+            }
+
+            const maxRisk = Math.max(...Object.values(data).filter(v => v !== -1));
+
+            let html = `
+                 <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 border-b-2 border-[#455b3c] pb-2 mb-4">Geographic Risk Areas (7-Day Outlook)</h3>
+                        <p class="text-sm text-gray-600 mb-4">This summary shows the total number of pest/disease risk events predicted for each province over the next 7 days. Higher numbers indicate a greater variety or persistence of risks.</p>
+                        <div class="space-y-3">
+            `;
+
+            Object.entries(data).sort(([,a],[,b]) => b-a).forEach(([province, score]) => {
+                const riskPercentage = maxRisk > 0 ? (score / maxRisk) * 100 : 0;
+                let bgColor;
+                if (score === -1) {
+                    bgColor = 'bg-gray-400';
+                } else if (riskPercentage > 66) {
+                    bgColor = 'bg-red-500';
+                } else if (riskPercentage > 33) {
+                    bgColor = 'bg-yellow-500';
+                } else {
+                    bgColor = 'bg-green-500';
+                }
+
+                html += `
+                    <div class="bg-white p-3 rounded-lg shadow-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-lg">${province}</span>
+                            <span class="text-sm font-semibold">${score === -1 ? 'Error' : `Risk Score: ${score}`}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-4 mt-2">
+                            <div class="${bgColor}" style="width: ${score === -1 ? 100 : riskPercentage}%; height: 100%; border-radius: 9999px;"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div></div></div>';
+            container.innerHTML = html;
+        }
+
 
         // --- Pest/Disease Card Logic ---
         async function loadPestAndDiseaseCards() {
@@ -2041,6 +2251,9 @@
                     loadAdminUserManagement(); // Default to users tab
                     attachAdminTabListeners();
                     break;
+            case 'advisory':
+                initializeAdvisoryScreen();
+                break;
                 case 'newSubmission':
                     await initializeReportMap(currentContext);
                     break;
