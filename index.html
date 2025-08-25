@@ -155,6 +155,9 @@
                  <a href="#" id="nav-admin" class="nav-item p-2 rounded-lg hover:bg-[#455b3c]" title="Admin Dashboard">
                     <i data-lucide="shield-alert" class="w-6 h-6"></i>
                 </a>
+                <a href="#" id="nav-advisory" class="nav-item p-2 rounded-lg hover:bg-[#455b3c]" title="Predictive Advisory">
+                    <i data-lucide="cloud-lightning" class="w-6 h-6"></i>
+                </a>
             </nav>
 
             <!-- Logout Button -->
@@ -782,6 +785,47 @@
                 </main>
             </div>
 
+            <!-- Advisory Screen -->
+            <div id="advisory-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
+                <header class="bg-white p-4 shadow-md">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold">Predictive Advisories</h2>
+                        <div>
+                            <label for="province-select" class="text-sm font-medium text-gray-700 mr-2">Select Province:</label>
+                            <select id="province-select" class="px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                <select id="municipality-select" class="hidden ml-4 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+                <button id="view-risk-map-btn" class="ml-4 px-4 py-2 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700">View Geographic Risk</button>
+                        </div>
+                    </div>
+                </header>
+                <main id="advisory-container" class="flex-1 p-4 overflow-y-auto">
+                    <div id="advisory-loading" class="text-center text-gray-500 mt-20 hidden">
+                        <i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i>
+                        <p class="mt-4">Generating advisories...</p>
+                    </div>
+                    <div id="advisory-content" class="h-full">
+                        <div id="advisory-list-container" class="flex flex-row gap-4 h-full">
+                            <div id="advisory-list" class="w-2/3 h-full overflow-y-auto space-y-4">
+                                <!-- Advisories will be rendered here -->
+                            </div>
+                            <div id="weather-dashboard" class="w-1/3 bg-white p-4 rounded-lg shadow-sm hidden">
+                                <h3 class="text-xl font-bold text-gray-800 mb-4">7-Day Weather Forecast</h3>
+                                <div class="relative h-[50vh]"> <!-- Constrain chart height -->
+                                    <canvas id="weather-chart-canvas-advisory"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="advisory-map-container" class="hidden h-full">
+                            <div id="advisory-map" class="w-full h-full rounded-lg shadow-inner"></div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
             <!-- Farm Setup Screen -->
             <div id="farm-setup-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
@@ -1057,6 +1101,11 @@
         // Import the IDB library for offline storage
         import { openDB } from 'https://cdn.jsdelivr.net/npm/idb@8/+esm';
 
+        // Import project-specific modules
+        import { conditionGroups } from './src/climateTriggers.js';
+        import { municipalityCoordinates } from './src/municipalityCoordinates.js';
+        import { generateAdvisories, generateGeographicRisk, fetchWeatherForecast } from './src/predictive-modeling.js';
+
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { 
@@ -1199,7 +1248,8 @@
             ewDashboard: document.getElementById('ew-dashboard-screen'),
             coordinatorDashboard: document.getElementById('coordinator-dashboard-screen'),
             expertDashboard: document.getElementById('expert-dashboard-screen'),
-            adminDashboard: document.getElementById('admin-dashboard-screen')
+            adminDashboard: document.getElementById('admin-dashboard-screen'),
+            advisory: document.getElementById('advisory-screen')
         };
 
         // --- Weather Settings Modal ---
@@ -1532,7 +1582,373 @@
         document.getElementById('nav-clinic').addEventListener('click', () => showScreen('onlineClinic', { isFreshNavigation: true, label: 'Online Clinic' }));
         document.getElementById('nav-notifications').addEventListener('click', () => showScreen('notifications', { isFreshNavigation: true, label: 'Notifications' }));
         document.getElementById('nav-admin').addEventListener('click', () => showScreen('adminDashboard', { isFreshNavigation: true, label: 'Admin Dashboard' }));
+        document.getElementById('nav-advisory').addEventListener('click', () => showScreen('advisory', { isFreshNavigation: true, label: 'Predictive Advisory' }));
         document.getElementById('sidebar-logout-btn').addEventListener('click', () => signOut(auth));
+
+        // --- Advisory Screen Logic ---
+        function initializeAdvisoryScreen() {
+            const provinceSelect = document.getElementById('province-select');
+            const municipalitySelect = document.getElementById('municipality-select');
+            if (!provinceSelect || !municipalitySelect) return;
+
+            // Populate province dropdown
+            const provinces = Object.keys(municipalityCoordinates);
+            provinceSelect.innerHTML = '<option value="">Select a Province</option>';
+            provinces.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p;
+                option.textContent = p;
+                provinceSelect.appendChild(option);
+            });
+            provinceSelect.addEventListener('change', async (e) => {
+                const selectedProvince = e.target.value;
+                const advisoryListContainer = document.getElementById('advisory-list-container');
+                const advisoryMapContainer = document.getElementById('advisory-map-container');
+                const weatherDashboard = document.getElementById('weather-dashboard');
+
+                // Reset everything
+                advisoryListContainer.querySelector('#advisory-list').innerHTML = '';
+                weatherDashboard.classList.add('hidden');
+                municipalitySelect.innerHTML = '<option value="">Select a Municipality</option>';
+                municipalitySelect.classList.add('hidden');
+                advisoryMapContainer.classList.add('hidden');
+                advisoryListContainer.classList.remove('hidden');
+
+                if (!selectedProvince) return;
+
+                // Populate municipality dropdown
+                const municipalities = Object.keys(municipalityCoordinates[selectedProvince]);
+                municipalities.forEach(m => {
+                    const option = document.createElement('option');
+                    option.value = m;
+                    option.textContent = m;
+                    municipalitySelect.appendChild(option);
+                });
+                municipalitySelect.classList.remove('hidden');
+            });
+
+            municipalitySelect.addEventListener('change', async (e) => {
+                const selectedMunicipality = e.target.value;
+                const selectedProvince = provinceSelect.value;
+                const advisoryListContainer = document.getElementById('advisory-list');
+                const weatherDashboard = document.getElementById('weather-dashboard');
+                const loadingIndicator = document.getElementById('advisory-loading');
+
+                advisoryListContainer.innerHTML = '';
+                weatherDashboard.classList.add('hidden');
+                if (!selectedMunicipality) return;
+
+                loadingIndicator.classList.remove('hidden');
+
+                try {
+                    const forecast = await fetchWeatherForecast(selectedProvince, selectedMunicipality);
+                    renderWeatherDashboard(forecast);
+                    weatherDashboard.classList.remove('hidden');
+
+                    const advisoryData = await generateAdvisories(selectedProvince, selectedMunicipality);
+                    renderAdvisories(advisoryData);
+                } catch (error) {
+                    console.error("Error fetching data for municipality:", error);
+                    advisoryListContainer.innerHTML = `<p class="text-red-500">Could not load data for ${selectedMunicipality}.</p>`;
+                }
+
+
+                loadingIndicator.classList.add('hidden');
+                lucide.createIcons();
+            });
+
+            document.getElementById('view-risk-map-btn').addEventListener('click', async () => {
+                const advisoryListContainer = document.getElementById('advisory-list-container');
+                const advisoryMapContainer = document.getElementById('advisory-map-container');
+                const loadingIndicator = document.getElementById('advisory-loading');
+                const weatherDashboard = document.getElementById('weather-dashboard');
+
+                // Reset UI
+                advisoryListContainer.querySelector('#advisory-list').innerHTML = '';
+                weatherDashboard.classList.add('hidden');
+                advisoryListContainer.classList.add('hidden');
+                advisoryMapContainer.classList.remove('hidden');
+                loadingIndicator.classList.remove('hidden');
+
+                const riskData = await generateGeographicRisk();
+                renderRiskMap(riskData);
+
+                loadingIndicator.classList.add('hidden');
+            });
+        }
+
+        function renderAdvisories(data) {
+            const container = document.getElementById('advisory-list');
+            container.innerHTML = '';
+
+            if (data.error) {
+                container.innerHTML = `<p class="text-red-500">${data.error}</p>`;
+                return;
+            }
+
+            if (Object.keys(data).length === 0) {
+                container.innerHTML = `<p class="text-center text-gray-600 mt-8">No specific pest or disease risks detected in the 7-day forecast for this province.</p>`;
+                return;
+            }
+
+            let html = `
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 border-b-2 border-[#455b3c] pb-2 mb-4">When to Scout</h3>
+                        ${renderScoutingSection(data)}
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 border-b-2 border-[#455b3c] pb-2 mb-4">Optimal Timing for Treatment</h3>
+                        ${renderTreatmentSection(data)}
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function renderScoutingSection(data) {
+            const groupedAdvisories = {};
+
+            // Group advisories by condition set
+            Object.entries(data).forEach(([date, advisories]) => {
+                advisories.forEach(advisory => {
+                    const conditionKey = advisory.conditions.sort().join(',');
+                    if (!groupedAdvisories[conditionKey]) {
+                        groupedAdvisories[conditionKey] = {
+                            title: conditionGroups[conditionKey] || "General Advisory",
+                            pests: {}
+                        };
+                    }
+                    if (!groupedAdvisories[conditionKey].pests[advisory.name]) {
+                        groupedAdvisories[conditionKey].pests[advisory.name] = {
+                            advice: advisory.scoutingAdvice,
+                            dates: new Set()
+                        };
+                    }
+                    groupedAdvisories[conditionKey].pests[advisory.name].dates.add(new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+                });
+            });
+
+            if (Object.keys(groupedAdvisories).length === 0) return '<p>No scouting advisories for the next 7 days.</p>';
+
+            let content = '';
+            for (const key in groupedAdvisories) {
+                const group = groupedAdvisories[key];
+                content += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <p class="font-bold text-lg text-[#384532]">${group.title}</p>`;
+
+                for (const pestName in group.pests) {
+                    const pestInfo = group.pests[pestName];
+                    content += `
+                        <div class="mt-3 pl-4 border-l-4 border-gray-200">
+                            <p class="font-semibold text-md text-gray-800">${pestName}</p>
+                            <p class="text-sm text-gray-600 mt-1">${pestInfo.advice}</p>
+                            <p class="text-sm font-semibold text-blue-600 mt-2">Favorable On: ${[...pestInfo.dates].join(', ')}</p>
+                        </div>`;
+                }
+                content += `</div>`;
+            }
+            return content;
+        }
+
+        function renderTreatmentSection(data) {
+            const groupedAdvisories = {};
+
+            // Group advisories by condition set
+            Object.entries(data).forEach(([date, advisories]) => {
+                advisories.forEach(advisory => {
+                    const conditionKey = advisory.conditions.sort().join(',');
+                    if (!groupedAdvisories[conditionKey]) {
+                        groupedAdvisories[conditionKey] = {
+                            title: conditionGroups[conditionKey] || "General Advisory",
+                            pests: {}
+                        };
+                    }
+                    if (!groupedAdvisories[conditionKey].pests[advisory.name]) {
+                        groupedAdvisories[conditionKey].pests[advisory.name] = {
+                            advice: advisory.optimalTreatment,
+                            dates: new Set()
+                        };
+                    }
+                    groupedAdvisories[conditionKey].pests[advisory.name].dates.add(new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+                });
+            });
+
+            if (Object.keys(groupedAdvisories).length === 0) return '<p>No specific treatment timing advisories for the next 7 days.</p>';
+
+            let content = '';
+            for (const key in groupedAdvisories) {
+                const group = groupedAdvisories[key];
+                 content += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+                        <p class="font-bold text-lg text-[#384532]">${group.title}</p>`;
+
+                for (const pestName in group.pests) {
+                    const pestInfo = group.pests[pestName];
+                    content += `
+                        <div class="mt-3 pl-4 border-l-4 border-gray-200">
+                            <p class="font-semibold text-md text-gray-800">${pestName}</p>
+                            <p class="text-sm text-gray-600 mt-1">${pestInfo.advice}</p>
+                            <p class="text-sm font-semibold text-red-600 mt-2">Highest Risk Period: ${[...pestInfo.dates].join(', ')}</p>
+                        </div>`;
+                }
+                 content += `</div>`;
+            }
+            return content;
+        }
+
+        let advisoryWeatherChart = null;
+        function renderWeatherDashboard(forecast) {
+            const canvas = document.getElementById('weather-chart-canvas-advisory');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            if (advisoryWeatherChart) {
+                advisoryWeatherChart.destroy();
+            }
+
+            if (!forecast || !forecast.daily || !forecast.daily.time) {
+                return;
+            }
+
+            advisoryWeatherChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: forecast.daily.time.map(t => new Date(t).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })),
+                    datasets: [
+                        {
+                            label: 'Max Temp (°C)',
+                            data: forecast.daily.temperature_2m_max,
+                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            yAxisID: 'y_temp',
+                            type: 'line',
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Min Temp (°C)',
+                            data: forecast.daily.temperature_2m_min,
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            yAxisID: 'y_temp',
+                            type: 'line',
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Precipitation (mm)',
+                            data: forecast.daily.precipitation_sum,
+                            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            yAxisID: 'y_precip',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                        },
+                        y_temp: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Temperature (°C)'
+                            }
+                        },
+                        y_precip: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Precipitation (mm)'
+                            },
+                            grid: {
+                                drawOnChartArea: false, // only draw grid for temp axis
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        let advisoryMap = null;
+        function renderRiskMap(data) {
+            const mapContainer = document.getElementById('advisory-map');
+            if (!mapContainer) return;
+
+            // Clear previous map instance
+            if (advisoryMap) {
+                advisoryMap.remove();
+                advisoryMap = null;
+            }
+
+            advisoryMap = L.map(mapContainer).setView([17.5, 121.0], 7); // Centered on Northern Luzon
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(advisoryMap);
+
+            if (data.error) {
+                mapContainer.innerHTML = `<p class="text-red-500 p-4">${data.error}</p>`;
+                return;
+            }
+
+            const allScores = Object.values(data).flatMap(province => Object.values(province).map(mun => mun.score)).filter(s => s > 0);
+            const maxScore = Math.max(...allScores, 1); // Avoid division by zero
+
+            for (const provinceName in data) {
+                for (const municipalityName in data[provinceName]) {
+                    const municipalityData = data[provinceName][municipalityName];
+                    if (municipalityData.score === -1) continue;
+
+                    const { lat, lng } = municipalityData.coords;
+                    const riskScore = municipalityData.score;
+
+                    let color = '#4ade80'; // green
+                    if (riskScore > maxScore * 0.66) {
+                        color = '#f87171'; // red
+                    } else if (riskScore > maxScore * 0.33) {
+                        color = '#facc15'; // yellow
+                    }
+
+                    const circle = L.circle([lat, lng], {
+                        color: color,
+                        fillColor: color,
+                        fillOpacity: 0.6,
+                        radius: 8000 // 8km radius
+                    }).addTo(advisoryMap);
+
+                    circle.bindPopup(`<b>${municipalityName}, ${provinceName}</b><br>Risk Score: ${riskScore}`);
+                }
+            }
+
+            // Add legend
+            const legend = L.control({position: 'bottomright'});
+            legend.onAdd = function (map) {
+                const div = L.DomUtil.create('div', 'info legend bg-white p-2 rounded-md shadow-md');
+                const grades = [0, Math.ceil(maxScore * 0.33), Math.ceil(maxScore * 0.66)];
+                const labels = ['<strong>Risk Level</strong>'];
+                const colors = ['#4ade80', '#facc15', '#f87171'];
+
+                for (let i = 0; i < grades.length; i++) {
+                    labels.push(
+                        `<i style="background:${colors[i]}; width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7;"></i> ` +
+                        grades[i] + (grades[i + 1] ? `&ndash;${grades[i + 1] - 1}` : '+'));
+                }
+                div.innerHTML = labels.join('<br>');
+                return div;
+            };
+            legend.addTo(advisoryMap);
+        }
+
 
         // --- Pest/Disease Card Logic ---
         async function loadPestAndDiseaseCards() {
@@ -2041,6 +2457,9 @@
                     loadAdminUserManagement(); // Default to users tab
                     attachAdminTabListeners();
                     break;
+            case 'advisory':
+                initializeAdvisoryScreen();
+                break;
                 case 'newSubmission':
                     await initializeReportMap(currentContext);
                     break;
