@@ -62,8 +62,8 @@
     },
     {
       "name": "Brown root rot",
-      "image_url": "https://ephytia.inra.fr/en/I/18816/tabac068"
-      "image_url1": "https://ephytia.inra.fr/en/I/18806/tabac385"
+      "image_url": "https://ephytia.inra.fr/en/I/18816/tabac068",
+      "image_url1": "https://ephytia.inra.fr/en/I/18806/tabac385",
       "image_url2": "https://ephytia.inra.fr/en/I/18807/tabac386"
     }
   ],
@@ -130,14 +130,14 @@
     },
     {
       "name": "Ragged leaf spot, Phoma leaf blight",
-      "image_url": "http://ephytia.inra.fr/en/I/18692/tabac302"
-      "image_url1": "http://ephytia.inra.fr/en/I/18693/tabac303"
+      "image_url": "http://ephytia.inra.fr/en/I/18692/tabac302",
+      "image_url1": "http://ephytia.inra.fr/en/I/18693/tabac303",
       "image_url2": "http://ephytia.inra.fr/en/I/19124/Pycnide-Ascochyta"
     },
     {
       "name": "Athelia stem rot, Southern stem rot",
-      "image_url": "https://ephytia.inra.fr/en/I/18850/Sclerotium-rolfsii1"
-      "image_url1": "https://ephytia.inra.fr/en/I/18851/Anse-anastomose-arolfsii"
+      "image_url": "https://ephytia.inra.fr/en/I/18850/Sclerotium-rolfsii1",
+      "image_url1": "https://ephytia.inra.fr/en/I/18851/Anse-anastomose-arolfsii",
       "image_url2": "https://ephytia.inra.fr/en/I/18849/sclerotium-rolfsii3"
     },
     {
@@ -178,7 +178,7 @@
     },
     {
       "name": "Stolbur, big bud",
-      "image_url": "https://ephytia.inra.fr/en/I/18675/tabac205-206-207"
+      "image_url": "https://ephytia.inra.fr/en/I/18675/tabac205-206-207",
       "image_url1": "https://ephytia.inra.fr/en/I/18077/tabac209"
     },
     {
@@ -199,7 +199,7 @@
     },
     {
       "name": "Tobacco bushy top virus (TBTV)",
-      "image_url": "https://ephytia.inra.fr/en/I/41955/Bushytop-1"
+      "image_url": "https://ephytia.inra.fr/en/I/41955/Bushytop-1",
       "image_url1": "https://ephytia.inra.fr/en/I/41956/Bushytop-2"
     },
     {
@@ -217,7 +217,7 @@
     },
     {
       "name": "Tobacco rattle virus (TRV)",
-      "image_url": "http://ephytia.inra.fr/en/I/31780/TRV-14-2"
+      "image_url": "http://ephytia.inra.fr/en/I/31780/TRV-14-2",
       "image_url1": "http://ephytia.inra.fr/en/I/31779/TRV-14"
     },
     {
@@ -238,7 +238,7 @@
     },
     {
       "name": "Tobacco vein banding mosaic virus (TVBMV)",
-      "image_url": "http://ephytia.inra.fr/en/I/18126/veinbanding2"
+      "image_url": "http://ephytia.inra.fr/en/I/18126/veinbanding2",
       "image_url": "http://ephytia.inra.fr/en/I/18710/tabac238-247"
     },
     {
@@ -267,8 +267,8 @@
     },
     {
       "name": "Damping-off, Collar cankers, Leaf spot (Target Spot)",
-      "image_url": "https://ephytia.inra.fr/en/I/18206/tabac014"
-      "image_url1": "https://ephytia.inra.fr/en/I/18195/tabac29-30"
+      "image_url": "https://ephytia.inra.fr/en/I/18206/tabac014",
+      "image_url1": "https://ephytia.inra.fr/en/I/18195/tabac29-30",
       "image_url2": "https://ephytia.inra.fr/en/I/31767/Rhizoctonia-6-2"
     }
       
