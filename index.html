@@ -3065,7 +3065,7 @@
             filterMunicipality = createMultiSelect('municipality-filter-container', 'All Municipalities', true);
             filterBarangay = createMultiSelect('barangay-filter-container', 'All Barangays', true);
 
-            filterProvince.populate(window.philippineAddresses.provinces.map(p => p.name));
+            filterProvince.populate(window.philippineAddresses.provinces.map(p => ({ value: p.name, label: p.name })));
             filterMunicipality.disable();
             filterBarangay.disable();
 
@@ -3079,7 +3079,7 @@
                         const provinceData = window.philippineAddresses.provinces.find(p => p.name === provinceName);
                         return provinceData.municipalities.map(m => m.name);
                     });
-                    filterMunicipality.populate([...new Set(municipalities)].sort());
+                    filterMunicipality.populate([...new Set(municipalities)].sort().map(m => ({ value: m, label: m })));
                     filterMunicipality.enable();
                 }
                 loadAllReports();
@@ -3096,7 +3096,7 @@
                             .filter(m => selectedMunicipalities.includes(m.name))
                             .flatMap(m => m.barangays);
                     });
-                    filterBarangay.populate([...new Set(barangays)].sort());
+                    filterBarangay.populate([...new Set(barangays)].sort().map(b => ({ value: b, label: b })));
                     filterBarangay.enable();
                 }
                 loadAllReports();
@@ -5348,7 +5348,7 @@
                     ...(pestAndDiseaseData.fungal_and_bacterial_diseases || []).map(d => d['Disease Name']),
                     ...(pestAndDiseaseData.major_insect_pests || []).map(p => p['Pest Common Name'])
                 ].sort();
-                expertFilterPestDisease.populate(allPestsAndDiseases);
+                expertFilterPestDisease.populate(allPestsAndDiseases.map(p => ({ value: p, label: p })));
             }
             expertFilterPestDisease.onChange(() => {
                 loadExpertStats();
@@ -5360,7 +5360,7 @@
             expertFilterMunicipality = createMultiSelect('expert-municipality-filter-container', 'All Municipalities', true);
             expertFilterBarangay = createMultiSelect('expert-barangay-filter-container', 'All Barangays', true);
 
-            expertFilterProvince.populate(window.philippineAddresses.provinces.map(p => p.name));
+            expertFilterProvince.populate(window.philippineAddresses.provinces.map(p => ({ value: p.name, label: p.name })));
             expertFilterMunicipality.disable();
             expertFilterBarangay.disable();
 
@@ -5379,7 +5379,7 @@
                         const provinceData = window.philippineAddresses.provinces.find(p => p.name === provinceName);
                         return provinceData ? provinceData.municipalities.map(m => m.name) : [];
                     });
-                    expertFilterMunicipality.populate([...new Set(municipalities)].sort());
+                    expertFilterMunicipality.populate([...new Set(municipalities)].sort().map(m => ({ value: m, label: m })));
                     expertFilterMunicipality.enable();
                 }
                 reloadData();
@@ -5396,7 +5396,7 @@
                             .filter(m => selectedMunicipalities.includes(m.name))
                             .flatMap(m => m.barangays) : [];
                     });
-                    expertFilterBarangay.populate([...new Set(barangays)].sort());
+                    expertFilterBarangay.populate([...new Set(barangays)].sort().map(b => ({ value: b, label: b })));
                     expertFilterBarangay.enable();
                 }
                 reloadData();
