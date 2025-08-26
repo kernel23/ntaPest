@@ -611,6 +611,12 @@
                         </div>
                     </fieldset>
 
+                    <div id="symptom-based-suggestions" class="mt-6 hidden">
+                        <h3 class="text-base font-medium text-gray-900">Possible Related Pests/Diseases</h3>
+                        <div id="suggestions-container" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            </div>
+                    </div>
+
                     <fieldset id="distribution-radios" class="mt-6">
                         <legend class="text-base font-medium text-gray-900">Pest/Disease Distribution in the Field</legend>
                         <div class="mt-4 grid grid-cols-2 gap-4">
@@ -883,6 +889,14 @@
                 <div id="pest-disease-info" class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm hidden">
                     <!-- Pest/disease info will be displayed here -->
                 </div>
+
+                <div id="diagnosis-suggestions" class="mt-4 hidden">
+                    <h4 class="text-sm font-medium text-gray-700">Suggestions based on symptoms:</h4>
+                    <div id="diagnosis-suggestions-container" class="mt-2 text-sm text-gray-600 space-y-1">
+                        <!-- Suggestions will be populated here -->
+                    </div>
+                </div>
+
                 <label for="diagnosis-notes" class="block text-sm font-medium text-gray-700 mt-4">Diagnosis Notes</label>
                 <textarea id="diagnosis-notes" rows="4" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></textarea>
                 <button id="save-diagnosis-btn" class="w-full bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Save Diagnosis</button>
@@ -953,6 +967,14 @@
                 <div id="final-pest-disease-info" class="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 text-sm hidden">
                     <!-- Final pest/disease info will be displayed here -->
                 </div>
+
+                <div id="treatment-suggestions" class="mt-4 hidden">
+                    <h4 class="text-sm font-medium text-gray-700">Suggestions based on symptoms:</h4>
+                    <div id="treatment-suggestions-container" class="mt-2 text-sm text-gray-600 space-y-1">
+                        <!-- Suggestions will be populated here -->
+                    </div>
+                </div>
+
                 <label for="final-diagnosis-notes" class="block text-sm font-medium text-gray-700 mt-4">Final Diagnosis Notes</label>
                 <textarea id="final-diagnosis-notes" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"></textarea>
 
@@ -2092,6 +2114,87 @@
             setTimeout(() => { // Allow display:block to take effect before starting transition
                 panel.classList.remove('translate-x-full');
             }, 10);
+        }
+
+        function findRelatedPestsAndDiseases(symptoms) {
+            if (!symptoms || symptoms.length === 0 || !pestAndDiseaseData) {
+                return [];
+            }
+
+            const symptomKeywords = {
+                'leaf-spots': ['spot', 'lesion', 'blight', 'anthracnose'],
+                'wilting': ['wilt', 'wilting'],
+                'yellowing': ['yellow', 'chlorotic', 'chlorosis'],
+                'stunted-growth': ['stunted', 'stunting', 'dwarf', 'reduced growth'],
+                'holes-in-leaves': ['holes', 'chews', 'defoliator', 'galleries', 'shredded'],
+                'galls': ['gall', 'galls', 'swellings', 'knots'],
+                'mosaic': ['mosaic', 'mottling', 'calico'],
+                'leaf-curl': ['curl', 'crinkled', 'twisted', 'distortion', 'cup'],
+                'sooty-mold': ['sooty mold', 'sooty mould'],
+                'rust': ['rust'],
+                'stem-lesions': ['stem lesion', 'canker', 'hollow stalk', 'stem rot', 'basal'],
+                'root-rot': ['root rot', 'black rot', 'rotten', 'damping-off']
+            };
+
+            const allItems = [
+                ...(pestAndDiseaseData.fungal_and_bacterial_diseases || []),
+                ...(pestAndDiseaseData.major_insect_pests || [])
+            ];
+
+            const matchedItems = [];
+
+            allItems.forEach(item => {
+                const symptomText = (item['Primary Visual Symptoms'] || '').toLowerCase();
+                let matchesAll = true;
+
+                for (const symptom of symptoms) {
+                    const keywords = symptomKeywords[symptom] || [symptom.replace('-', ' ')];
+                    const matchesSymptom = keywords.some(keyword => symptomText.includes(keyword));
+
+                    if (!matchesSymptom) {
+                        matchesAll = false;
+                        break;
+                    }
+                }
+
+                if (matchesAll) {
+                    matchedItems.push(item);
+                }
+            });
+
+            return matchedItems;
+        }
+
+        function updateSuggestionsPanel(container, suggestions) {
+            container.innerHTML = '';
+            if (suggestions.length === 0) {
+                container.parentElement.classList.add('hidden');
+                return;
+            }
+
+            container.parentElement.classList.remove('hidden');
+            suggestions.forEach(item => {
+                const name = item['Pest Common Name'] || item['Disease Name'];
+                const allImages = [
+                    ...(pestImageData.pests || []),
+                    ...(pestImageData.diseases || [])
+                ];
+                const imageEntry = allImages.find(img => img.name === name);
+                const imageUrl = imageEntry ? imageEntry.image_url : 'https://placehold.co/64x64/e2e8f0/334155?text=N/A';
+
+                const suggestionEl = document.createElement('div');
+                suggestionEl.className = 'p-3 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors flex items-center';
+                suggestionEl.innerHTML = `
+                    <img src="${imageUrl}" alt="${name}" class="w-12 h-12 object-cover rounded-md mr-4">
+                    <span class="flex-1">${name}</span>
+                    <i data-lucide="info" class="w-5 h-5 text-gray-500"></i>
+                `;
+                suggestionEl.addEventListener('click', () => {
+                    showPestDetailsByName(name);
+                });
+                container.appendChild(suggestionEl);
+            });
+            lucide.createIcons();
         }
 
         async function loadPestAndDiseaseCards() {
@@ -3685,6 +3788,13 @@
             }
         }
 
+        document.getElementById('symptoms-checklist').addEventListener('change', () => {
+            const selectedSymptoms = Array.from(document.querySelectorAll('.symptom-checkbox:checked')).map(cb => cb.value);
+            const suggestions = findRelatedPestsAndDiseases(selectedSymptoms);
+            const suggestionsContainer = document.getElementById('suggestions-container');
+            updateSuggestionsPanel(suggestionsContainer, suggestions);
+        });
+
         document.getElementById('save-submission-btn').addEventListener('click', async () => {
             const imagePreviews = imagePreviewContainer.querySelectorAll('img');
             const imageDataUrls = Array.from(imagePreviews).map(img => img.src);
@@ -4187,6 +4297,10 @@
                     document.getElementById('diagnosis-modal').classList.remove('hidden');
                     document.getElementById('diagnosis-modal').classList.add('flex');
                     lucide.createIcons();
+
+                    const suggestions = findRelatedPestsAndDiseases(submission.symptoms);
+                    const suggestionsContainer = document.getElementById('diagnosis-suggestions-container');
+                    updateSuggestionsPanel(suggestionsContainer, suggestions);
                 });
 
                 diagnosisContainer.appendChild(card);
@@ -4321,6 +4435,11 @@
             document.getElementById('treatment-modal').classList.remove('hidden');
             document.getElementById('treatment-modal').classList.add('flex');
             lucide.createIcons();
+
+            // Populate suggestions based on original symptoms
+            const suggestions = findRelatedPestsAndDiseases(submissionData.symptoms);
+            const suggestionsContainer = document.getElementById('treatment-suggestions-container');
+            updateSuggestionsPanel(suggestionsContainer, suggestions);
         }
 
         function renderReportsForTreatment(submissions) {
