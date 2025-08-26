@@ -2529,6 +2529,7 @@
                     break;
                 case 'expertDashboard':
                 if (!window.expertFiltersInitialized) {
+                    await window.pestDiseaseDataPromise; // Wait for data to be loaded
                     initializeExpertDashboardFilters();
                     window.expertFiltersInitialized = true;
                 }
@@ -5651,14 +5652,16 @@
             const selectedBarangays = expertFilterBarangay ? expertFilterBarangay.getSelectedValues() : [];
 
             try {
-                const submissionsQuery = query(collectionGroup(db, 'submissions'), where("initialDiagnosis", "!=", null));
+                const submissionsQuery = query(collectionGroup(db, 'submissions'));
                 const submissionsSnapshot = await getDocs(submissionsQuery);
 
                 const layers = [];
                 const farmCache = {};
                 const userCache = {};
 
-                for (const submissionDoc of submissionsSnapshot.docs) {
+                const submissionsWithDiagnosis = submissionsSnapshot.docs.filter(doc => doc.data().initialDiagnosis);
+
+                for (const submissionDoc of submissionsWithDiagnosis) {
                     const submissionData = submissionDoc.data();
                     const farmLotRef = submissionDoc.ref.parent.parent;
                     const userRef = farmLotRef.parent.parent;
