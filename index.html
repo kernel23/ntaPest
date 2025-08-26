@@ -2141,27 +2141,28 @@
                 ...(pestAndDiseaseData.major_insect_pests || [])
             ];
 
-            const matchedItems = new Set();
-
-            const selectedKeywords = symptoms.flatMap(symptom => symptomKeywords[symptom] || [symptom.replace('-', ' ')]);
-
-            if (selectedKeywords.length === 0) {
-                return [];
-            }
+            const matchedItems = [];
 
             allItems.forEach(item => {
                 const symptomText = (item['Primary Visual Symptoms'] || '').toLowerCase();
-                const name = item['Pest Common Name'] || item['Disease Name'];
+                let matchesAll = true;
 
-                for (const keyword of selectedKeywords) {
-                    if (symptomText.includes(keyword)) {
-                        matchedItems.add(name);
+                for (const symptom of symptoms) {
+                    const keywords = symptomKeywords[symptom] || [symptom.replace('-', ' ')];
+                    const matchesSymptom = keywords.some(keyword => symptomText.includes(keyword));
+
+                    if (!matchesSymptom) {
+                        matchesAll = false;
                         break;
                     }
                 }
+
+                if (matchesAll) {
+                    matchedItems.push(item);
+                }
             });
 
-            return Array.from(matchedItems);
+            return matchedItems;
         }
 
         function updateSuggestionsPanel(container, suggestions) {
@@ -2172,10 +2173,22 @@
             }
 
             container.parentElement.classList.remove('hidden');
-            suggestions.forEach(name => {
+            suggestions.forEach(item => {
+                const name = item['Pest Common Name'] || item['Disease Name'];
+                const allImages = [
+                    ...(pestImageData.pests || []),
+                    ...(pestImageData.diseases || [])
+                ];
+                const imageEntry = allImages.find(img => img.name === name);
+                const imageUrl = imageEntry ? imageEntry.image_url : 'https://placehold.co/64x64/e2e8f0/334155?text=N/A';
+
                 const suggestionEl = document.createElement('div');
-                suggestionEl.className = 'p-3 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors flex items-center justify-between';
-                suggestionEl.innerHTML = `<span>${name}</span><i data-lucide="info" class="w-4 h-4 text-gray-500"></i>`;
+                suggestionEl.className = 'p-3 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors flex items-center';
+                suggestionEl.innerHTML = `
+                    <img src="${imageUrl}" alt="${name}" class="w-12 h-12 object-cover rounded-md mr-4">
+                    <span class="flex-1">${name}</span>
+                    <i data-lucide="info" class="w-5 h-5 text-gray-500"></i>
+                `;
                 suggestionEl.addEventListener('click', () => {
                     showPestDetailsByName(name);
                 });
