@@ -3028,7 +3028,7 @@
             profileMunicipality = createMultiSelect('municipality-multiselect-container', 'Select Municipality', false);
             profileBarangay = createMultiSelect('barangay-multiselect-container', 'Select Barangay', false);
 
-            profileProvince.populate(window.philippineAddresses.provinces.map(p => p.name));
+            profileProvince.populate(window.philippineAddresses.provinces.map(p => ({ value: p.name, label: p.name })));
             profileMunicipality.disable();
             profileBarangay.disable();
 
@@ -3037,7 +3037,7 @@
                 profileBarangay.clear();
                 if (selectedProvinces.length > 0) {
                     const provinceData = window.philippineAddresses.provinces.find(p => p.name === selectedProvinces[0]);
-                    profileMunicipality.populate(provinceData.municipalities.map(m => m.name));
+                    profileMunicipality.populate(provinceData.municipalities.map(m => ({ value: m.name, label: m.name })));
                     profileMunicipality.enable();
                 } else {
                     profileMunicipality.disable();
@@ -3051,8 +3051,10 @@
                     const selectedProvinceName = profileProvince.getSelectedValues()[0];
                     const provinceData = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
                     const municipalityData = provinceData.municipalities.find(m => m.name === selectedMunicipalities[0]);
-                    profileBarangay.populate(municipalityData.barangays);
-                    profileBarangay.enable();
+                    if (municipalityData && municipalityData.barangays) {
+                        profileBarangay.populate(municipalityData.barangays.map(b => ({ value: b, label: b })));
+                        profileBarangay.enable();
+                    }
                 } else {
                     profileBarangay.disable();
                 }
