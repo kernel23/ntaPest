@@ -2892,13 +2892,15 @@
                         return;
                     }
 
-                    // Normalize items to be {value, label} objects
-                    options = items.map(item => {
-                        if (typeof item === 'string') {
-                            return { value: item, label: item };
-                        }
-                        return item;
-                    });
+                    // Normalize items to be {value, label} objects and filter out invalid entries
+                    options = items
+                        .filter(item => item !== null && item !== undefined)
+                        .map(item => {
+                            if (typeof item === 'string') {
+                                return { value: item, label: item };
+                            }
+                            return item;
+                        });
 
                     options.forEach(option => {
                         const li = document.createElement('li');
