@@ -2855,8 +2855,11 @@
                     <span class="block truncate text-gray-500">${placeholder}</span>
                     <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400"></i>
                 </button>
-                <div class="absolute z-20 mt-1 w-full bg-white shadow-lg rounded-md hidden max-h-60 overflow-auto border border-gray-200">
-                    <ul class="py-1">
+                <div class="absolute z-50 mt-1 w-full bg-white shadow-lg rounded-md hidden max-h-60 overflow-auto border border-gray-200 multi-select-dropdown">
+                    <div class="p-2">
+                        <input type="text" placeholder="Search..." class="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-500">
+                    </div>
+                    <ul class="py-1" style="max-height: 10rem; overflow-y: auto;">
                         <!-- Options will be inserted here -->
                     </ul>
                 </div>
@@ -2865,80 +2868,108 @@
             const button = container.querySelector('button');
             const buttonText = button.querySelector('span');
             const dropdown = container.querySelector('div');
+            const searchInput = dropdown.querySelector('input');
             const list = container.querySelector('ul');
             let options = [];
+            let allItems = [];
 
             const toggleDropdown = (e) => {
                  e.stopPropagation();
-                 // Close other dropdowns
                 document.querySelectorAll('.multi-select-dropdown').forEach(d => {
                     if (d !== dropdown) d.classList.add('hidden');
                 });
                 dropdown.classList.toggle('hidden');
+                if (!dropdown.classList.contains('hidden')) {
+                    searchInput.focus();
+                }
             };
 
             button.addEventListener('click', toggleDropdown);
 
             let changeCallback = () => {};
 
-            const instance = {
-                populate: (items) => { // items is an array of {value, label} objects
-                    list.innerHTML = '';
-                    options = items;
-                    if (!items || items.length === 0) {
-                        list.innerHTML = `<li class="px-3 py-2 text-gray-500">No options available</li>`;
-                    } else {
-                        items.forEach(item => {
-                            const li = document.createElement('li');
-                            li.className = 'px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center';
-                            li.dataset.value = item.value;
+            const renderList = (itemsToRender) => {
+                list.innerHTML = '';
+                if (!itemsToRender || itemsToRender.length === 0) {
+                    list.innerHTML = `<li class="px-3 py-2 text-gray-500">No options found</li>`;
+                    return;
+                }
 
-                            const checkbox = document.createElement('input');
-                            checkbox.type = 'checkbox';
-                            checkbox.className = 'h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mr-3';
-                            if (!isMultiSelect) {
-                                checkbox.type = 'radio';
-                                checkbox.name = `radio-${containerId}`;
-                            }
+                const selectedValues = instance.getSelectedValues();
 
-                            li.appendChild(checkbox);
+                itemsToRender.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'px-3 py-2 cursor-pointer hover:bg-gray-100 flex items-center';
+                    li.dataset.value = item.value;
 
-                            const span = document.createElement('span');
-                            span.className = 'font-normal block truncate';
-                            span.textContent = item.label;
-                            li.appendChild(span);
-
-                            list.appendChild(li);
-
-                            li.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                if (e.target.tagName !== 'INPUT') {
-                                    checkbox.checked = !checkbox.checked;
-                                }
-
-                                if (!isMultiSelect) {
-                                    list.querySelectorAll('input').forEach(rb => {
-                                        if (rb !== checkbox) rb.checked = false;
-                                    });
-                                    dropdown.classList.add('hidden');
-                                }
-                                instance.updateButtonText();
-                                changeCallback(instance.getSelectedValues());
-                            });
-                        });
+                    const checkbox = document.createElement('input');
+                    checkbox.type = isMultiSelect ? 'checkbox' : 'radio';
+                    checkbox.className = 'h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mr-3';
+                    if (!isMultiSelect) {
+                        checkbox.name = `radio-${containerId}`;
                     }
+                    checkbox.checked = selectedValues.includes(item.value);
+
+                    li.appendChild(checkbox);
+
+                    const span = document.createElement('span');
+                    span.className = 'font-normal block truncate';
+                    span.textContent = item.label;
+                    li.appendChild(span);
+
+                    list.appendChild(li);
+
+                    li.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const wasChecked = checkbox.checked;
+
+                        if (e.target.tagName !== 'INPUT') {
+                            checkbox.checked = !wasChecked;
+                        }
+
+                        if (!isMultiSelect) {
+                            list.querySelectorAll('input').forEach(rb => {
+                                if (rb !== checkbox) rb.checked = false;
+                            });
+                            dropdown.classList.add('hidden');
+                        }
+                        instance.updateButtonText();
+                        changeCallback(instance.getSelectedValues());
+                    });
+                });
+            };
+
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredItems = allItems.filter(item =>
+                    item.label.toLowerCase().includes(searchTerm)
+                );
+                renderList(filteredItems);
+            });
+
+            const instance = {
+                populate: (items) => {
+                    allItems = items;
+                    options = items; // Keep original options for button text
+                    searchInput.value = '';
+                    renderList(allItems);
                     instance.updateButtonText();
                     lucide.createIcons();
                 },
                 getSelectedValues: () => {
                     const selected = [];
-                    list.querySelectorAll('input:checked').forEach(checkbox => {
+                    // Important: query from the container, not just the filtered list
+                    container.querySelectorAll('input:checked').forEach(checkbox => {
                         selected.push(checkbox.closest('li').dataset.value);
                     });
                     return selected;
                 },
                 setSelectedValues: (values) => {
-                    list.querySelectorAll('input').forEach(checkbox => {
+                    // This needs to be smarter now. We just update the internal state
+                    // and let the render function handle the checked status.
+                    // A simple way is to just re-render with the full list.
+                    renderList(allItems);
+                    container.querySelectorAll('input').forEach(checkbox => {
                         checkbox.checked = values.includes(checkbox.closest('li').dataset.value);
                     });
                     instance.updateButtonText();
@@ -2950,7 +2981,7 @@
                         buttonText.classList.add('text-gray-500');
                         buttonText.classList.remove('text-gray-900');
                     } else {
-                        const selectedLabels = options
+                        const selectedLabels = allItems
                             .filter(opt => selectedValues.includes(opt.value))
                             .map(opt => opt.label);
 
@@ -2975,8 +3006,9 @@
                     button.classList.add('bg-gray-100', 'cursor-not-allowed');
                 },
                 clear: () => {
-                    list.innerHTML = `<li class="px-3 py-2 text-gray-500">No options available</li>`;
+                    allItems = [];
                     options = [];
+                    renderList([]);
                     instance.updateButtonText();
                 }
             };
