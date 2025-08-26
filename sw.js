@@ -66,7 +66,6 @@ self.addEventListener('install', event => {
             return Promise.all([coreAssetsPromise, ...remoteAssetsPromises]);
         })
     );
-    self.skipWaiting();
 });
 
 // 2. Activation: Clean up old caches.
