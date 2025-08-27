@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windy Map</title>
+    <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+    <script src="https://api.windy.com/assets/map-forecast/libBoot.js"></script>
+    <style>
+        html, body, #windy {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="windy"></div>
+    <script>
+        const options = {
+            key: 'peirXehVujo42TXoeaB2T9B4yT3y5bSU',
+            lat: 17.5747,
+            lon: 120.3869,
+            zoom: 8
+        };
+
+        windyInit(options, windyAPI => {
+            const { map } = windyAPI;
+        });
+    </script>
+</body>
+</html>
