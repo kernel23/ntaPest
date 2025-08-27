@@ -3995,8 +3995,8 @@
 
             // --- 1. Sync Farmers First ---
             for (const farmer of farmersToSync) {
+                const tempId = farmer.id;
                 try {
-                    const tempId = farmer.id;
                     const farmerDataForFirestore = {
                         fullName: farmer.fullName,
                         province: farmer.province,
@@ -4014,7 +4014,13 @@
                     showToast(`Synced new farmer: ${farmer.fullName}`, 'success');
                 } catch (error) {
                     console.error(`Failed to sync farmer ${farmer.fullName}:`, error);
-                    showToast(`Failed to sync farmer: ${farmer.fullName}`, 'error');
+                    if (error.code === 'permission-denied') {
+                        showToast(`Sync failed: You do not have permission to create new farmers. Please contact an administrator.`, 'error');
+                    } else {
+                        showToast(`Failed to sync farmer: ${farmer.fullName}`, 'error');
+                    }
+                    // Stop the sync process for EW outbox if a farmer fails, to prevent orphan farms.
+                    return tempIdToFirestoreIdMap;
                 }
             }
 
@@ -5916,11 +5922,11 @@
         // Removed old syncOutbox function as it's now obsolete with the new online-only farm setup flow.
 
         async function syncOutbox() {
-            if (!navigator.onLine || !currentUser) return {}; // Return empty map if offline
+            if (!navigator.onLine || !currentUser) return new Map();
 
             const idb = await dbPromise;
             const allFarms = await idb.getAll('outbox');
-            if (allFarms.length === 0) return {};
+            if (allFarms.length === 0) return new Map();
 
             showToast(`Syncing ${allFarms.length} offline farm(s)...`, 'info');
             const idMap = new Map();
@@ -5948,7 +5954,7 @@
             } catch (error) {
                 console.error('Error syncing farm outbox:', error);
                 showToast('Failed to sync offline farms.', 'error');
-                return {}; // Return empty map on failure
+                return new Map(); // Return empty map on failure
             }
         }
 
@@ -7280,7 +7286,6 @@
         const connectionStatusEl = document.getElementById('connection-status');
         async function runSync() {
             if (isSyncing) {
-                console.log("Sync already in progress. Skipping.");
                 return;
             }
             isSyncing = true;
@@ -7291,8 +7296,10 @@
                 const ewIdMap = await syncEwOutbox();
                 const personalFarmIdMap = await syncOutbox();
 
-                // Merge maps. The ewIdMap is prioritized in case of any theoretical key collision.
-                const combinedIdMap = new Map([...personalFarmIdMap, ...ewIdMap]);
+                // Defensive map merging to prevent TypeError
+                const map1 = (ewIdMap instanceof Map) ? ewIdMap : new Map();
+                const map2 = (personalFarmIdMap instanceof Map) ? personalFarmIdMap : new Map();
+                const combinedIdMap = new Map([...map2, ...map1]);
 
                 await syncSubmissionOutbox(combinedIdMap);
 
@@ -7304,11 +7311,9 @@
                         const screenName = lastState.screenName.replace('-screen', '');
                         const context = lastState.context;
                         if (screenName === 'farmList') {
-                            console.log("Refreshing farm list after sync.");
                             loadFarms(context);
                         }
                         if (screenName === 'farmerDashboard') {
-                            console.log("Refreshing farmer dashboard after sync.");
                             loadFarmerDashboard(context);
                         }
                     }
@@ -7318,7 +7323,6 @@
                 showToast("Sync failed. Will try again later.", "error");
             } finally {
                 isSyncing = false;
-                console.log("Sync finished.");
             }
         }
 
