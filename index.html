@@ -3719,7 +3719,18 @@
 
         // --- 6. FARM MANAGEMENT & SETUP FLOW ---
         const farmModal = document.getElementById('farm-modal');
-        document.getElementById('add-farm-btn').addEventListener('click', () => farmModal.style.display = 'flex');
+
+        const openFarmModal = () => {
+            isEditMode = false;
+            document.getElementById('farmName').value = '';
+            document.getElementById('tobaccoVariety').value = '';
+            document.getElementById('plantingDate').value = '';
+            document.getElementById('next-farm-map-btn').textContent = 'Next: Set Location';
+            farmModal.style.display = 'flex';
+            updateOnlineStatus();
+        };
+
+        document.getElementById('add-farm-btn').addEventListener('click', openFarmModal);
         document.getElementById('close-farm-modal-btn').addEventListener('click', () => farmModal.style.display = 'none');
 
         // --- New Farm Flow ---
@@ -3732,34 +3743,28 @@
             }
             isEditMode = true;
 
-            // Fetch current farm data
-            const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
-            const farmDocSnap = await getDoc(farmDocRef);
+            try {
+                const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
+                const farmDocSnap = await getDoc(farmDocRef);
 
-            if (farmDocSnap.exists()) {
-                const farmData = farmDocSnap.data();
-                // Pre-fill the modal
-                document.getElementById('farmName').value = farmData.farmName || '';
-                document.getElementById('tobaccoVariety').value = farmData.tobaccoVariety || '';
-                document.getElementById('plantingDate').value = farmData.plantingDate || '';
+                if (farmDocSnap.exists()) {
+                    const farmData = farmDocSnap.data();
+                    // Pre-fill the modal
+                    document.getElementById('farmName').value = farmData.farmName || '';
+                    document.getElementById('tobaccoVariety').value = farmData.tobaccoVariety || '';
+                    document.getElementById('plantingDate').value = farmData.plantingDate || '';
 
-                // Change button text and show modal
-                document.getElementById('next-farm-map-btn').textContent = 'Update Details & Set Location';
-                farmModal.style.display = 'flex';
-            } else {
-                showToast('Could not find farm details to edit.', 'error');
+                    // Change button text and show modal
+                    document.getElementById('next-farm-map-btn').textContent = 'Update Details & Set Location';
+                    farmModal.style.display = 'flex';
+                    updateOnlineStatus();
+                } else {
+                    showToast('Could not find farm details to edit.', 'error');
+                }
+            } catch (error) {
+                 showToast('Could not load farm details to edit. Are you offline?', 'error');
+                 console.error("Error fetching farm for edit:", error);
             }
-        });
-
-        // Reset edit mode when adding a new farm
-        document.getElementById('add-farm-btn').addEventListener('click', () => {
-            isEditMode = false;
-            // Clear fields and reset button text for new entry
-            document.getElementById('farmName').value = '';
-            document.getElementById('tobaccoVariety').value = '';
-            document.getElementById('plantingDate').value = '';
-            document.getElementById('next-farm-map-btn').textContent = 'Next: Set Location';
-            farmModal.style.display = 'flex';
         });
 
 
@@ -4137,63 +4142,98 @@
             showScreen('newSubmission', newContext);
         });
 
-        function loadSubmissions(context) {
+        async function loadSubmissions(context) {
             const farmId = context.farmId;
-            const targetUserId = context.userId || currentUser.uid;
+            const targetUserId = context.userId || (currentUser ? currentUser.uid : null);
             if (!targetUserId || !farmId) return;
 
-            const submissionsCollection = collection(db, 'users', targetUserId, 'farmLots', farmId, 'submissions');
             const dashboardMain = document.getElementById('dashboard-main');
+            dashboardMain.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i><p class="mt-4">Loading reports...</p></div>`;
+            lucide.createIcons();
 
-            const unsubscribe = onSnapshot(submissionsCollection, (querySnapshot) => {
-                dashboardMain.innerHTML = ''; // Clear existing content
-
-                if (querySnapshot.empty) {
-                    dashboardMain.innerHTML = `
-                    <div class="text-center text-gray-500 mt-20">
-                        <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto text-gray-400"></i>
-                        <p class="mt-4">No scouting reports found for this farm.</p>
-                        <p>Click 'New Report' to add one.</p>
-                    </div>`;
-                } else {
+            try {
+                let onlineSubmissions = [];
+                // 1. Fetch online submissions from Firestore if not an offline farm
+                if (navigator.onLine && !farmId.startsWith('offline_')) {
+                    const submissionsCollection = collection(db, 'users', targetUserId, 'farmLots', farmId, 'submissions');
+                    const querySnapshot = await getDocs(submissionsCollection);
                     querySnapshot.forEach(doc => {
-                        const submission = doc.data();
-                        const submissionId = doc.id;
-                        const card = document.createElement('div');
-                        card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
-
-                        // Fallback for older data that might not have a proper timestamp
-                        const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date();
-                        const dateString = submissionDate.toLocaleDateString();
-                        const timeString = submissionDate.toLocaleTimeString();
-
-                        const thumbnailUrl = (submission.imageDownloadUrls && submission.imageDownloadUrls.length > 0)
-                            ? submission.imageDownloadUrls[0]
-                            : (submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image');
-
-
-                        card.innerHTML = `
-                            <div class="flex justify-between items-start">
-                                <div class="flex">
-                                    <img src="${thumbnailUrl}" class="w-24 h-24 rounded-md mr-4 object-cover">
-                                    <div>
-                                        <p class="font-bold">Report from ${dateString} at ${timeString}</p>
-                                        <p class="text-sm"><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
-                                        <p class="text-sm"><strong>Distribution:</strong> ${submission.distribution}</p>
-                                        <p class="text-sm"><strong>Severity:</strong> ${submission.severity}</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <button class="edit-submission-btn bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded" data-id="${submissionId}">Edit</button>
-                                </div>
-                            </div>
-                        `;
-                        dashboardMain.appendChild(card);
+                        onlineSubmissions.push({ id: doc.id, ...doc.data(), isOffline: false });
                     });
                 }
-                lucide.createIcons();
-            });
-            activeListeners.push(unsubscribe);
+
+                // 2. Fetch offline submissions from IndexedDB for this specific farm
+                const idb = await dbPromise;
+                const allOfflineSubmissions = await idb.getAll('submission_outbox');
+                const offlineSubmissionsForFarm = allOfflineSubmissions
+                    .filter(sub => sub.farmId === farmId)
+                    .map(sub => ({ ...sub, id: `offline_${new Date(sub.timestamp).getTime()}`, isOffline: true })); // Give it a temporary unique ID
+
+                // 3. Combine and render
+                const allSubmissions = [...onlineSubmissions, ...offlineSubmissionsForFarm];
+                allSubmissions.sort((a, b) => {
+                    const dateA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+                    const dateB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+                    return dateB - dateA;
+                });
+
+                renderSubmissions(allSubmissions, dashboardMain);
+
+            } catch (error) {
+                console.error("Error loading submissions:", error);
+                dashboardMain.innerHTML = `<p class="text-red-500">Error loading reports. Please check your connection.</p>`;
+            }
+        }
+
+        function renderSubmissions(submissions, container) {
+            container.innerHTML = ''; // Clear existing content
+
+            if (submissions.length === 0) {
+                container.innerHTML = `
+                <div class="text-center text-gray-500 mt-20">
+                    <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto text-gray-400"></i>
+                    <p class="mt-4">No scouting reports found for this farm.</p>
+                    <p>Click 'New Report' to add one.</p>
+                </div>`;
+            } else {
+                submissions.forEach(submission => {
+                    const submissionId = submission.id;
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
+
+                    const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date(submission.timestamp);
+                    const dateString = submissionDate.toLocaleDateString();
+                    const timeString = submissionDate.toLocaleTimeString();
+
+                    // Offline reports use imageDataUrls, online use imageDownloadUrls
+                    const thumbnailUrl = (submission.imageDownloadUrls && submission.imageDownloadUrls.length > 0)
+                        ? submission.imageDownloadUrls[0]
+                        : (submission.imageDataUrls && submission.imageDataUrls.length > 0)
+                            ? submission.imageDataUrls[0]
+                            : 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image';
+
+                    const offlineBadge = submission.isOffline ? '<span class="ml-2 text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-gray-600 bg-gray-200">Offline</span>' : '';
+
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex">
+                                <img src="${thumbnailUrl}" class="w-24 h-24 rounded-md mr-4 object-cover">
+                                <div>
+                                    <p class="font-bold">Report from ${dateString} at ${timeString} ${offlineBadge}</p>
+                                    <p class="text-sm"><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
+                                    <p class="text-sm"><strong>Distribution:</strong> ${submission.distribution}</p>
+                                    <p class="text-sm"><strong>Severity:</strong> ${submission.severity}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="edit-submission-btn bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded" data-id="${submissionId}" ${submission.isOffline ? 'disabled title="Cannot edit offline reports"' : ''}>Edit</button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+            lucide.createIcons();
         }
 
         let currentReportFilter = 'all';
@@ -5632,14 +5672,7 @@
             lucide.createIcons();
 
             // --- Attach button listeners ---
-            document.getElementById('dashboard-add-farm-btn').addEventListener('click', () => {
-                isEditMode = false;
-                document.getElementById('farmName').value = '';
-                document.getElementById('tobaccoVariety').value = '';
-                document.getElementById('plantingDate').value = '';
-                document.getElementById('next-farm-map-btn').textContent = 'Next: Set Location';
-                farmModal.style.display = 'flex';
-            });
+            document.getElementById('dashboard-add-farm-btn').addEventListener('click', openFarmModal);
 
             document.getElementById('view-all-farms-btn').addEventListener('click', () => {
                 showScreen('farmList', context);
@@ -6930,6 +6963,7 @@
             const offlineMessageContainer = document.getElementById('offline-message-container');
             const googleBtn = document.getElementById('google-signin-btn');
             const guestBtn = document.getElementById('guest-signin-btn');
+            const nextFarmMapBtn = document.getElementById('next-farm-map-btn');
 
             if (navigator.onLine) {
                  if (connectionStatusEl) {
@@ -6944,6 +6978,11 @@
                 if (guestBtn) {
                     guestBtn.disabled = false;
                     guestBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                if (nextFarmMapBtn) {
+                    nextFarmMapBtn.disabled = false;
+                    nextFarmMapBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+                    nextFarmMapBtn.classList.add('bg-green-600');
                 }
 
                 if (farmOutboxCount > 0 || submissionOutboxCount > 0) {
@@ -6970,6 +7009,11 @@
                 if (guestBtn) {
                     guestBtn.disabled = true;
                     guestBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                 if (nextFarmMapBtn) {
+                    nextFarmMapBtn.disabled = true;
+                    nextFarmMapBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+                    nextFarmMapBtn.classList.remove('bg-green-600');
                 }
             }
         }
