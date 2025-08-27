@@ -44,6 +44,15 @@
         #pest-cards-container {
             perspective: 1000px;
         }
+        .advisory-tab {
+            border-bottom: 2px solid transparent;
+            color: #6b7280; /* text-gray-500 */
+        }
+        .advisory-tab.active-tab {
+            border-bottom-color: #455b3c; /* theme color */
+            color: #384532; /* theme color */
+            font-weight: 600;
+        }
         .pest-card {
             width: 180px;
             height: 220px;
@@ -801,11 +810,23 @@
                             <select id="province-select" class="px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
                                 <!-- Options will be populated by JavaScript -->
                             </select>
-                <select id="municipality-select" class="hidden ml-4 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
-                    <!-- Options will be populated by JavaScript -->
-                </select>
-                <button id="view-risk-map-btn" class="ml-4 px-4 py-2 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700">View Geographic Risk</button>
+                            <select id="municipality-select" class="hidden ml-4 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
                         </div>
+                    </div>
+                    <div class="mt-4 border-b border-gray-200">
+                        <nav class="flex space-x-4" aria-label="Tabs">
+                            <button id="advisory-tab-location" type="button" class="advisory-tab active-tab px-3 py-2 font-medium text-sm rounded-t-md">
+                                Location Advisories
+                            </button>
+                            <button id="advisory-tab-geo" type="button" class="advisory-tab px-3 py-2 font-medium text-sm rounded-t-md">
+                                Geographical Risk
+                            </button>
+                            <button id="advisory-tab-weather" type="button" class="advisory-tab px-3 py-2 font-medium text-sm rounded-t-md">
+                                Weather Dashboard
+                            </button>
+                        </nav>
                     </div>
                 </header>
                 <main id="advisory-container" class="flex-1 p-4 overflow-y-auto">
@@ -813,26 +834,42 @@
                         <i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i>
                         <p class="mt-4">Generating advisories...</p>
                     </div>
+
+                    <!-- Tab Content -->
                     <div id="advisory-content" class="h-full">
-                        <div id="advisory-list-container" class="flex flex-row gap-4 h-full">
-                            <div id="advisory-list" class="w-2/3 h-full overflow-y-auto space-y-4">
-                                <!-- Advisories will be rendered here -->
-                            </div>
-                            <div id="weather-dashboard" class="w-1/3 bg-white p-4 rounded-lg shadow-sm hidden">
-                                <h3 class="text-xl font-bold text-gray-800 mb-4">7-Day Weather Forecast</h3>
-                                <div class="relative h-[50vh]"> <!-- Constrain chart height -->
-                                    <canvas id="weather-chart-canvas-advisory"></canvas>
+                        <!-- Location Advisories Tab Panel -->
+                        <div id="advisory-panel-location" class="advisory-panel h-full">
+                            <div id="advisory-list-container" class="flex flex-row gap-4 h-full">
+                                <div id="advisory-list" class="w-2/3 h-full overflow-y-auto space-y-4">
+                                    <!-- Advisories will be rendered here -->
+                                </div>
+                                <div id="weather-dashboard" class="w-1/3 bg-white p-4 rounded-lg shadow-sm hidden">
+                                    <h3 class="text-xl font-bold text-gray-800 mb-4">7-Day Weather Forecast</h3>
+                                    <div class="relative h-[50vh]">
+                                        <canvas id="weather-chart-canvas-advisory"></canvas>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div id="advisory-map-container" class="hidden h-full relative">
-                            <div id="advisory-map" class="w-full h-full rounded-lg shadow-inner"></div>
-                            <div id="farm-risk-stats" class="absolute top-2 right-2 bg-white bg-opacity-80 p-3 rounded-lg shadow-md z-[1000]">
-                                <h4 class="font-bold text-sm mb-2 text-gray-800">Farm Risk Analysis</h4>
-                                <div id="farm-risk-stats-content">
-                                    <p class="text-xs text-gray-600">Loading farm data...</p>
+
+                        <!-- Geographical Risk Tab Panel -->
+                        <div id="advisory-panel-geo" class="advisory-panel hidden h-full">
+                            <div id="advisory-map-container" class="h-full relative">
+                                <div id="advisory-map" class="w-full h-full rounded-lg shadow-inner"></div>
+                                <div id="farm-risk-stats" class="absolute top-2 right-2 bg-white bg-opacity-80 p-3 rounded-lg shadow-md z-[1000]">
+                                    <h4 class="font-bold text-sm mb-2 text-gray-800">Farm Risk Analysis</h4>
+                                    <div id="farm-risk-stats-content">
+                                        <p class="text-xs text-gray-600">Loading farm data...</p>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Weather Dashboard Tab Panel -->
+                        <div id="advisory-panel-weather" class="advisory-panel hidden h-full">
+                            <iframe style="width: 100%; height: 75vh; border: none;"
+                                src="https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=°C&metricWind=km/h&zoom=5&overlay=satellite&product=satellite&level=surface&lat=14.264&lon=120.542&detailLat=18.058&detailLon=120.544&detail=true&pressure=true&message=true"
+                                frameborder="0"></iframe>
                         </div>
                     </div>
                 </main>
@@ -1615,6 +1652,28 @@
 
         // --- Advisory Screen Logic ---
         function initializeAdvisoryScreen() {
+            const tabs = document.querySelectorAll('.advisory-tab');
+            const panels = document.querySelectorAll('.advisory-panel');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Deactivate all tabs and panels
+                    tabs.forEach(t => t.classList.remove('active-tab'));
+                    panels.forEach(p => p.classList.add('hidden'));
+
+                    // Activate the clicked tab and corresponding panel
+                    tab.classList.add('active-tab');
+                    const panelId = tab.id.replace('tab', 'panel');
+                    const activePanel = document.getElementById(panelId);
+                    activePanel.classList.remove('hidden');
+
+                    // Handle special cases
+                    if (panelId === 'advisory-panel-geo' && !advisoryMap) {
+                        showGeographicRisk();
+                    }
+                });
+            });
+
             const provinceSelect = document.getElementById('province-select');
             const municipalitySelect = document.getElementById('municipality-select');
             const advisoryList = document.getElementById('advisory-list');
@@ -1699,17 +1758,8 @@
                 lucide.createIcons();
             });
 
-            document.getElementById('view-risk-map-btn').addEventListener('click', async () => {
-                const advisoryListContainer = document.getElementById('advisory-list-container');
-                const advisoryMapContainer = document.getElementById('advisory-map-container');
+            async function showGeographicRisk() {
                 const loadingIndicator = document.getElementById('advisory-loading');
-                const weatherDashboard = document.getElementById('weather-dashboard');
-
-                // Reset UI
-                advisoryListContainer.querySelector('#advisory-list').innerHTML = '';
-                weatherDashboard.classList.add('hidden');
-                advisoryListContainer.classList.add('hidden');
-                advisoryMapContainer.classList.remove('hidden');
                 loadingIndicator.classList.remove('hidden');
 
                 // Fetch all farm lots from all users
@@ -1735,7 +1785,7 @@
                 renderRiskMap(riskData.riskSummary, riskData.farmRiskCounts);
 
                 loadingIndicator.classList.add('hidden');
-            });
+            }
         }
 
         function renderAdvisories(data) {
