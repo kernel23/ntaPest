@@ -1686,7 +1686,7 @@
             } else if (userProfile.role === 'Expert') {
                 screen = 'expertDashboard';
             } else { // Default to Farmer
-                screen = 'farmList';
+                screen = 'farmerDashboard';
             }
             showScreen(screen, context);
         });
@@ -3441,7 +3441,7 @@
 
                         const isMobile = window.innerWidth < 768;
 
-                        if (userProfile.role === 'Farmer' && isMobile) {
+                        if (userProfile.role === 'Farmer') {
                             screen = 'farmerDashboard';
                             // Welcome message is set in loadFarmerDashboard
                         } else if (userProfile.role === 'Extension Worker') {
@@ -5519,6 +5519,14 @@
 
             try {
                 const db = await dbPromise;
+                const existingFarms = await db.getAll('outbox');
+                const isDuplicate = existingFarms.some(farm => farm.farmName.toLowerCase() === farmName.toLowerCase());
+
+                if (isDuplicate) {
+                    showToast('A farm with this name is already saved offline.', 'error');
+                    return;
+                }
+
                 await db.add('outbox', farmData);
 
                 showToast('Farm saved for offline use. It will sync when you are back online.', 'success');
