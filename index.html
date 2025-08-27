@@ -3801,7 +3801,10 @@
             isEditMode = true;
 
             try {
-                const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
+                const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+                const ownerId = lastContext.userId || currentUser.uid;
+
+                const farmDocRef = doc(db, 'users', ownerId, 'farmLots', currentFarmId);
                 const farmDocSnap = await getDoc(farmDocRef);
 
                 if (farmDocSnap.exists()) {
