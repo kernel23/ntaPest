@@ -323,6 +323,46 @@
                 </main>
             </div>
 
+            <!-- Farmer Dashboard Screen -->
+            <div id="farmer-dashboard-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
+                <header class="bg-white p-4 shadow-md">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold">Farmer Dashboard</h2>
+                            <p id="farmer-dashboard-welcome-message" class="text-sm text-gray-600"></p>
+                        </div>
+                        <div id="farmer-dashboard-connection-status" class="text-center py-1 px-3 rounded-full text-sm font-semibold"></div>
+                    </div>
+                </header>
+                <main class="flex-1 p-4 overflow-y-auto">
+                    <!-- Quick Actions -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <button id="dashboard-add-farm-btn" class="bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-4 px-5 rounded-lg shadow-lg flex items-center justify-center text-lg">
+                            <i data-lucide="map-pin" class="w-6 h-6 mr-3"></i>
+                            <span>Add New Farm Plot</span>
+                        </button>
+                        <button id="dashboard-new-report-btn" class="bg-gradient-to-r from-[#384532] to-[#455b3c] text-white font-bold py-4 px-5 rounded-lg shadow-lg flex items-center justify-center text-lg">
+                            <i data-lucide="clipboard-list" class="w-6 h-6 mr-3"></i>
+                            <span>Create New Report</span>
+                        </button>
+                    </div>
+
+                    <!-- My Farms Summary -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-xl font-bold text-gray-800">My Farm Plots</h3>
+                            <button id="view-all-farms-btn" class="text-sm text-blue-600 hover:underline">View All</button>
+                        </div>
+                        <div id="farmer-dashboard-farm-list" class="space-y-3">
+                            <!-- Farm summary cards will be inserted here by JavaScript -->
+                            <div class="text-center text-gray-500 py-8">
+                                <p>Loading your farms...</p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+
             <!-- Farm List Screen (Home) -->
             <div id="farm-list-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
@@ -1066,7 +1106,16 @@
                 <input type="text" id="tobaccoVariety" placeholder="e.g., Virginia" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
                 <label for="plantingDate" class="block text-sm font-medium text-gray-700 mt-4">Date of Planting</label>
                 <input type="date" id="plantingDate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
-                <button id="next-farm-map-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md mt-6">Next: Set Location</button>
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button id="save-farm-offline-btn" class="w-full bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-md flex items-center justify-center">
+                        <i data-lucide="save" class="w-5 h-5 mr-2"></i>
+                        <span>Save Offline</span>
+                    </button>
+                    <button id="next-farm-map-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md flex items-center justify-center">
+                        <span>Set Location Online</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 ml-2"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -1310,6 +1359,7 @@
             notifications: document.getElementById('notifications-screen'),
             privacyPolicy: document.getElementById('privacy-policy-screen'),
             farmSetup: document.getElementById('farm-setup-screen'),
+            farmerDashboard: document.getElementById('farmer-dashboard-screen'),
             ewDashboard: document.getElementById('ew-dashboard-screen'),
             coordinatorDashboard: document.getElementById('coordinator-dashboard-screen'),
             expertDashboard: document.getElementById('expert-dashboard-screen'),
@@ -2648,6 +2698,9 @@
 
             // Attach listeners and load data for the new screen
             switch (screenName) {
+                case 'farmerDashboard':
+                    loadFarmerDashboard(currentContext);
+                    break;
                 case 'farmList':
                     loadFarms(currentContext);
                     break;
@@ -3371,6 +3424,12 @@
                         setProfileMode('view');
                         listenForNotifications();
 
+                        // If online, try to sync any pending offline data
+                        if (navigator.onLine) {
+                            syncOutbox();
+                            syncSubmissionOutbox();
+                        }
+
                         // Role-based routing
                         let screen;
                         const context = {
@@ -3380,7 +3439,12 @@
                             label: 'Dashboard'
                         };
 
-                        if (userProfile.role === 'Extension Worker') {
+                        const isMobile = window.innerWidth < 768;
+
+                        if (userProfile.role === 'Farmer' && isMobile) {
+                            screen = 'farmerDashboard';
+                            // Welcome message is set in loadFarmerDashboard
+                        } else if (userProfile.role === 'Extension Worker') {
                             screen = 'ewDashboard';
                             document.getElementById('ew-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
                             document.getElementById('add-farm-btn').style.display = 'none';
@@ -3396,7 +3460,7 @@
                             screen = 'adminDashboard';
                             document.getElementById('admin-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
                             document.getElementById('add-farm-btn').style.display = 'none';
-                        } else { // Default to Farmer
+                        } else { // Default to Farmer on Desktop
                             screen = 'farmList';
                             document.getElementById('welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
                             document.getElementById('add-farm-btn').style.display = 'flex';
@@ -5196,16 +5260,35 @@
 
                         const plantingDate = farm.plantingDate ? new Date(farm.plantingDate).toLocaleDateString() : 'N/A';
 
-                        farmCard.innerHTML = `
-                            <p class="text-xl font-bold text-gray-800">${farm.farmName}</p>
-                            <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
-                            <p class="text-sm text-gray-500">Planted on: ${plantingDate}</p>
-                        `;
-
-                        farmCard.addEventListener('click', () => {
-                            const newContext = { ...context, farmId: farmId, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: farm.farmName };
-                            showScreen('dashboard', newContext);
-                        });
+                        if (!farm.polygonCoordinates || farm.polygonCoordinates.length === 0) {
+                            farmCard.className += ' flex justify-between items-center';
+                            farmCard.innerHTML = `
+                                <div>
+                                    <p class="text-xl font-bold text-gray-800">${farm.farmName}</p>
+                                    <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
+                                    <p class="text-sm text-yellow-600 font-semibold mt-2">Location not set</p>
+                                </div>
+                                <button class="add-location-btn bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded-lg">Add Location</button>
+                            `;
+                            farmCard.querySelector('.add-location-btn').addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                isEditMode = true;
+                                currentFarmId = farmId;
+                                pendingFarmData = { farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, plantingDate: farm.plantingDate };
+                                showScreen('farmSetup');
+                                setTimeout(() => initializeMap(), 100);
+                            });
+                        } else {
+                            farmCard.innerHTML = `
+                                <p class="text-xl font-bold text-gray-800">${farm.farmName}</p>
+                                <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
+                                <p class="text-sm text-gray-500">Planted on: ${plantingDate}</p>
+                            `;
+                            farmCard.addEventListener('click', () => {
+                                const newContext = { ...context, farmId: farmId, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: farm.farmName };
+                                showScreen('dashboard', newContext);
+                            });
+                        }
 
                         farmListContainer.appendChild(farmCard);
                     });
@@ -5390,6 +5473,155 @@
         }
         
         // Removed old syncOutbox function as it's now obsolete with the new online-only farm setup flow.
+
+        async function syncOutbox() {
+            if (!navigator.onLine || !currentUser) return;
+
+            const idb = await dbPromise;
+            const allFarms = await idb.getAll('outbox');
+            if (allFarms.length === 0) return;
+
+            showToast(`Syncing ${allFarms.length} offline farm(s)...`, 'info');
+
+            try {
+                const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+                for (const farmData of allFarms) {
+                    // Add server timestamp right before syncing
+                    farmData.createdAt = serverTimestamp();
+                    await addDoc(farmLotsCollection, farmData);
+                }
+
+                await idb.clear('outbox');
+                showToast('Offline farms synced successfully!', 'success');
+            } catch (error) {
+                console.error('Error syncing farm outbox:', error);
+                showToast('Failed to sync offline farms.', 'error');
+            }
+        }
+
+        document.getElementById('save-farm-offline-btn').addEventListener('click', async () => {
+            const farmName = document.getElementById('farmName').value.trim();
+            const tobaccoVariety = document.getElementById('tobaccoVariety').value.trim();
+            const plantingDate = document.getElementById('plantingDate').value;
+
+            if (!farmName || !tobaccoVariety || !plantingDate) {
+                showToast('Please fill out all farm details.', 'error');
+                return;
+            }
+
+            const farmData = {
+                farmName,
+                tobaccoVariety,
+                plantingDate,
+                polygonCoordinates: [], // Empty coordinates for offline farms
+                status: 'pending-sync' // Flag for later use
+            };
+
+            try {
+                const db = await dbPromise;
+                await db.add('outbox', farmData);
+
+                showToast('Farm saved for offline use. It will sync when you are back online.', 'success');
+                farmModal.style.display = 'none'; // Hide the modal
+            } catch (error) {
+                console.error('Error saving farm offline:', error);
+                showToast('Could not save farm locally. Please try again.', 'error');
+            }
+        });
+
+        function loadFarmerDashboard(context) {
+            const targetUserId = context.userId || (currentUser ? currentUser.uid : null);
+            if (!targetUserId) return;
+
+            document.getElementById('farmer-dashboard-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+
+            // --- Attach button listeners ---
+            document.getElementById('dashboard-add-farm-btn').addEventListener('click', () => {
+                isEditMode = false;
+                document.getElementById('farmName').value = '';
+                document.getElementById('tobaccoVariety').value = '';
+                document.getElementById('plantingDate').value = '';
+                document.getElementById('next-farm-map-btn').textContent = 'Next: Set Location';
+                farmModal.style.display = 'flex';
+            });
+
+            document.getElementById('view-all-farms-btn').addEventListener('click', () => {
+                showScreen('farmList', context);
+            });
+
+            const farmLotsCollection = collection(db, 'users', targetUserId, 'farmLots');
+            const unsubscribe = onSnapshot(farmLotsCollection, (querySnapshot) => {
+                const farmListContainer = document.getElementById('farmer-dashboard-farm-list');
+                farmListContainer.innerHTML = ''; // Clear existing list
+
+                const farms = [];
+                querySnapshot.forEach(doc => farms.push({ id: doc.id, ...doc.data() }));
+
+                if (farms.length === 0) {
+                    farmListContainer.innerHTML = `
+                        <div class="text-center text-gray-500 py-8">
+                            <p>No farms found. Add your first plot to get started!</p>
+                        </div>`;
+                } else {
+                    farms.forEach(farm => {
+                        const farmCard = document.createElement('div');
+                        farmCard.className = 'bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex justify-between items-center cursor-pointer hover:bg-gray-50';
+
+                        // Check if location needs to be set
+                        if (!farm.polygonCoordinates || farm.polygonCoordinates.length === 0) {
+                            farmCard.innerHTML = `
+                                <div class="flex-grow">
+                                    <p class="font-bold text-gray-800">${farm.farmName}</p>
+                                    <p class="text-sm text-yellow-600 font-semibold">Location not set</p>
+                                </div>
+                                <button class="add-location-btn bg-blue-500 text-white text-sm font-bold py-1 px-3 rounded-lg">Add Location</button>
+                            `;
+                            farmCard.querySelector('.add-location-btn').addEventListener('click', (e) => {
+                                e.stopPropagation(); // Prevent card click from firing
+                                isEditMode = true;
+                                currentFarmId = farm.id;
+                                pendingFarmData = { farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, plantingDate: farm.plantingDate };
+                                showScreen('farmSetup');
+                                setTimeout(() => initializeMap(), 100);
+                            });
+                        } else {
+                            farmCard.innerHTML = `
+                                <div>
+                                    <p class="font-bold text-gray-800">${farm.farmName}</p>
+                                    <p class="text-sm text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
+                                </div>
+                                <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
+                            `;
+                            farmCard.addEventListener('click', () => {
+                                const newContext = { ...context, farmId: farm.id, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: farm.farmName };
+                                showScreen('dashboard', newContext);
+                            });
+                        }
+
+                        farmListContainer.appendChild(farmCard);
+                    });
+                }
+
+                // Logic for the "Create New Report" button
+                document.getElementById('dashboard-new-report-btn').onclick = () => {
+                    if (farms.length === 0) {
+                        showToast('You must add a farm plot before you can create a report.', 'error');
+                    } else if (farms.length === 1) {
+                        // Go directly to new submission screen
+                        const farm = farms[0];
+                        const newContext = { ...context, farmId: farm.id, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: 'New Report' };
+                        showScreen('newSubmission', newContext);
+                    } else {
+                        // If multiple farms, show the list to choose from
+                        showToast('Please select a farm from the list to create a report.', 'info');
+                        showScreen('farmList', context);
+                    }
+                };
+
+                lucide.createIcons();
+            });
+            activeListeners.push(unsubscribe);
+        }
 
         async function syncSubmissionOutbox() {
             if (!navigator.onLine || !currentUser) return;
