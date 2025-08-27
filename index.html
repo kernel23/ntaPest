@@ -3981,11 +3981,11 @@
         }
 
         async function syncEwOutbox() {
-            if (!navigator.onLine || !currentUser) return;
+            if (!navigator.onLine || !currentUser) return new Map();
 
             const idb = await dbPromise;
             const allItems = await idb.getAll('ew_outbox');
-            if (allItems.length === 0) return;
+            if (allItems.length === 0) return new Map();
 
             showToast(`Syncing ${allItems.length} item(s) created by Extension Worker...`, 'info');
 
@@ -4046,7 +4046,8 @@
                     };
 
                     const farmLotsCollectionRef = collection(db, 'users', finalFarmerId, 'farmLots');
-                    await addDoc(farmLotsCollectionRef, farmDataForFirestore);
+                    const newFarmDocRef = await addDoc(farmLotsCollectionRef, farmDataForFirestore);
+                    tempIdToFirestoreIdMap.set(tempFarmId, newFarmDocRef.id);
 
                     await idb.delete('ew_outbox', tempFarmId);
                     showToast(`Synced new farm lot: ${farm.farmName}`, 'success');
@@ -4063,6 +4064,8 @@
                 if (activeScreenId === 'ewDashboard') loadExtensionWorkerDashboard(lastContext);
                 if (activeScreenId === 'farmList') loadFarms(lastContext);
             }
+
+            return tempIdToFirestoreIdMap;
         }
 
         document.getElementById('symptoms-checklist').addEventListener('change', () => {
@@ -4101,8 +4104,12 @@
                 return;
             }
 
+            const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+            const farmerId = lastContext.userId || currentUser.uid;
+
             const submissionData = {
                 farmId: currentFarmId, // Keep farmId for syncing
+                farmerId: farmerId, // ** NEW: Explicitly store the owner of the report **
                 imageDataUrls: imageDataUrls, // Keep as base64 for offline
                 symptoms,
                 distribution,
@@ -6106,11 +6113,10 @@
             }
         }
 
-        async function syncSubmissionOutbox(farmIdMap) {
+        async function syncSubmissionOutbox(idMap) {
             if (!navigator.onLine || !currentUser) return;
 
             const idb = await dbPromise;
-            // Use getAllKeys and then process one by one to avoid holding all data in memory
             const keys = await idb.getAllKeys('submission_outbox');
             if (keys.length === 0) return;
 
@@ -6120,28 +6126,32 @@
                 let submissionData;
                 try {
                     submissionData = await idb.get('submission_outbox', key);
-                    let farmId = submissionData.farmId;
 
-                    // Check if this farmId needs to be mapped to a new one
-                    if (farmId.startsWith('offline_')) {
-                        const newFarmId = farmIdMap.get(farmId);
-                        if (newFarmId) {
-                            farmId = newFarmId; // Use the new permanent ID
-                        } else {
-                            // This can happen if farm sync failed or is still in progress.
-                            // We'll skip this report and try again on the next sync cycle.
-                            console.warn(`Skipping submission for unsynced farm: ${farmId}`);
-                            continue;
-                        }
+                    // --- Resolve Farmer and Farm IDs ---
+                    let finalFarmerId = submissionData.farmerId;
+                    if (finalFarmerId.startsWith('offline_') && idMap.has(finalFarmerId)) {
+                        finalFarmerId = idMap.get(finalFarmerId);
+                    } else if (finalFarmerId.startsWith('offline_')) {
+                        console.warn(`Skipping report because its parent farmer (${finalFarmerId}) has not been synced.`);
+                        continue;
                     }
 
-                    // 1. Generate a new submission ID for Firestore
-                    const submissionDocRef = doc(collection(db, 'users', currentUser.uid, 'farmLots', farmId, 'submissions'));
+                    let finalFarmId = submissionData.farmId;
+                    if (finalFarmId.startsWith('offline_') && idMap.has(finalFarmId)) {
+                        finalFarmId = idMap.get(finalFarmId);
+                    } else if (finalFarmId.startsWith('offline_')) {
+                        console.warn(`Skipping report because its parent farm (${finalFarmId}) has not been synced.`);
+                        continue;
+                    }
+                    // --- End ID Resolution ---
+
+                    // 1. Generate a new submission ID for Firestore, using the CORRECT farmer ID
+                    const submissionDocRef = doc(collection(db, 'users', finalFarmerId, 'farmLots', finalFarmId, 'submissions'));
                     const submissionId = submissionDocRef.id;
 
-                    // 2. Upload images to Firebase Storage
+                    // 2. Upload images to Firebase Storage, using the CORRECT farmer ID in the path
                     const uploadPromises = submissionData.imageDataUrls.map((dataUrl, index) => {
-                        const storageRef = ref(storage, `submissions/${currentUser.uid}/${submissionId}/image_${index}.jpg`);
+                        const storageRef = ref(storage, `submissions/${finalFarmerId}/${submissionId}/image_${index}.jpg`);
                         return uploadString(storageRef, dataUrl, 'data_url').then(snapshot => getDownloadURL(snapshot.ref));
                     });
 
@@ -7277,10 +7287,14 @@
             showToast('Syncing offline data...', 'info');
 
             try {
-                // It's important to sync in the correct order
-                await syncEwOutbox();
-                const farmIdMap = await syncOutbox();
-                await syncSubmissionOutbox(farmIdMap);
+                // Sync items and get their ID maps
+                const ewIdMap = await syncEwOutbox();
+                const personalFarmIdMap = await syncOutbox();
+
+                // Merge maps. The ewIdMap is prioritized in case of any theoretical key collision.
+                const combinedIdMap = new Map([...personalFarmIdMap, ...ewIdMap]);
+
+                await syncSubmissionOutbox(combinedIdMap);
 
                 // After sync, refresh the view to show updated status
                 const activeScreen = document.querySelector('.screen.active');
