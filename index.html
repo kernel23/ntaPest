@@ -3798,26 +3798,36 @@
                 showToast('No farm selected.', 'error');
                 return;
             }
+
+            const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+            const ownerId = lastContext.userId || currentUser.uid;
+            const isOffline = lastContext.isOffline || false;
+
             isEditMode = true;
 
             try {
-                const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
-                const ownerId = lastContext.userId || currentUser.uid;
+                let farmData;
+                if (isOffline) {
+                    const idb = await dbPromise;
+                    const outboxName = currentFarmId.startsWith('offline_farm_lot_') ? 'ew_outbox' : 'outbox';
+                    farmData = await idb.get(outboxName, currentFarmId);
+                } else {
+                    const farmDocRef = doc(db, 'users', ownerId, 'farmLots', currentFarmId);
+                    const farmDocSnap = await getDoc(farmDocRef);
+                    if (farmDocSnap.exists()) {
+                        farmData = farmDocSnap.data();
+                    }
+                }
 
-                const farmDocRef = doc(db, 'users', ownerId, 'farmLots', currentFarmId);
-                const farmDocSnap = await getDoc(farmDocRef);
-
-                if (farmDocSnap.exists()) {
-                    const farmData = farmDocSnap.data();
+                if (farmData) {
                     // Pre-fill the modal
                     document.getElementById('farmName').value = farmData.farmName || '';
                     document.getElementById('tobaccoVariety').value = farmData.tobaccoVariety || '';
                     document.getElementById('plantingDate').value = farmData.plantingDate || '';
 
-                    // Change button text and show modal
-                    document.getElementById('next-farm-map-btn').textContent = 'Update Details & Set Location';
-                    farmModal.style.display = 'flex';
-                    updateOnlineStatus();
+                    // Open the modal with the correct context
+                    openFarmModal(ownerId, isOffline);
+                    document.getElementById('farm-modal').querySelector('h3').textContent = 'Edit Farm Plot';
                 } else {
                     showToast('Could not find farm details to edit.', 'error');
                 }
@@ -3875,16 +3885,36 @@
                 return;
             }
 
+            const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+            const isOfflineFarm = lastContext.isOffline;
+
             if (confirm('Are you sure you want to delete this farm plot? This action cannot be undone.')) {
+                showSavingOverlay('Deleting...');
                 try {
-                    const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
-                    await deleteDoc(farmDocRef);
-                    showToast('Deletion Successful: The farm plot has been removed.', 'success');
-                    currentFarmId = null;
-                    showScreen('farmList');
+                    if (isOfflineFarm) {
+                        // Handle deletion from IndexedDB
+                        const idb = await dbPromise;
+                        // An EW's offline farm lots are in 'ew_outbox', personal ones are in 'outbox'
+                        const outboxName = currentFarmId.startsWith('offline_farm_lot_') ? 'ew_outbox' : 'outbox';
+                        await idb.delete(outboxName, currentFarmId);
+                        showToast('Offline farm plot deleted.', 'success');
+                    } else {
+                        // Handle deletion from Firestore
+                        const ownerId = lastContext.userId || currentUser.uid;
+                        const farmDocRef = doc(db, 'users', ownerId, 'farmLots', currentFarmId);
+                        await deleteDoc(farmDocRef);
+                        showToast('Farm plot deleted successfully.', 'success');
+                    }
+
+                    // Go back to the previous screen (farm list)
+                    const farmListContext = navigationHistory[navigationHistory.length - 2]?.context || {};
+                    showScreen('farmList', farmListContext, true);
+
                 } catch (error) {
                     console.error("Error deleting farm plot:", error);
                     showToast('Failed to delete farm plot. Please try again.', 'error');
+                } finally {
+                    hideSavingOverlay();
                 }
             }
         });
