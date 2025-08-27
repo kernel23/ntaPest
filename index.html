@@ -5334,44 +5334,20 @@
 
                         const plantingDate = farm.plantingDate ? new Date(farm.plantingDate).toLocaleDateString() : 'N/A';
 
-                        let offlineBadge = '';
-                        if (farm.isOffline) {
-                            offlineBadge = '<span class="ml-2 text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-gray-600 bg-gray-200">Offline</span>';
-                        }
+                        let offlineBadge = farm.isOffline ? '<span class="ml-2 text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-gray-600 bg-gray-200">Offline</span>' : '';
+                        let locationStatus = (!farm.polygonCoordinates || farm.polygonCoordinates.length === 0) ? '<p class="text-sm text-yellow-600 font-semibold mt-1">Location not set</p>' : '';
 
-                        if (!farm.polygonCoordinates || farm.polygonCoordinates.length === 0) {
-                            farmCard.className += ' flex justify-between items-center';
-                            farmCard.innerHTML = `
-                                <div>
-                                    <p class="text-xl font-bold text-gray-800">${farm.farmName} ${offlineBadge}</p>
-                                    <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
-                                    <p class="text-sm text-yellow-600 font-semibold mt-2">Location not set</p>
-                                </div>
-                                <button class="add-location-btn bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded-lg">Add Location</button>
-                            `;
-                            farmCard.querySelector('.add-location-btn').addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                if (farm.isOffline) {
-                                    showToast('Please sync this farm first to set a location.', 'info');
-                                    return;
-                                }
-                                isEditMode = true;
-                                currentFarmId = farmId;
-                                pendingFarmData = { farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, plantingDate: farm.plantingDate };
-                                showScreen('farmSetup');
-                                setTimeout(() => initializeMap(), 100);
-                            });
-                        } else {
-                            farmCard.innerHTML = `
-                                <p class="text-xl font-bold text-gray-800">${farm.farmName} ${offlineBadge}</p>
-                                <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
-                                <p class="text-sm text-gray-500">Planted on: ${plantingDate}</p>
-                            `;
-                            farmCard.addEventListener('click', () => {
-                                const newContext = { ...context, farmId: farmId, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: farm.farmName, isOffline: farm.isOffline };
-                                showScreen('dashboard', newContext);
-                            });
-                        }
+                        farmCard.innerHTML = `
+                            <p class="text-xl font-bold text-gray-800">${farm.farmName} ${offlineBadge}</p>
+                            <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
+                            <p class="text-sm text-gray-500">Planted on: ${plantingDate}</p>
+                            ${locationStatus}
+                        `;
+
+                        farmCard.addEventListener('click', () => {
+                            const newContext = { ...context, farmId: farmId, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: farm.farmName, isOffline: farm.isOffline };
+                            showScreen('dashboard', newContext);
+                        });
 
                         farmListContainer.appendChild(farmCard);
                     });
@@ -5708,40 +5684,21 @@
                         farmCard.className = 'bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex justify-between items-center cursor-pointer hover:bg-gray-50';
 
                         let offlineBadge = farm.isOffline ? '<span class="ml-2 text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-gray-600 bg-gray-200">Offline</span>' : '';
+                        let locationStatus = (!farm.polygonCoordinates || farm.polygonCoordinates.length === 0) ? '<p class="text-xs text-yellow-600">Location not set</p>' : `<p class="text-sm text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>`;
 
-                        if (!farm.polygonCoordinates || farm.polygonCoordinates.length === 0) {
-                             farmCard.innerHTML = `
-                                <div class="flex-grow">
-                                    <p class="font-bold text-gray-800">${farm.farmName} ${offlineBadge}</p>
-                                    <p class="text-sm text-yellow-600 font-semibold">Location not set</p>
-                                </div>
-                                <button class="add-location-btn bg-blue-500 text-white text-sm font-bold py-1 px-3 rounded-lg">Add Location</button>
-                            `;
-                            farmCard.querySelector('.add-location-btn').addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                if (farm.isOffline) {
-                                    showToast('Please sync this farm first to set a location.', 'info');
-                                    return;
-                                }
-                                isEditMode = true;
-                                currentFarmId = farm.id;
-                                pendingFarmData = { farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, plantingDate: farm.plantingDate };
-                                showScreen('farmSetup');
-                                setTimeout(() => initializeMap(), 100);
-                            });
-                        } else {
-                            farmCard.innerHTML = `
-                                <div>
-                                    <p class="font-bold text-gray-800">${farm.farmName} ${offlineBadge}</p>
-                                    <p class="text-sm text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
-                                </div>
-                                <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
-                            `;
-                            farmCard.addEventListener('click', () => {
-                                const newContext = { ...context, farmId: farm.id, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: farm.farmName, isOffline: farm.isOffline };
-                                showScreen('dashboard', newContext);
-                            });
-                        }
+                        farmCard.innerHTML = `
+                            <div>
+                                <p class="font-bold text-gray-800">${farm.farmName} ${offlineBadge}</p>
+                                ${locationStatus}
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
+                        `;
+
+                        farmCard.addEventListener('click', () => {
+                            const newContext = { ...context, farmId: farm.id, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: farm.farmName, isOffline: farm.isOffline };
+                            showScreen('dashboard', newContext);
+                        });
+
                         farmListContainer.appendChild(farmCard);
                     });
                 }
