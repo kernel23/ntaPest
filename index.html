@@ -3408,12 +3408,30 @@
                 // Now that address data is loaded, populate the dropdowns
                 initializeAddressFilters();
                 
-                const userDocRef = doc(db, "users", user.uid);
-                const docSnap = await getDoc(userDocRef);
+                try {
+                    const userDocRef = doc(db, "users", user.uid);
+                    const docSnap = await getDoc(userDocRef);
 
-                if (docSnap.exists()) {
-                    userProfile = docSnap.data();
+                    if (docSnap.exists()) {
+                        userProfile = docSnap.data();
+                        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+                    } else {
+                         throw new Error("User document doesn't exist in Firestore.");
+                    }
+                } catch (error) {
+                    console.warn("Failed to fetch user profile from Firestore. Attempting to load from cache.", error.message);
+                    const cachedProfile = localStorage.getItem('userProfile');
+                    if (cachedProfile) {
+                        userProfile = JSON.parse(cachedProfile);
+                        showToast('Using cached user data. Some features may be limited.', 'info');
+                    } else {
+                        showScreen('login');
+                        showToast('Offline and no cached data. Please connect to the internet to log in for the first time.', 'error');
+                        return;
+                    }
+                }
 
+                if (userProfile) {
                     const requiredFields = ['fullName', 'province', 'municipality', 'barangay', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
                     const isProfileComplete = requiredFields.every(field => userProfile[field] !== undefined && userProfile[field] !== null && userProfile[field] !== '');
 
@@ -3938,6 +3956,38 @@
                 return;
             }
 
+            const submissionData = {
+                farmId: currentFarmId, // Keep farmId for syncing
+                imageDataUrls: imageDataUrls, // Keep as base64 for offline
+                symptoms,
+                distribution,
+                severity,
+                affectedParts,
+                onsetDate,
+                progression,
+                pestSigns,
+                timestamp: new Date(), // Use local date for offline
+                status: 'pending-sync',
+                gps_coordinates: { latitude: 17.5734, longitude: 120.3856 } // Simulate GPS data
+            };
+
+            if (!navigator.onLine) {
+                showSavingOverlay('Saving report offline...');
+                try {
+                    const db = await dbPromise;
+                    await db.add('submission_outbox', submissionData);
+                    showToast('Report saved locally. It will sync when you are back online.', 'success');
+                     const lastContext = navigationHistory[navigationHistory.length - 2] || { screenName: 'farmList', context: {} };
+                    showScreen(lastContext.screenName, lastContext.context);
+                } catch (error) {
+                    console.error('Error saving report offline:', error);
+                    showToast('Could not save report locally.', 'error');
+                } finally {
+                    hideSavingOverlay();
+                }
+                return;
+            }
+
             showSavingOverlay('Uploading images...');
 
             try {
@@ -3957,18 +4007,12 @@
 
                 showSavingOverlay('Saving report data...');
 
-                const submissionData = {
-                    imageDownloadUrls: imageDownloadUrls, // <-- Store URLs, not base64 data
-                    symptoms,
-                    distribution,
-                    severity,
-                    affectedParts,
-                    onsetDate,
-                    progression,
-                    pestSigns,
-                    timestamp: serverTimestamp(),
-                    gps_coordinates: { latitude: 17.5734, longitude: 120.3856 } // Simulate GPS data
-                };
+                // Replace base64 with URLs and add server timestamp
+                submissionData.imageDownloadUrls = imageDownloadUrls;
+                delete submissionData.imageDataUrls; // Remove base64 data
+                submissionData.timestamp = serverTimestamp();
+                delete submissionData.status; // No longer pending sync
+                delete submissionData.farmId; // Not needed in the final doc
 
                 // Save the complete document to Firestore now that images are uploaded
                 await setDoc(submissionDocRef, submissionData);
@@ -5635,27 +5679,54 @@
             if (!navigator.onLine || !currentUser) return;
 
             const idb = await dbPromise;
-            const allSubmissions = await idb.getAll('submission_outbox');
-            if (allSubmissions.length === 0) return;
+            // Use getAllKeys and then process one by one to avoid holding all data in memory
+            const keys = await idb.getAllKeys('submission_outbox');
+            if (keys.length === 0) return;
 
-            const connectionStatusEl = document.getElementById('connection-status');
-            connectionStatusEl.textContent = `Syncing ${allSubmissions.length} submission(s)...`;
-            connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-yellow-100 text-yellow-800';
+            showToast(`Syncing ${keys.length} offline report(s)...`, 'info');
 
-            try {
-                for (const submission of allSubmissions) {
-                    const { id, farmId, ...dataToSync } = submission;
-                    if (!farmId) continue;
+            for (const key of keys) {
+                let submissionData;
+                try {
+                    submissionData = await idb.get('submission_outbox', key);
+                    if (!submissionData || !submissionData.farmId) {
+                        await idb.delete('submission_outbox', key); // Clean up invalid entry
+                        continue;
+                    }
 
-                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmId, 'submissions');
-                    await addDoc(submissionsCollection, dataToSync);
+                    // 1. Generate a new submission ID for Firestore
+                    const submissionDocRef = doc(collection(db, 'users', currentUser.uid, 'farmLots', submissionData.farmId, 'submissions'));
+                    const submissionId = submissionDocRef.id;
+
+                    // 2. Upload images to Firebase Storage
+                    const uploadPromises = submissionData.imageDataUrls.map((dataUrl, index) => {
+                        const storageRef = ref(storage, `submissions/${currentUser.uid}/${submissionId}/image_${index}.jpg`);
+                        return uploadString(storageRef, dataUrl, 'data_url').then(snapshot => getDownloadURL(snapshot.ref));
+                    });
+
+                    const imageDownloadUrls = await Promise.all(uploadPromises);
+
+                    // 3. Prepare the final data for Firestore
+                    const finalSubmissionData = { ...submissionData };
+                    delete finalSubmissionData.imageDataUrls; // Remove base64 data
+                    delete finalSubmissionData.farmId; // Not needed in the sub-collection doc
+                    finalSubmissionData.imageDownloadUrls = imageDownloadUrls;
+                    finalSubmissionData.timestamp = serverTimestamp(); // Use server timestamp
+                    finalSubmissionData.status = 'pending'; // Update status from 'pending-sync'
+
+                    // 4. Save the document to Firestore
+                    await setDoc(submissionDocRef, finalSubmissionData);
+
+                    // 5. If successful, delete from IndexedDB
+                    await idb.delete('submission_outbox', key);
+
+                    showToast(`Synced report for farm: ${submissionData.farmId}.`, 'success');
+
+                } catch (error) {
+                    console.error('Error syncing individual submission:', error);
+                    showToast(`Failed to sync a report. It will be retried later.`, 'error');
+                    // If an error occurs, we leave the item in IndexedDB to be retried later.
                 }
-
-                await idb.clear('submission_outbox');
-            } catch (error) {
-                console.error('Error syncing submission outbox:', error);
-                connectionStatusEl.textContent = 'Sync Failed';
-                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-red-100 text-red-800';
             }
         }
 
