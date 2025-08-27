@@ -412,6 +412,9 @@
                         <p class="mt-4">Loading assigned farmers...</p>
                     </div>
                 </main>
+                <button id="add-farmer-by-ew-btn" class="absolute bottom-6 right-6 bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center">
+                    <i data-lucide="user-plus" class="w-8 h-8"></i>
+                </button>
             </div>
 
             <!-- Coordinator Dashboard Screen -->
@@ -1200,6 +1203,36 @@
         </div>
     </div>
 
+    <!-- Add Farmer by EW Modal -->
+    <div id="add-farmer-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-40">
+         <div class="bg-white rounded-lg shadow-xl w-full max-w-md m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Add New Farmer</h3>
+                <button id="close-add-farmer-modal-btn" class="p-1"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[80vh]">
+                <label for="newFarmerName" class="block text-sm font-medium text-gray-700">Full Name</label>
+                <input type="text" id="newFarmerName" placeholder="e.g., Juan dela Cruz" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm">
+
+                <label class="block text-sm font-medium text-gray-700 mt-4">Province</label>
+                <div id="new-farmer-province-container" class="relative"></div>
+
+                <label class="block text-sm font-medium text-gray-700 mt-4">Municipality</label>
+                <div id="new-farmer-municipality-container" class="relative"></div>
+
+                <label class="block text-sm font-medium text-gray-700 mt-4">Barangay</label>
+                <div id="new-farmer-barangay-container" class="relative"></div>
+
+                <div class="mt-6">
+                    <button id="save-new-farmer-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md flex items-center justify-center">
+                        <i data-lucide="save" class="w-5 h-5 mr-2"></i>
+                        <span>Save Farmer</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Address Data -->
     <script src="address-provider.js"></script>
 
@@ -1312,13 +1345,19 @@
         })();
 
         // Initialize IndexedDB
-        const dbPromise = openDB('agri-guard-db', 2, {
+        const dbPromise = openDB('agri-guard-db', 3, {
             upgrade(db, oldVersion, newVersion, transaction) {
                 if (oldVersion < 1) {
-                    db.createObjectStore('outbox', { autoIncrement: true });
+                    // Personal outbox for the logged-in user's own offline farms
+                    db.createObjectStore('outbox', { keyPath: 'id' });
                 }
                 if (oldVersion < 2) {
+                    // Personal outbox for the logged-in user's own offline reports
                     db.createObjectStore('submission_outbox', { autoIncrement: true });
+                }
+                if (oldVersion < 3) {
+                    // Outbox for items created by an Extension Worker on behalf of others
+                    db.createObjectStore('ew_outbox', { keyPath: 'id' });
                 }
             },
         });
@@ -3981,6 +4020,26 @@
                 showSavingOverlay('Saving report offline...');
                 try {
                     const db = await dbPromise;
+
+                    // --- Duplicate Check for Offline Reports ---
+                    const allOfflineSubmissions = await db.getAll('submission_outbox');
+                    const oneHourAgo = new Date().getTime() - (60 * 60 * 1000);
+
+                    const isDuplicate = allOfflineSubmissions.some(sub => {
+                        const submissionTimestamp = new Date(sub.timestamp).getTime();
+                        return sub.farmId === submissionData.farmId &&
+                               submissionTimestamp > oneHourAgo &&
+                               JSON.stringify(sub.symptoms.sort()) === JSON.stringify(submissionData.symptoms.sort()) &&
+                               sub.severity === submissionData.severity;
+                    });
+
+                    if (isDuplicate) {
+                        showToast('This looks like a duplicate of a recent offline report.', 'error');
+                        hideSavingOverlay();
+                        return;
+                    }
+                    // --- End Duplicate Check ---
+
                     await db.add('submission_outbox', submissionData);
                     showToast('Report saved locally. It will sync when you are back online.', 'success');
                      const lastContext = navigationHistory[navigationHistory.length - 2] || { screenName: 'farmList', context: {} };
@@ -5404,12 +5463,11 @@
             const welcomeMessage = document.getElementById('ew-welcome-message');
             const dashboardTitle = document.querySelector('#ew-dashboard-screen h2');
 
+            // UI setup based on context (EW viewing own vs. Coordinator viewing EW's)
             if (context.userId && context.userId !== currentUser.uid) {
-                // Coordinator viewing a specific EW's list
                 welcomeMessage.textContent = `Viewing farmers for ${context.userName}`;
                 dashboardTitle.textContent = `${context.userName}'s Farmer List`;
             } else {
-                // EW viewing their own dashboard
                 welcomeMessage.textContent = `Welcome, ${userProfile.fullName}`;
                 dashboardTitle.textContent = 'Extension Worker Dashboard';
             }
@@ -5423,38 +5481,77 @@
             lucide.createIcons();
 
             try {
-                const usersCollection = collection(db, 'users');
-                const q = query(usersCollection, where("role", "==", "Farmer"));
-                const querySnapshot = await getDocs(q);
-
-                let farmers = [];
-                querySnapshot.forEach(doc => {
-                    farmers.push({ id: doc.id, ...doc.data() });
-                });
-
-                let farmersWithData = [];
-                for (const farmer of farmers) {
-                    let latestReportTimestamp = null;
-                    const farmLotsCollection = collection(db, 'users', farmer.id, 'farmLots');
-                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
-
-                    for (const farmDoc of farmLotsSnapshot.docs) {
-                        const submissionsCollection = collection(db, 'users', farmer.id, 'farmLots', farmDoc.id, 'submissions');
-                        const subQuery = query(submissionsCollection, orderBy("timestamp", "desc"), limit(1));
-                        const submissionsSnapshot = await getDocs(subQuery);
-
-                        if (!submissionsSnapshot.empty) {
-                            const latestSubmission = submissionsSnapshot.docs[0].data();
-                            const currentTimestamp = latestSubmission.timestamp.toDate();
-                            if (!latestReportTimestamp || currentTimestamp > latestReportTimestamp) {
-                                latestReportTimestamp = currentTimestamp;
-                            }
-                        }
-                    }
-                    farmersWithData.push({ ...farmer, lastReportDate: latestReportTimestamp });
+                // 1. Fetch online farmers from Firestore
+                let onlineFarmers = [];
+                if (navigator.onLine) {
+                    const usersCollection = collection(db, 'users');
+                    const q = query(usersCollection, where("role", "==", "Farmer"));
+                    const querySnapshot = await getDocs(q);
+                    querySnapshot.forEach(doc => {
+                        onlineFarmers.push({ id: doc.id, ...doc.data(), isOffline: false });
+                    });
                 }
 
-                farmersWithData.sort((a, b) => (b.lastReportDate || 0) - (a.lastReportDate || 0));
+                // 2. Fetch offline farmers from IndexedDB's 'ew_outbox'
+                const idb = await dbPromise;
+                const offlineFarmersRaw = await idb.getAll('ew_outbox');
+                // Filter for just new farmer entries
+                const offlineFarmers = offlineFarmersRaw
+                    .filter(item => item.type === 'new_farmer')
+                    .map(farmer => ({ ...farmer, isOffline: true }));
+
+                // 3. Combine and de-duplicate, prioritizing online data
+                const farmerMap = new Map();
+                onlineFarmers.forEach(farmer => farmerMap.set(farmer.fullName, farmer));
+                offlineFarmers.forEach(farmer => {
+                    // Only add the offline farmer if an online version with the same name doesn't exist
+                    if (!farmerMap.has(farmer.fullName)) {
+                        farmerMap.set(farmer.fullName, farmer);
+                    }
+                });
+
+                const combinedFarmers = Array.from(farmerMap.values());
+
+                // 4. Fetch auxiliary data (like last report date) for online farmers
+                let farmersWithData = [];
+                for (const farmer of combinedFarmers) {
+                    // Only fetch report data for online farmers who have a real Firestore ID
+                    if (!farmer.isOffline && navigator.onLine) {
+                        let latestReportTimestamp = null;
+                        const farmLotsCollection = collection(db, 'users', farmer.id, 'farmLots');
+                        const farmLotsSnapshot = await getDocs(farmLotsCollection);
+
+                        for (const farmDoc of farmLotsSnapshot.docs) {
+                            const submissionsCollection = collection(db, 'users', farmer.id, 'farmLots', farmDoc.id, 'submissions');
+                            const subQuery = query(submissionsCollection, orderBy("timestamp", "desc"), limit(1));
+                            const submissionsSnapshot = await getDocs(subQuery);
+
+                            if (!submissionsSnapshot.empty) {
+                                const latestSubmission = submissionsSnapshot.docs[0].data();
+                                const currentTimestamp = latestSubmission.timestamp.toDate();
+                                if (!latestReportTimestamp || currentTimestamp > latestReportTimestamp) {
+                                    latestReportTimestamp = currentTimestamp;
+                                }
+                            }
+                        }
+                        farmersWithData.push({ ...farmer, lastReportDate: latestReportTimestamp });
+                    } else {
+                        // For offline farmers, just add them to the list without a report date
+                        farmersWithData.push({ ...farmer, lastReportDate: null });
+                    }
+                }
+
+                // 5. Sort and render the final list
+                farmersWithData.sort((a, b) => {
+                    const dateA = a.lastReportDate || 0;
+                    const dateB = b.lastReportDate || 0;
+                    if (dateB !== dateA) {
+                        return dateB - dateA;
+                    }
+                    // If dates are the same (or both null), sort by name
+                    return a.fullName.localeCompare(b.fullName);
+                });
+
                 renderFarmerTable(farmersWithData, context);
 
             } catch (error) {
@@ -5470,6 +5567,7 @@
                     <div class="text-center text-gray-500 mt-20">
                         <i data-lucide="users" class="w-12 h-12 mx-auto text-gray-400"></i>
                         <p class="mt-4">No farmers found or assigned.</p>
+                        <p class="text-sm">Click the '+' button to add a new farmer offline.</p>
                     </div>`;
                 lucide.createIcons();
                 return;
@@ -5486,24 +5584,145 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200" id="farmer-table-body">
-                            ${farmers.map(farmer => `
-                                <tr class="hover:bg-gray-50 cursor-pointer" data-farmer-id="${farmer.id}" data-farmer-name="${farmer.fullName}">
+                            ${farmers.map(farmer => {
+                                const offlineBadge = farmer.isOffline ? '<span class="ml-2 text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-gray-600 bg-gray-200">Offline</span>' : '';
+                                const lastReportText = farmer.isOffline ? 'N/A (Offline)' : (farmer.lastReportDate ? farmer.lastReportDate.toLocaleDateString() : 'No reports yet');
+                                // Offline farmers can't be clicked yet as they have no farms to show
+                                const rowClass = farmer.isOffline ? 'opacity-60' : 'hover:bg-gray-50 cursor-pointer';
+                                const dataAttributes = farmer.isOffline ? '' : `data-farmer-id="${farmer.id}" data-farmer-name="${farmer.fullName}"`;
+
+                                return `
+                                <tr class="${rowClass}" ${dataAttributes}>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">${farmer.fullName}</div>
+                                        <div class="text-sm font-medium text-gray-900">${farmer.fullName} ${offlineBadge}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         ${farmer.barangay}, ${farmer.municipality}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        ${farmer.lastReportDate ? farmer.lastReportDate.toLocaleDateString() : 'No reports yet'}
+                                        ${lastReportText}
                                     </td>
                                 </tr>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
             `;
             container.innerHTML = tableHtml;
+        }
+
+        // --- Add Farmer by EW Logic ---
+        const addFarmerModal = document.getElementById('add-farmer-modal');
+        const openAddFarmerBtn = document.getElementById('add-farmer-by-ew-btn');
+        const closeAddFarmerBtn = document.getElementById('close-add-farmer-modal-btn');
+        const saveNewFarmerBtn = document.getElementById('save-new-farmer-btn');
+
+        let newFarmerProvince, newFarmerMunicipality, newFarmerBarangay;
+
+        function initializeNewFarmerModal() {
+            if (!newFarmerProvince) { // Initialize only once
+                newFarmerProvince = createMultiSelect('new-farmer-province-container', 'Select Province', false);
+                newFarmerMunicipality = createMultiSelect('new-farmer-municipality-container', 'Select Municipality', false);
+                newFarmerBarangay = createMultiSelect('new-farmer-barangay-container', 'Select Barangay', false);
+
+                newFarmerProvince.populate(window.philippineAddresses.provinces.map(p => ({ value: p.name, label: p.name })));
+                newFarmerMunicipality.disable();
+                newFarmerBarangay.disable();
+
+                newFarmerProvince.onChange(selectedProvinces => {
+                    newFarmerMunicipality.clear();
+                    newFarmerBarangay.clear();
+                    newFarmerMunicipality.disable();
+                    newFarmerBarangay.disable();
+                    if (selectedProvinces.length > 0) {
+                        const provinceData = window.philippineAddresses.provinces.find(p => p.name === selectedProvinces[0]);
+                        if(provinceData) {
+                            newFarmerMunicipality.populate(provinceData.municipalities.map(m => ({ value: m.name, label: m.name })));
+                            newFarmerMunicipality.enable();
+                        }
+                    }
+                });
+
+                newFarmerMunicipality.onChange(selectedMunicipalities => {
+                    newFarmerBarangay.clear();
+                    newFarmerBarangay.disable();
+                    if (selectedMunicipalities.length > 0) {
+                        const selectedProvinceName = newFarmerProvince.getSelectedValues()[0];
+                        const provinceData = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
+                        const municipalityData = provinceData.municipalities.find(m => m.name === selectedMunicipalities[0]);
+                        if (municipalityData && municipalityData.barangays) {
+                            newFarmerBarangay.populate(municipalityData.barangays.map(b => ({ value: b, label: b })));
+                            newFarmerBarangay.enable();
+                        }
+                    }
+                });
+            }
+        }
+
+        if (openAddFarmerBtn) {
+            openAddFarmerBtn.addEventListener('click', () => {
+                initializeNewFarmerModal();
+                // Reset form fields
+                document.getElementById('newFarmerName').value = '';
+                newFarmerProvince.setSelectedValues([]);
+                newFarmerMunicipality.clear();
+                newFarmerBarangay.clear();
+                newFarmerMunicipality.disable();
+                newFarmerBarangay.disable();
+
+                addFarmerModal.classList.remove('hidden');
+                addFarmerModal.classList.add('flex');
+                lucide.createIcons();
+            });
+        }
+
+        if (closeAddFarmerBtn) {
+            closeAddFarmerBtn.addEventListener('click', () => {
+                addFarmerModal.classList.add('hidden');
+                addFarmerModal.classList.remove('flex');
+            });
+        }
+
+        if (saveNewFarmerBtn) {
+            saveNewFarmerBtn.addEventListener('click', async () => {
+                const farmerName = document.getElementById('newFarmerName').value.trim();
+                const province = (newFarmerProvince.getSelectedValues() || [])[0] || '';
+                const municipality = (newFarmerMunicipality.getSelectedValues() || [])[0] || '';
+                const barangay = (newFarmerBarangay.getSelectedValues() || [])[0] || '';
+
+                if (!farmerName || !province || !municipality || !barangay) {
+                    showToast('Please fill out all fields for the new farmer.', 'error');
+                    return;
+                }
+
+                const farmerData = {
+                    id: `offline_farmer_${crypto.randomUUID()}`,
+                    type: 'new_farmer',
+                    fullName: farmerName,
+                    province,
+                    municipality,
+                    barangay,
+                    role: 'Farmer', // Default role
+                    createdAt: new Date().toISOString() // Use ISO string for IndexedDB
+                };
+
+                showSavingOverlay('Saving Farmer Offline...');
+                try {
+                    const db = await dbPromise;
+                    await db.add('ew_outbox', farmerData);
+                    showToast('Farmer saved locally. They will be synced when you are online.', 'success');
+                    closeAddFarmerBtn.click();
+                    // Refresh the current view
+                    const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+                    loadExtensionWorkerDashboard(lastContext);
+                } catch (error) {
+                    console.error('Error saving new farmer offline:', error);
+                    showToast('Could not save farmer locally. A farmer with this ID might already exist.', 'error');
+                } finally {
+                    hideSavingOverlay();
+                }
+            });
         }
 
         async function loadCoordinatorDashboard(context) {
