@@ -1686,7 +1686,7 @@
             } else if (userProfile.role === 'Expert') {
                 screen = 'expertDashboard';
             } else { // Default to Farmer
-                screen = 'farmList';
+                screen = 'farmerDashboard';
             }
             showScreen(screen, context);
         });
@@ -2749,6 +2749,7 @@
                 initializeAdvisoryScreen();
                 break;
                 case 'newSubmission':
+                    currentFarmIsOffline = currentContext.isOffline;
                     await initializeReportMap(currentContext);
                     break;
             }
@@ -3408,12 +3409,30 @@
                 // Now that address data is loaded, populate the dropdowns
                 initializeAddressFilters();
                 
-                const userDocRef = doc(db, "users", user.uid);
-                const docSnap = await getDoc(userDocRef);
+                try {
+                    const userDocRef = doc(db, "users", user.uid);
+                    const docSnap = await getDoc(userDocRef);
 
-                if (docSnap.exists()) {
-                    userProfile = docSnap.data();
+                    if (docSnap.exists()) {
+                        userProfile = docSnap.data();
+                        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+                    } else {
+                         throw new Error("User document doesn't exist in Firestore.");
+                    }
+                } catch (error) {
+                    console.warn("Failed to fetch user profile from Firestore. Attempting to load from cache.", error.message);
+                    const cachedProfile = localStorage.getItem('userProfile');
+                    if (cachedProfile) {
+                        userProfile = JSON.parse(cachedProfile);
+                        showToast('Using cached user data. Some features may be limited.', 'info');
+                    } else {
+                        showScreen('login');
+                        showToast('Offline and no cached data. Please connect to the internet to log in for the first time.', 'error');
+                        return;
+                    }
+                }
 
+                if (userProfile) {
                     const requiredFields = ['fullName', 'province', 'municipality', 'barangay', 'birthdate', 'civilStatus', 'religion', 'yearsFarming', 'familyMembers', 'education', 'role'];
                     const isProfileComplete = requiredFields.every(field => userProfile[field] !== undefined && userProfile[field] !== null && userProfile[field] !== '');
 
@@ -3441,7 +3460,7 @@
 
                         const isMobile = window.innerWidth < 768;
 
-                        if (userProfile.role === 'Farmer' && isMobile) {
+                        if (userProfile.role === 'Farmer') {
                             screen = 'farmerDashboard';
                             // Welcome message is set in loadFarmerDashboard
                         } else if (userProfile.role === 'Extension Worker') {
@@ -3700,7 +3719,18 @@
 
         // --- 6. FARM MANAGEMENT & SETUP FLOW ---
         const farmModal = document.getElementById('farm-modal');
-        document.getElementById('add-farm-btn').addEventListener('click', () => farmModal.style.display = 'flex');
+
+        const openFarmModal = () => {
+            isEditMode = false;
+            document.getElementById('farmName').value = '';
+            document.getElementById('tobaccoVariety').value = '';
+            document.getElementById('plantingDate').value = '';
+            document.getElementById('next-farm-map-btn').textContent = 'Next: Set Location';
+            farmModal.style.display = 'flex';
+            updateOnlineStatus();
+        };
+
+        document.getElementById('add-farm-btn').addEventListener('click', openFarmModal);
         document.getElementById('close-farm-modal-btn').addEventListener('click', () => farmModal.style.display = 'none');
 
         // --- New Farm Flow ---
@@ -3713,34 +3743,28 @@
             }
             isEditMode = true;
 
-            // Fetch current farm data
-            const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
-            const farmDocSnap = await getDoc(farmDocRef);
+            try {
+                const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
+                const farmDocSnap = await getDoc(farmDocRef);
 
-            if (farmDocSnap.exists()) {
-                const farmData = farmDocSnap.data();
-                // Pre-fill the modal
-                document.getElementById('farmName').value = farmData.farmName || '';
-                document.getElementById('tobaccoVariety').value = farmData.tobaccoVariety || '';
-                document.getElementById('plantingDate').value = farmData.plantingDate || '';
+                if (farmDocSnap.exists()) {
+                    const farmData = farmDocSnap.data();
+                    // Pre-fill the modal
+                    document.getElementById('farmName').value = farmData.farmName || '';
+                    document.getElementById('tobaccoVariety').value = farmData.tobaccoVariety || '';
+                    document.getElementById('plantingDate').value = farmData.plantingDate || '';
 
-                // Change button text and show modal
-                document.getElementById('next-farm-map-btn').textContent = 'Update Details & Set Location';
-                farmModal.style.display = 'flex';
-            } else {
-                showToast('Could not find farm details to edit.', 'error');
+                    // Change button text and show modal
+                    document.getElementById('next-farm-map-btn').textContent = 'Update Details & Set Location';
+                    farmModal.style.display = 'flex';
+                    updateOnlineStatus();
+                } else {
+                    showToast('Could not find farm details to edit.', 'error');
+                }
+            } catch (error) {
+                 showToast('Could not load farm details to edit. Are you offline?', 'error');
+                 console.error("Error fetching farm for edit:", error);
             }
-        });
-
-        // Reset edit mode when adding a new farm
-        document.getElementById('add-farm-btn').addEventListener('click', () => {
-            isEditMode = false;
-            // Clear fields and reset button text for new entry
-            document.getElementById('farmName').value = '';
-            document.getElementById('tobaccoVariety').value = '';
-            document.getElementById('plantingDate').value = '';
-            document.getElementById('next-farm-map-btn').textContent = 'Next: Set Location';
-            farmModal.style.display = 'flex';
         });
 
 
@@ -3938,6 +3962,38 @@
                 return;
             }
 
+            const submissionData = {
+                farmId: currentFarmId, // Keep farmId for syncing
+                imageDataUrls: imageDataUrls, // Keep as base64 for offline
+                symptoms,
+                distribution,
+                severity,
+                affectedParts,
+                onsetDate,
+                progression,
+                pestSigns,
+                timestamp: new Date(), // Use local date for offline
+                status: 'pending-sync',
+                gps_coordinates: { latitude: 17.5734, longitude: 120.3856 } // Simulate GPS data
+            };
+
+            if (!navigator.onLine || currentFarmIsOffline) {
+                showSavingOverlay('Saving report offline...');
+                try {
+                    const db = await dbPromise;
+                    await db.add('submission_outbox', submissionData);
+                    showToast('Report saved locally. It will sync when you are back online.', 'success');
+                     const lastContext = navigationHistory[navigationHistory.length - 2] || { screenName: 'farmList', context: {} };
+                    showScreen(lastContext.screenName, lastContext.context);
+                } catch (error) {
+                    console.error('Error saving report offline:', error);
+                    showToast('Could not save report locally.', 'error');
+                } finally {
+                    hideSavingOverlay();
+                }
+                return;
+            }
+
             showSavingOverlay('Uploading images...');
 
             try {
@@ -3957,18 +4013,12 @@
 
                 showSavingOverlay('Saving report data...');
 
-                const submissionData = {
-                    imageDownloadUrls: imageDownloadUrls, // <-- Store URLs, not base64 data
-                    symptoms,
-                    distribution,
-                    severity,
-                    affectedParts,
-                    onsetDate,
-                    progression,
-                    pestSigns,
-                    timestamp: serverTimestamp(),
-                    gps_coordinates: { latitude: 17.5734, longitude: 120.3856 } // Simulate GPS data
-                };
+                // Replace base64 with URLs and add server timestamp
+                submissionData.imageDownloadUrls = imageDownloadUrls;
+                delete submissionData.imageDataUrls; // Remove base64 data
+                submissionData.timestamp = serverTimestamp();
+                delete submissionData.status; // No longer pending sync
+                delete submissionData.farmId; // Not needed in the final doc
 
                 // Save the complete document to Firestore now that images are uploaded
                 await setDoc(submissionDocRef, submissionData);
@@ -3994,6 +4044,8 @@
         });
 
         let currentFarmId = null;
+        let currentFarmIsOffline = false;
+        let isSyncing = false;
         let isEditSubmissionMode = false;
         let currentSubmissionId = null;
 
@@ -4090,63 +4142,98 @@
             showScreen('newSubmission', newContext);
         });
 
-        function loadSubmissions(context) {
+        async function loadSubmissions(context) {
             const farmId = context.farmId;
-            const targetUserId = context.userId || currentUser.uid;
+            const targetUserId = context.userId || (currentUser ? currentUser.uid : null);
             if (!targetUserId || !farmId) return;
 
-            const submissionsCollection = collection(db, 'users', targetUserId, 'farmLots', farmId, 'submissions');
             const dashboardMain = document.getElementById('dashboard-main');
+            dashboardMain.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i><p class="mt-4">Loading reports...</p></div>`;
+            lucide.createIcons();
 
-            const unsubscribe = onSnapshot(submissionsCollection, (querySnapshot) => {
-                dashboardMain.innerHTML = ''; // Clear existing content
-
-                if (querySnapshot.empty) {
-                    dashboardMain.innerHTML = `
-                    <div class="text-center text-gray-500 mt-20">
-                        <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto text-gray-400"></i>
-                        <p class="mt-4">No scouting reports found for this farm.</p>
-                        <p>Click 'New Report' to add one.</p>
-                    </div>`;
-                } else {
+            try {
+                let onlineSubmissions = [];
+                // 1. Fetch online submissions from Firestore if not an offline farm
+                if (navigator.onLine && !farmId.startsWith('offline_')) {
+                    const submissionsCollection = collection(db, 'users', targetUserId, 'farmLots', farmId, 'submissions');
+                    const querySnapshot = await getDocs(submissionsCollection);
                     querySnapshot.forEach(doc => {
-                        const submission = doc.data();
-                        const submissionId = doc.id;
-                        const card = document.createElement('div');
-                        card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
-
-                        // Fallback for older data that might not have a proper timestamp
-                        const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date();
-                        const dateString = submissionDate.toLocaleDateString();
-                        const timeString = submissionDate.toLocaleTimeString();
-
-                        const thumbnailUrl = (submission.imageDownloadUrls && submission.imageDownloadUrls.length > 0)
-                            ? submission.imageDownloadUrls[0]
-                            : (submission.imageDataUrl || 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image');
-
-
-                        card.innerHTML = `
-                            <div class="flex justify-between items-start">
-                                <div class="flex">
-                                    <img src="${thumbnailUrl}" class="w-24 h-24 rounded-md mr-4 object-cover">
-                                    <div>
-                                        <p class="font-bold">Report from ${dateString} at ${timeString}</p>
-                                        <p class="text-sm"><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
-                                        <p class="text-sm"><strong>Distribution:</strong> ${submission.distribution}</p>
-                                        <p class="text-sm"><strong>Severity:</strong> ${submission.severity}</p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <button class="edit-submission-btn bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded" data-id="${submissionId}">Edit</button>
-                                </div>
-                            </div>
-                        `;
-                        dashboardMain.appendChild(card);
+                        onlineSubmissions.push({ id: doc.id, ...doc.data(), isOffline: false });
                     });
                 }
-                lucide.createIcons();
-            });
-            activeListeners.push(unsubscribe);
+
+                // 2. Fetch offline submissions from IndexedDB for this specific farm
+                const idb = await dbPromise;
+                const allOfflineSubmissions = await idb.getAll('submission_outbox');
+                const offlineSubmissionsForFarm = allOfflineSubmissions
+                    .filter(sub => sub.farmId === farmId)
+                    .map(sub => ({ ...sub, id: `offline_${new Date(sub.timestamp).getTime()}`, isOffline: true })); // Give it a temporary unique ID
+
+                // 3. Combine and render
+                const allSubmissions = [...onlineSubmissions, ...offlineSubmissionsForFarm];
+                allSubmissions.sort((a, b) => {
+                    const dateA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+                    const dateB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+                    return dateB - dateA;
+                });
+
+                renderSubmissions(allSubmissions, dashboardMain);
+
+            } catch (error) {
+                console.error("Error loading submissions:", error);
+                dashboardMain.innerHTML = `<p class="text-red-500">Error loading reports. Please check your connection.</p>`;
+            }
+        }
+
+        function renderSubmissions(submissions, container) {
+            container.innerHTML = ''; // Clear existing content
+
+            if (submissions.length === 0) {
+                container.innerHTML = `
+                <div class="text-center text-gray-500 mt-20">
+                    <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto text-gray-400"></i>
+                    <p class="mt-4">No scouting reports found for this farm.</p>
+                    <p>Click 'New Report' to add one.</p>
+                </div>`;
+            } else {
+                submissions.forEach(submission => {
+                    const submissionId = submission.id;
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200';
+
+                    const submissionDate = submission.timestamp?.toDate ? submission.timestamp.toDate() : new Date(submission.timestamp);
+                    const dateString = submissionDate.toLocaleDateString();
+                    const timeString = submissionDate.toLocaleTimeString();
+
+                    // Offline reports use imageDataUrls, online use imageDownloadUrls
+                    const thumbnailUrl = (submission.imageDownloadUrls && submission.imageDownloadUrls.length > 0)
+                        ? submission.imageDownloadUrls[0]
+                        : (submission.imageDataUrls && submission.imageDataUrls.length > 0)
+                            ? submission.imageDataUrls[0]
+                            : 'https://placehold.co/96x96/e2e8f0/334155?text=No+Image';
+
+                    const offlineBadge = submission.isOffline ? '<span class="ml-2 text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-gray-600 bg-gray-200">Offline</span>' : '';
+
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div class="flex">
+                                <img src="${thumbnailUrl}" class="w-24 h-24 rounded-md mr-4 object-cover">
+                                <div>
+                                    <p class="font-bold">Report from ${dateString} at ${timeString} ${offlineBadge}</p>
+                                    <p class="text-sm"><strong>Symptoms:</strong> ${submission.symptoms.join(', ')}</p>
+                                    <p class="text-sm"><strong>Distribution:</strong> ${submission.distribution}</p>
+                                    <p class="text-sm"><strong>Severity:</strong> ${submission.severity}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="edit-submission-btn bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded" data-id="${submissionId}" ${submission.isOffline ? 'disabled title="Cannot edit offline reports"' : ''}>Edit</button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+            lucide.createIcons();
         }
 
         let currentReportFilter = 'all';
@@ -5215,21 +5302,22 @@
     lucide.createIcons();
 }
 
-        function loadFarms(context) {
+        async function loadFarms(context) {
             const targetUserId = context.userId || (currentUser ? currentUser.uid : null);
             if (!targetUserId) return;
 
             const welcomeMessage = document.getElementById('welcome-message');
             const farmListTitle = document.querySelector('#farm-list-screen h2');
             const addFarmBtn = document.getElementById('add-farm-btn');
+            const farmListContainer = document.getElementById('farm-list-container');
+            farmListContainer.innerHTML = '<div class="text-center text-gray-500 mt-20"><i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i><p class="mt-4">Loading farms...</p></div>';
+            lucide.createIcons();
 
             if (context.userId && context.userId !== currentUser.uid) {
-                // Viewing someone else's farms (drill-down)
                 welcomeMessage.textContent = `Viewing farms for ${context.userName}`;
                 farmListTitle.textContent = `${context.userName}'s Farm Plots`;
                 addFarmBtn.style.display = 'none';
             } else {
-                // Viewing own farms
                 welcomeMessage.textContent = `Welcome, ${userProfile.fullName}`;
                 farmListTitle.textContent = 'My Farm Plots';
                 if (userProfile.role === 'Farmer') {
@@ -5239,63 +5327,76 @@
                 }
             }
 
-            const farmLotsCollection = collection(db, 'users', targetUserId, 'farmLots');
-            const unsubscribe = onSnapshot(farmLotsCollection, (querySnapshot) => {
-                const farmListContainer = document.getElementById('farm-list-container');
-                farmListContainer.innerHTML = ''; // Clear existing list
-                
-                if (querySnapshot.empty) {
+            try {
+                // 1. Fetch online farms from Firestore
+                let onlineFarms = [];
+                // Only fetch from Firestore if online
+                if (navigator.onLine) {
+                    const farmLotsCollection = collection(db, 'users', targetUserId, 'farmLots');
+                    const querySnapshot = await getDocs(farmLotsCollection);
+                    querySnapshot.forEach(doc => {
+                        onlineFarms.push({ id: doc.id, ...doc.data(), isOffline: false });
+                    });
+                }
+
+
+                // 2. Fetch offline farms from IndexedDB
+                const idb = await dbPromise;
+                const offlineFarms = await idb.getAll('outbox');
+
+                // 3. Combine and de-duplicate, prioritizing online data
+                const farmMap = new Map();
+                onlineFarms.forEach(farm => farmMap.set(farm.farmName, farm));
+                offlineFarms.forEach(farm => {
+                    if (!farmMap.has(farm.farmName)) {
+                        farmMap.set(farm.farmName, farm);
+                    }
+                });
+
+                const uniqueFarms = Array.from(farmMap.values());
+
+
+                farmListContainer.innerHTML = ''; // Clear loading message
+
+                if (uniqueFarms.length === 0) {
                     farmListContainer.innerHTML = `
                         <div class="text-center text-gray-500 mt-20">
                             <i data-lucide="map-pin" class="w-12 h-12 mx-auto text-gray-400"></i>
-                            <p class="mt-4">No farm plots found for this user.</p>
+                            <p class="mt-4">No farm plots found.</p>
+                            <p>Add your first plot to start monitoring.</p>
                         </div>`;
                 } else {
-                    querySnapshot.forEach((doc) => {
-                        const farm = doc.data();
-                        const farmId = doc.id;
+                    uniqueFarms.forEach(farm => {
+                        const farmId = farm.id;
                         const farmCard = document.createElement('div');
                         farmCard.className = 'bg-white p-4 rounded-xl mb-4 shadow-sm border border-gray-200 cursor-pointer hover:shadow-md';
                         farmCard.setAttribute('data-id', farmId);
 
                         const plantingDate = farm.plantingDate ? new Date(farm.plantingDate).toLocaleDateString() : 'N/A';
 
-                        if (!farm.polygonCoordinates || farm.polygonCoordinates.length === 0) {
-                            farmCard.className += ' flex justify-between items-center';
-                            farmCard.innerHTML = `
-                                <div>
-                                    <p class="text-xl font-bold text-gray-800">${farm.farmName}</p>
-                                    <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
-                                    <p class="text-sm text-yellow-600 font-semibold mt-2">Location not set</p>
-                                </div>
-                                <button class="add-location-btn bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded-lg">Add Location</button>
-                            `;
-                            farmCard.querySelector('.add-location-btn').addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                isEditMode = true;
-                                currentFarmId = farmId;
-                                pendingFarmData = { farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, plantingDate: farm.plantingDate };
-                                showScreen('farmSetup');
-                                setTimeout(() => initializeMap(), 100);
-                            });
-                        } else {
-                            farmCard.innerHTML = `
-                                <p class="text-xl font-bold text-gray-800">${farm.farmName}</p>
-                                <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
-                                <p class="text-sm text-gray-500">Planted on: ${plantingDate}</p>
-                            `;
-                            farmCard.addEventListener('click', () => {
-                                const newContext = { ...context, farmId: farmId, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: farm.farmName };
-                                showScreen('dashboard', newContext);
-                            });
-                        }
+                        let offlineBadge = farm.isOffline ? '<span class="ml-2 text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-gray-600 bg-gray-200">Offline</span>' : '';
+                        let locationStatus = (!farm.polygonCoordinates || farm.polygonCoordinates.length === 0) ? '<p class="text-sm text-yellow-600 font-semibold mt-1">Location not set</p>' : '';
+
+                        farmCard.innerHTML = `
+                            <p class="text-xl font-bold text-gray-800">${farm.farmName} ${offlineBadge}</p>
+                            <p class="text-md text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
+                            <p class="text-sm text-gray-500">Planted on: ${plantingDate}</p>
+                            ${locationStatus}
+                        `;
+
+                        farmCard.addEventListener('click', () => {
+                            const newContext = { ...context, farmId: farmId, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: farm.farmName, isOffline: farm.isOffline };
+                            showScreen('dashboard', newContext);
+                        });
 
                         farmListContainer.appendChild(farmCard);
                     });
                 }
                 lucide.createIcons();
-            });
-            activeListeners.push(unsubscribe);
+            } catch (error) {
+                console.error("Error loading farms:", error);
+                farmListContainer.innerHTML = `<p class="text-red-500">Error loading farms. Please check your connection.</p>`;
+            }
         }
 
         async function loadExtensionWorkerDashboard(context) {
@@ -5475,27 +5576,39 @@
         // Removed old syncOutbox function as it's now obsolete with the new online-only farm setup flow.
 
         async function syncOutbox() {
-            if (!navigator.onLine || !currentUser) return;
+            if (!navigator.onLine || !currentUser) return {}; // Return empty map if offline
 
             const idb = await dbPromise;
             const allFarms = await idb.getAll('outbox');
-            if (allFarms.length === 0) return;
+            if (allFarms.length === 0) return {};
 
             showToast(`Syncing ${allFarms.length} offline farm(s)...`, 'info');
+            const idMap = new Map();
 
             try {
                 const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
                 for (const farmData of allFarms) {
-                    // Add server timestamp right before syncing
-                    farmData.createdAt = serverTimestamp();
-                    await addDoc(farmLotsCollection, farmData);
+                    const tempId = farmData.id; // The 'offline_...' ID
+
+                    // Remove temporary properties before saving to Firestore
+                    const firestoreData = { ...farmData };
+                    delete firestoreData.id;
+                    delete firestoreData.isOffline;
+                    delete firestoreData.status;
+
+                    firestoreData.createdAt = serverTimestamp();
+
+                    const newDocRef = await addDoc(farmLotsCollection, firestoreData);
+                    idMap.set(tempId, newDocRef.id); // Map old temp ID to new Firestore ID
                 }
 
                 await idb.clear('outbox');
                 showToast('Offline farms synced successfully!', 'success');
+                return idMap;
             } catch (error) {
                 console.error('Error syncing farm outbox:', error);
                 showToast('Failed to sync offline farms.', 'error');
+                return {}; // Return empty map on failure
             }
         }
 
@@ -5510,144 +5623,201 @@
             }
 
             const farmData = {
+                id: `offline_${crypto.randomUUID()}`, // Assign a temporary client-side UUID
                 farmName,
                 tobaccoVariety,
                 plantingDate,
                 polygonCoordinates: [], // Empty coordinates for offline farms
-                status: 'pending-sync' // Flag for later use
+                status: 'pending-sync', // Flag for later use
+                isOffline: true
             };
 
             try {
                 const db = await dbPromise;
+                const existingFarms = await db.getAll('outbox');
+                const isDuplicate = existingFarms.some(farm => farm.farmName.toLowerCase() === farmName.toLowerCase());
+
+                if (isDuplicate) {
+                    showToast('A farm with this name is already saved offline.', 'error');
+                    return;
+                }
+
                 await db.add('outbox', farmData);
 
                 showToast('Farm saved for offline use. It will sync when you are back online.', 'success');
                 farmModal.style.display = 'none'; // Hide the modal
+
+                // Manually trigger a refresh of the farm list to show the new offline farm
+                const activeScreenId = document.querySelector('.screen.active').id.replace('-screen', '');
+                const lastContext = navigationHistory[navigationHistory.length-1]?.context || {};
+                if (activeScreenId === 'farmList') {
+                    loadFarms(lastContext);
+                } else if (activeScreenId === 'farmerDashboard') {
+                    loadFarmerDashboard(lastContext);
+                }
+
             } catch (error) {
                 console.error('Error saving farm offline:', error);
                 showToast('Could not save farm locally. Please try again.', 'error');
             }
         });
 
-        function loadFarmerDashboard(context) {
+        async function loadFarmerDashboard(context) {
             const targetUserId = context.userId || (currentUser ? currentUser.uid : null);
             if (!targetUserId) return;
 
             document.getElementById('farmer-dashboard-welcome-message').textContent = `Welcome, ${userProfile.fullName}`;
+            const farmListContainer = document.getElementById('farmer-dashboard-farm-list');
+            farmListContainer.innerHTML = '<div class="text-center text-gray-500 py-8"><i data-lucide="loader" class="w-8 h-8 mx-auto text-gray-400 animate-spin"></i><p>Loading farms...</p></div>';
+            lucide.createIcons();
 
             // --- Attach button listeners ---
-            document.getElementById('dashboard-add-farm-btn').addEventListener('click', () => {
-                isEditMode = false;
-                document.getElementById('farmName').value = '';
-                document.getElementById('tobaccoVariety').value = '';
-                document.getElementById('plantingDate').value = '';
-                document.getElementById('next-farm-map-btn').textContent = 'Next: Set Location';
-                farmModal.style.display = 'flex';
-            });
+            document.getElementById('dashboard-add-farm-btn').addEventListener('click', openFarmModal);
 
             document.getElementById('view-all-farms-btn').addEventListener('click', () => {
                 showScreen('farmList', context);
             });
 
-            const farmLotsCollection = collection(db, 'users', targetUserId, 'farmLots');
-            const unsubscribe = onSnapshot(farmLotsCollection, (querySnapshot) => {
-                const farmListContainer = document.getElementById('farmer-dashboard-farm-list');
-                farmListContainer.innerHTML = ''; // Clear existing list
+            try {
+                // 1. Fetch online farms from Firestore
+                let onlineFarms = [];
+                if (navigator.onLine) {
+                    const farmLotsCollection = collection(db, 'users', targetUserId, 'farmLots');
+                    const querySnapshot = await getDocs(farmLotsCollection);
+                    querySnapshot.forEach(doc => {
+                        onlineFarms.push({ id: doc.id, ...doc.data(), isOffline: false });
+                    });
+                }
 
-                const farms = [];
-                querySnapshot.forEach(doc => farms.push({ id: doc.id, ...doc.data() }));
+                // 2. Fetch offline farms from IndexedDB
+                const idb = await dbPromise;
+                const offlineFarms = await idb.getAll('outbox');
 
-                if (farms.length === 0) {
+                // 3. Combine and de-duplicate, prioritizing online data
+                const farmMap = new Map();
+                onlineFarms.forEach(farm => farmMap.set(farm.farmName, farm));
+                offlineFarms.forEach(farm => {
+                    if (!farmMap.has(farm.farmName)) {
+                        farmMap.set(farm.farmName, farm);
+                    }
+                });
+
+                const uniqueFarms = Array.from(farmMap.values());
+
+                farmListContainer.innerHTML = ''; // Clear loading message
+
+                if (uniqueFarms.length === 0) {
                     farmListContainer.innerHTML = `
                         <div class="text-center text-gray-500 py-8">
                             <p>No farms found. Add your first plot to get started!</p>
                         </div>`;
                 } else {
-                    farms.forEach(farm => {
+                    uniqueFarms.forEach(farm => {
                         const farmCard = document.createElement('div');
                         farmCard.className = 'bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex justify-between items-center cursor-pointer hover:bg-gray-50';
 
-                        // Check if location needs to be set
-                        if (!farm.polygonCoordinates || farm.polygonCoordinates.length === 0) {
-                            farmCard.innerHTML = `
-                                <div class="flex-grow">
-                                    <p class="font-bold text-gray-800">${farm.farmName}</p>
-                                    <p class="text-sm text-yellow-600 font-semibold">Location not set</p>
-                                </div>
-                                <button class="add-location-btn bg-blue-500 text-white text-sm font-bold py-1 px-3 rounded-lg">Add Location</button>
-                            `;
-                            farmCard.querySelector('.add-location-btn').addEventListener('click', (e) => {
-                                e.stopPropagation(); // Prevent card click from firing
-                                isEditMode = true;
-                                currentFarmId = farm.id;
-                                pendingFarmData = { farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, plantingDate: farm.plantingDate };
-                                showScreen('farmSetup');
-                                setTimeout(() => initializeMap(), 100);
-                            });
-                        } else {
-                            farmCard.innerHTML = `
-                                <div>
-                                    <p class="font-bold text-gray-800">${farm.farmName}</p>
-                                    <p class="text-sm text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>
-                                </div>
-                                <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
-                            `;
-                            farmCard.addEventListener('click', () => {
-                                const newContext = { ...context, farmId: farm.id, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: farm.farmName };
-                                showScreen('dashboard', newContext);
-                            });
-                        }
+                        let offlineBadge = farm.isOffline ? '<span class="ml-2 text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-gray-600 bg-gray-200">Offline</span>' : '';
+                        let locationStatus = (!farm.polygonCoordinates || farm.polygonCoordinates.length === 0) ? '<p class="text-xs text-yellow-600">Location not set</p>' : `<p class="text-sm text-gray-600">Variety: ${farm.tobaccoVariety || 'N/A'}</p>`;
+
+                        farmCard.innerHTML = `
+                            <div>
+                                <p class="font-bold text-gray-800">${farm.farmName} ${offlineBadge}</p>
+                                ${locationStatus}
+                            </div>
+                            <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
+                        `;
+
+                        farmCard.addEventListener('click', () => {
+                            const newContext = { ...context, farmId: farm.id, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: farm.farmName, isOffline: farm.isOffline };
+                            showScreen('dashboard', newContext);
+                        });
 
                         farmListContainer.appendChild(farmCard);
                     });
                 }
 
-                // Logic for the "Create New Report" button
                 document.getElementById('dashboard-new-report-btn').onclick = () => {
-                    if (farms.length === 0) {
+                    if (uniqueFarms.length === 0) {
                         showToast('You must add a farm plot before you can create a report.', 'error');
-                    } else if (farms.length === 1) {
-                        // Go directly to new submission screen
-                        const farm = farms[0];
-                        const newContext = { ...context, farmId: farm.id, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: 'New Report' };
+                    } else if (uniqueFarms.length === 1) {
+                        const farm = uniqueFarms[0];
+                        const newContext = { ...context, farmId: farm.id, farmName: farm.farmName, tobaccoVariety: farm.tobaccoVariety, label: 'New Report', isOffline: farm.isOffline };
                         showScreen('newSubmission', newContext);
                     } else {
-                        // If multiple farms, show the list to choose from
                         showToast('Please select a farm from the list to create a report.', 'info');
                         showScreen('farmList', context);
                     }
                 };
 
                 lucide.createIcons();
-            });
-            activeListeners.push(unsubscribe);
+            } catch (error) {
+                console.error("Error loading farmer dashboard:", error);
+                farmListContainer.innerHTML = `<p class="text-red-500">Error loading farms. Please check your connection.</p>`;
+            }
         }
 
-        async function syncSubmissionOutbox() {
+        async function syncSubmissionOutbox(farmIdMap) {
             if (!navigator.onLine || !currentUser) return;
 
             const idb = await dbPromise;
-            const allSubmissions = await idb.getAll('submission_outbox');
-            if (allSubmissions.length === 0) return;
+            // Use getAllKeys and then process one by one to avoid holding all data in memory
+            const keys = await idb.getAllKeys('submission_outbox');
+            if (keys.length === 0) return;
 
-            const connectionStatusEl = document.getElementById('connection-status');
-            connectionStatusEl.textContent = `Syncing ${allSubmissions.length} submission(s)...`;
-            connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-yellow-100 text-yellow-800';
+            showToast(`Syncing ${keys.length} offline report(s)...`, 'info');
 
-            try {
-                for (const submission of allSubmissions) {
-                    const { id, farmId, ...dataToSync } = submission;
-                    if (!farmId) continue;
+            for (const key of keys) {
+                let submissionData;
+                try {
+                    submissionData = await idb.get('submission_outbox', key);
+                    let farmId = submissionData.farmId;
 
-                    const submissionsCollection = collection(db, 'users', currentUser.uid, 'farmLots', farmId, 'submissions');
-                    await addDoc(submissionsCollection, dataToSync);
+                    // Check if this farmId needs to be mapped to a new one
+                    if (farmId.startsWith('offline_')) {
+                        const newFarmId = farmIdMap.get(farmId);
+                        if (newFarmId) {
+                            farmId = newFarmId; // Use the new permanent ID
+                        } else {
+                            // This can happen if farm sync failed or is still in progress.
+                            // We'll skip this report and try again on the next sync cycle.
+                            console.warn(`Skipping submission for unsynced farm: ${farmId}`);
+                            continue;
+                        }
+                    }
+
+                    // 1. Generate a new submission ID for Firestore
+                    const submissionDocRef = doc(collection(db, 'users', currentUser.uid, 'farmLots', farmId, 'submissions'));
+                    const submissionId = submissionDocRef.id;
+
+                    // 2. Upload images to Firebase Storage
+                    const uploadPromises = submissionData.imageDataUrls.map((dataUrl, index) => {
+                        const storageRef = ref(storage, `submissions/${currentUser.uid}/${submissionId}/image_${index}.jpg`);
+                        return uploadString(storageRef, dataUrl, 'data_url').then(snapshot => getDownloadURL(snapshot.ref));
+                    });
+
+                    const imageDownloadUrls = await Promise.all(uploadPromises);
+
+                    // 3. Prepare the final data for Firestore
+                    const finalSubmissionData = { ...submissionData };
+                    delete finalSubmissionData.imageDataUrls; // Remove base64 data
+                    delete finalSubmissionData.farmId; // Not needed in the sub-collection doc
+                    finalSubmissionData.imageDownloadUrls = imageDownloadUrls;
+                    finalSubmissionData.timestamp = serverTimestamp(); // Use server timestamp
+                    finalSubmissionData.status = 'pending'; // Update status from 'pending-sync'
+
+                    // 4. Save the document to Firestore
+                    await setDoc(submissionDocRef, finalSubmissionData);
+
+                    // 5. If successful, delete from IndexedDB
+                    await idb.delete('submission_outbox', key);
+
+                    showToast(`Synced report for farm: ${farmId}.`, 'success');
+
+                } catch (error) {
+                    console.error('Error syncing individual submission:', error);
+                    showToast(`Failed to sync a report. It will be retried later.`, 'error');
+                    // If an error occurs, we leave the item in IndexedDB to be retried later.
                 }
-
-                await idb.clear('submission_outbox');
-            } catch (error) {
-                console.error('Error syncing submission outbox:', error);
-                connectionStatusEl.textContent = 'Sync Failed';
-                connectionStatusEl.className = 'text-center py-1 text-sm font-semibold bg-red-100 text-red-800';
             }
         }
 
@@ -6748,6 +6918,44 @@
 
         // --- 8. CONNECTION STATUS UI ---
         const connectionStatusEl = document.getElementById('connection-status');
+        async function runSync() {
+            if (isSyncing) {
+                console.log("Sync already in progress. Skipping.");
+                return;
+            }
+            isSyncing = true;
+            showToast('Syncing offline data...', 'info');
+
+            try {
+                const farmIdMap = await syncOutbox();
+                await syncSubmissionOutbox(farmIdMap);
+
+                // After sync, refresh the view to show updated status
+                const activeScreen = document.querySelector('.screen.active');
+                if (activeScreen) {
+                    const lastState = navigationHistory[navigationHistory.length - 1];
+                    if (lastState) {
+                        const screenName = lastState.screenName.replace('-screen', '');
+                        const context = lastState.context;
+                        if (screenName === 'farmList') {
+                            console.log("Refreshing farm list after sync.");
+                            loadFarms(context);
+                        }
+                        if (screenName === 'farmerDashboard') {
+                            console.log("Refreshing farmer dashboard after sync.");
+                            loadFarmerDashboard(context);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("An error occurred during sync:", error);
+                showToast("Sync failed. Will try again later.", "error");
+            } finally {
+                isSyncing = false;
+                console.log("Sync finished.");
+            }
+        }
+
         async function updateOnlineStatus() {
             const db = await dbPromise;
             const farmOutboxCount = await db.count('outbox');
@@ -6755,6 +6963,7 @@
             const offlineMessageContainer = document.getElementById('offline-message-container');
             const googleBtn = document.getElementById('google-signin-btn');
             const guestBtn = document.getElementById('guest-signin-btn');
+            const nextFarmMapBtn = document.getElementById('next-farm-map-btn');
 
             if (navigator.onLine) {
                  if (connectionStatusEl) {
@@ -6770,12 +6979,14 @@
                     guestBtn.disabled = false;
                     guestBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 }
-
-                if (farmOutboxCount > 0) {
-                    syncOutbox();
+                if (nextFarmMapBtn) {
+                    nextFarmMapBtn.disabled = false;
+                    nextFarmMapBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+                    nextFarmMapBtn.classList.add('bg-green-600');
                 }
-                if (submissionOutboxCount > 0) {
-                    syncSubmissionOutbox();
+
+                if (farmOutboxCount > 0 || submissionOutboxCount > 0) {
+                    runSync();
                 }
 
             } else {
@@ -6798,6 +7009,11 @@
                 if (guestBtn) {
                     guestBtn.disabled = true;
                     guestBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                 if (nextFarmMapBtn) {
+                    nextFarmMapBtn.disabled = true;
+                    nextFarmMapBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+                    nextFarmMapBtn.classList.remove('bg-green-600');
                 }
             }
         }
