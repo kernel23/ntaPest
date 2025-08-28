@@ -1314,7 +1314,8 @@
             orderBy,
             limit,
             collectionGroup,
-            arrayUnion
+            arrayUnion,
+            enableIndexedDbPersistence
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         import {
             getStorage,
@@ -1340,6 +1341,16 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        try {
+            enableIndexedDbPersistence(db);
+            console.log('Firebase persistence enabled.');
+        } catch (err) {
+            if (err.code == 'failed-precondition') {
+                console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
+            } else if (err.code == 'unimplemented') {
+                console.warn('The current browser does not support all of the features required to enable persistence.');
+            }
+        }
         const storage = getStorage(app);
 
         // --- 2. PWA & OFFLINE SETUP ---
@@ -5516,11 +5527,9 @@
             const dashboardTitle = document.querySelector('#ew-dashboard-screen h2');
 
             if (context.userId && context.userId !== currentUser.uid) {
-                // Coordinator viewing a specific EW's list
                 welcomeMessage.textContent = `Viewing farmers for ${context.userName}`;
                 dashboardTitle.textContent = `${context.userName}'s Farmer List`;
             } else {
-                // EW viewing their own dashboard
                 welcomeMessage.textContent = `Welcome, ${userProfile.fullName}`;
                 dashboardTitle.textContent = 'Extension Worker Dashboard';
             }
@@ -5534,39 +5543,61 @@
             lucide.createIcons();
 
             try {
+                let allFarmers = [];
+
+                // Fetch farmers from Firestore (will use cache if offline)
                 const usersCollection = collection(db, 'users');
                 const q = query(usersCollection, where("role", "==", "Farmer"));
                 const querySnapshot = await getDocs(q);
-
-                let farmers = [];
                 querySnapshot.forEach(doc => {
-                    farmers.push({ id: doc.id, ...doc.data() });
+                    allFarmers.push({ id: doc.id, ...doc.data(), isOffline: false });
                 });
 
-                let farmersWithData = [];
-                for (const farmer of farmers) {
-                    let latestReportTimestamp = null;
-                    const farmLotsCollection = collection(db, 'users', farmer.id, 'farmLots');
-                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                // Fetch new farmers from IndexedDB
+                const idb = await dbPromise;
+                const newFarmers = await idb.getAll('new-farmers-outbox');
+                newFarmers.forEach(farmer => {
+                    allFarmers.push({ ...farmer, id: `offline_${farmer.createdAt.getTime()}`, isOffline: true });
+                });
 
-                    for (const farmDoc of farmLotsSnapshot.docs) {
-                        const submissionsCollection = collection(db, 'users', farmer.id, 'farmLots', farmDoc.id, 'submissions');
-                        const subQuery = query(submissionsCollection, orderBy("timestamp", "desc"), limit(1));
-                        const submissionsSnapshot = await getDocs(subQuery);
+                // Deduplicate farmers
+                const farmerMap = new Map();
+                allFarmers.forEach(farmer => {
+                    farmerMap.set(farmer.fullName, farmer);
+                });
+                const uniqueFarmers = Array.from(farmerMap.values());
 
-                        if (!submissionsSnapshot.empty) {
-                            const latestSubmission = submissionsSnapshot.docs[0].data();
-                            const currentTimestamp = latestSubmission.timestamp.toDate();
-                            if (!latestReportTimestamp || currentTimestamp > latestReportTimestamp) {
-                                latestReportTimestamp = currentTimestamp;
+                if (navigator.onLine) {
+                    let farmersWithData = [];
+                    for (const farmer of uniqueFarmers) {
+                        if (farmer.isOffline) {
+                            farmersWithData.push({ ...farmer, lastReportDate: null });
+                            continue;
+                        }
+                        let latestReportTimestamp = null;
+                        const farmLotsCollection = collection(db, 'users', farmer.id, 'farmLots');
+                        const farmLotsSnapshot = await getDocs(farmLotsCollection);
+
+                        for (const farmDoc of farmLotsSnapshot.docs) {
+                            const submissionsCollection = collection(db, 'users', farmer.id, 'farmLots', farmDoc.id, 'submissions');
+                            const subQuery = query(submissionsCollection, orderBy("timestamp", "desc"), limit(1));
+                            const submissionsSnapshot = await getDocs(subQuery);
+
+                            if (!submissionsSnapshot.empty) {
+                                const latestSubmission = submissionsSnapshot.docs[0].data();
+                                const currentTimestamp = latestSubmission.timestamp.toDate();
+                                if (!latestReportTimestamp || currentTimestamp > latestReportTimestamp) {
+                                    latestReportTimestamp = currentTimestamp;
+                                }
                             }
                         }
+                        farmersWithData.push({ ...farmer, lastReportDate: latestReportTimestamp });
                     }
-                    farmersWithData.push({ ...farmer, lastReportDate: latestReportTimestamp });
+                    farmersWithData.sort((a, b) => (b.lastReportDate || 0) - (a.lastReportDate || 0));
+                    renderFarmerTable(farmersWithData, context);
+                } else {
+                    renderFarmerTable(uniqueFarmers, context);
                 }
-
-                farmersWithData.sort((a, b) => (b.lastReportDate || 0) - (a.lastReportDate || 0));
-                renderFarmerTable(farmersWithData, context);
 
             } catch (error) {
                 console.error("Error loading Extension Worker dashboard:", error);
@@ -5606,7 +5637,7 @@
                                         ${farmer.barangay}, ${farmer.municipality}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        ${farmer.lastReportDate ? farmer.lastReportDate.toLocaleDateString() : 'No reports yet'}
+                                        ${farmer.isOffline ? '<span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-gray-600 bg-gray-200">Pending Sync</span>' : (farmer.lastReportDate ? farmer.lastReportDate.toLocaleDateString() : 'No reports yet')}
                                     </td>
                                 </tr>
                             `).join('')}
