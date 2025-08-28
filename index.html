@@ -393,23 +393,69 @@
                 </button>
             </div>
 
-            <!-- Extension Worker Dashboard Screen -->
-            <div id="ew-dashboard-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
-                <header class="bg-white p-4 shadow-md">
+            <!-- Extension Worker Mobile Dashboard Screen -->
+            <div id="ew-dashboard-screen" class="screen flex-col h-full bg-gray-100 text-[#384532]">
+                <header class="bg-gradient-to-br from-[#384532] via-[#455b3c] to-[#cc9244] text-white p-4 shadow-lg">
                     <div class="header-nav-container flex items-center mb-2">
-                        <button class="back-button p-2 rounded-full hover:bg-gray-100 mr-2 hidden">
-                            <i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i>
+                        <button class="back-button p-2 rounded-full hover:bg-white/20 mr-2 hidden">
+                            <i data-lucide="arrow-left" class="w-6 h-6"></i>
                         </button>
-                        <div class="breadcrumbs text-sm text-gray-500"></div>
+                        <div class="breadcrumbs text-sm text-gray-200"></div>
                     </div>
-                    <h2 class="text-2xl font-bold">Extension Worker Dashboard</h2>
-                    <p id="ew-welcome-message" class="text-sm text-gray-600"></p>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold">Dashboard</h2>
+                            <p id="ew-welcome-message" class="text-sm text-gray-200"></p>
+                        </div>
+                        <div class="text-center">
+                            <i data-lucide="user-cog" class="w-10 h-10"></i>
+                            <p class="text-xs font-semibold">Ext. Worker</p>
+                        </div>
+                    </div>
                 </header>
+
                 <main id="ew-dashboard-container" class="flex-1 p-4 overflow-y-auto">
-                    <!-- Farmer list table will be inserted here -->
-                    <div class="text-center text-gray-500 mt-20">
-                        <i data-lucide="users" class="w-12 h-12 mx-auto text-gray-400"></i>
-                        <p class="mt-4">Loading assigned farmers...</p>
+                    <!-- Stat Cards -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-white p-4 rounded-xl shadow-md text-center">
+                            <h3 class="text-2xl font-bold text-[#384532]" id="ew-stat-farmers">--</h3>
+                            <p class="text-sm text-gray-600">My Farmers</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-md text-center">
+                            <h3 class="text-2xl font-bold text-red-600" id="ew-stat-pending">--</h3>
+                            <p class="text-sm text-gray-600">Pending Reports</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-md text-center">
+                            <h3 class="text-2xl font-bold text-yellow-600" id="ew-stat-diagnosed">--</h3>
+                            <p class="text-sm text-gray-600">Diagnosed</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-md text-center">
+                            <h3 class="text-2xl font-bold text-green-600" id="ew-stat-treated">--</h3>
+                            <p class="text-sm text-gray-600">Treated</p>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <button id="ew-action-view-farmers" class="bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-4 px-5 rounded-lg shadow-lg flex items-center justify-center text-lg">
+                            <i data-lucide="users" class="w-6 h-6 mr-3"></i>
+                            <span>View My Farmers</span>
+                        </button>
+                        <button id="ew-action-view-reports" class="bg-gradient-to-r from-[#384532] to-[#455b3c] text-white font-bold py-4 px-5 rounded-lg shadow-lg flex items-center justify-center text-lg">
+                            <i data-lucide="clipboard-list" class="w-6 h-6 mr-3"></i>
+                            <span>All Reports</span>
+                        </button>
+                    </div>
+
+                    <!-- High Priority Reports -->
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">High Priority Reports</h3>
+                        <div id="ew-priority-reports" class="space-y-3">
+                            <div class="text-center text-gray-500 py-8">
+                                <i data-lucide="loader" class="w-8 h-8 mx-auto animate-spin"></i>
+                                <p>Loading reports...</p>
+                            </div>
+                        </div>
                     </div>
                 </main>
             </div>
@@ -5402,65 +5448,147 @@
         async function loadExtensionWorkerDashboard(context) {
             const ewDashboardContainer = document.getElementById('ew-dashboard-container');
             const welcomeMessage = document.getElementById('ew-welcome-message');
-            const dashboardTitle = document.querySelector('#ew-dashboard-screen h2');
 
-            if (context.userId && context.userId !== currentUser.uid) {
-                // Coordinator viewing a specific EW's list
-                welcomeMessage.textContent = `Viewing farmers for ${context.userName}`;
-                dashboardTitle.textContent = `${context.userName}'s Farmer List`;
-            } else {
-                // EW viewing their own dashboard
-                welcomeMessage.textContent = `Welcome, ${userProfile.fullName}`;
-                dashboardTitle.textContent = 'Extension Worker Dashboard';
-            }
+            // Set welcome message
+            welcomeMessage.textContent = `Welcome, ${userProfile.fullName}`;
+
+            // Action buttons navigation
+            document.getElementById('ew-action-view-farmers').addEventListener('click', () => {
+                const newContext = { ...context, isFreshNavigation: true, label: 'All Farmers' };
+                showScreen('farmList', newContext);
+            });
+            document.getElementById('ew-action-view-reports').addEventListener('click', () => {
+                showScreen('reports', { isFreshNavigation: true, label: 'All Reports' });
+            });
 
             if (!currentUser) return;
-            ewDashboardContainer.innerHTML = `
-                <div class="text-center text-gray-500 mt-20">
-                    <i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i>
-                    <p class="mt-4">Loading assigned farmers...</p>
+
+            // Reset stats
+            const statFields = {
+                farmers: document.getElementById('ew-stat-farmers'),
+                pending: document.getElementById('ew-stat-pending'),
+                diagnosed: document.getElementById('ew-stat-diagnosed'),
+                treated: document.getElementById('ew-stat-treated')
+            };
+            Object.values(statFields).forEach(field => field.textContent = '...');
+            const priorityReportsContainer = document.getElementById('ew-priority-reports');
+            priorityReportsContainer.innerHTML = `
+                <div class="text-center text-gray-500 py-8">
+                    <i data-lucide="loader" class="w-8 h-8 mx-auto animate-spin"></i>
+                    <p>Loading reports...</p>
                 </div>`;
             lucide.createIcons();
 
             try {
+                // 1. Get all farmers associated with this EW (assuming all for now)
                 const usersCollection = collection(db, 'users');
                 const q = query(usersCollection, where("role", "==", "Farmer"));
-                const querySnapshot = await getDocs(q);
+                const farmersSnapshot = await getDocs(q);
+                const farmers = farmersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                statFields.farmers.textContent = farmers.length;
 
-                let farmers = [];
-                querySnapshot.forEach(doc => {
-                    farmers.push({ id: doc.id, ...doc.data() });
-                });
+                // 2. Get all submissions and calculate stats
+                let allSubmissions = [];
+                let pendingCount = 0;
+                let diagnosedCount = 0;
+                let treatedCount = 0;
 
-                let farmersWithData = [];
-                for (const farmer of farmers) {
-                    let latestReportTimestamp = null;
-                    const farmLotsCollection = collection(db, 'users', farmer.id, 'farmLots');
-                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                const submissionsQuery = collectionGroup(db, 'submissions');
+                const submissionsSnapshot = await getDocs(submissionsQuery);
 
-                    for (const farmDoc of farmLotsSnapshot.docs) {
-                        const submissionsCollection = collection(db, 'users', farmer.id, 'farmLots', farmDoc.id, 'submissions');
-                        const subQuery = query(submissionsCollection, orderBy("timestamp", "desc"), limit(1));
-                        const submissionsSnapshot = await getDocs(subQuery);
+                const farmerProfiles = new Map(farmers.map(f => [f.id, f]));
 
-                        if (!submissionsSnapshot.empty) {
-                            const latestSubmission = submissionsSnapshot.docs[0].data();
-                            const currentTimestamp = latestSubmission.timestamp.toDate();
-                            if (!latestReportTimestamp || currentTimestamp > latestReportTimestamp) {
-                                latestReportTimestamp = currentTimestamp;
-                            }
+                for (const submissionDoc of submissionsSnapshot.docs) {
+                    const submissionData = submissionDoc.data();
+                    const userRef = submissionDoc.ref.parent.parent.parent.parent;
+
+                    if (farmerProfiles.has(userRef.id)) {
+                        const farmLotRef = submissionDoc.ref.parent.parent;
+                        const farmDoc = await getDoc(farmLotRef);
+                        const farmName = farmDoc.exists() ? farmDoc.data().farmName : 'Unknown Farm';
+                        const userName = farmerProfiles.get(userRef.id).fullName;
+
+                        if (submissionData.treatment) {
+                            treatedCount++;
+                        } else if (submissionData.initialDiagnosis) {
+                            diagnosedCount++;
+                        } else {
+                            pendingCount++;
                         }
+
+                        allSubmissions.push({
+                            ...submissionData,
+                            id: submissionDoc.id,
+                            farmName: farmName,
+                            userName: userName,
+                            userId: userRef.id,
+                            farmId: farmLotRef.id
+                        });
                     }
-                    farmersWithData.push({ ...farmer, lastReportDate: latestReportTimestamp });
                 }
 
-                farmersWithData.sort((a, b) => (b.lastReportDate || 0) - (a.lastReportDate || 0));
-                renderFarmerTable(farmersWithData, context);
+                statFields.pending.textContent = pendingCount;
+                statFields.diagnosed.textContent = diagnosedCount;
+                statFields.treated.textContent = treatedCount;
+
+                // 3. Find and render high-priority reports
+                const priorityReports = allSubmissions
+                    .filter(sub => !sub.initialDiagnosis)
+                    .sort((a, b) => (b.timestamp?.toDate() || 0) - (a.timestamp?.toDate() || 0))
+                    .slice(0, 5);
+
+                renderEwPriorityReports(priorityReports, priorityReportsContainer);
 
             } catch (error) {
                 console.error("Error loading Extension Worker dashboard:", error);
-                ewDashboardContainer.innerHTML = `<div class="text-center text-red-500 mt-20"><p>Could not load farmer data. Check console for details.</p></div>`;
+                const mainContainer = document.querySelector('#ew-dashboard-container');
+                mainContainer.innerHTML = `<div class="text-center text-red-500 mt-20 p-4"><p>Could not load dashboard data.</p><p class="text-xs">${error.message}</p></div>`;
             }
+        }
+
+        function renderEwPriorityReports(reports, container) {
+            container.innerHTML = '';
+            if (!reports || reports.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500 py-8 bg-white rounded-lg shadow-sm">
+                        <i data-lucide="check-circle" class="w-10 h-10 mx-auto text-green-500"></i>
+                        <p class="mt-2">No high-priority reports found. Great job!</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            reports.forEach(report => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-colors';
+
+                const thumbnailUrl = (report.imageDownloadUrls && report.imageDownloadUrls.length > 0)
+                    ? report.imageDownloadUrls[0]
+                    : 'https://placehold.co/96x96/e2e8f0/334155?text=N/A';
+
+                const reportDate = report.timestamp?.toDate ? report.timestamp.toDate().toLocaleDateString() : 'N/A';
+
+                card.innerHTML = `
+                    <img src="${thumbnailUrl}" class="w-16 h-16 rounded-md object-cover flex-shrink-0">
+                    <div class="flex-grow overflow-hidden">
+                        <p class="font-bold text-gray-800 truncate">${report.farmName}</p>
+                        <p class="text-sm text-gray-600 truncate">Farmer: ${report.userName}</p>
+                        <p class="text-xs text-gray-500">Reported on ${reportDate}</p>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                        <p class="text-sm font-semibold text-red-600">Pending</p>
+                        <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400 inline-block"></i>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    showScreen('diagnosis', { isFreshNavigation: true, label: 'For Diagnosis' });
+                });
+
+                container.appendChild(card);
+            });
+            lucide.createIcons();
         }
 
         function renderFarmerTable(farmers, context) {
