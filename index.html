@@ -460,6 +460,27 @@
                 </main>
             </div>
 
+            <!-- Extension Worker Farmer List Screen -->
+            <div id="ew-farmer-list-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
+                <header class="bg-white p-4 shadow-md">
+                    <div class="header-nav-container flex items-center mb-2">
+                        <button class="back-button p-2 rounded-full hover:bg-gray-100 mr-2 hidden">
+                            <i data-lucide="arrow-left" class="w-6 h-6 text-gray-600"></i>
+                        </button>
+                        <div class="breadcrumbs text-sm text-gray-500"></div>
+                    </div>
+                    <h2 class="text-2xl font-bold">My Farmers</h2>
+                    <p class="text-sm text-gray-600">A list of all farmers you manage.</p>
+                </header>
+                <main id="ew-farmer-list-container" class="flex-1 p-4 overflow-y-auto">
+                    <!-- Farmer list table will be inserted here by JavaScript -->
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i>
+                        <p class="mt-4">Loading farmers...</p>
+                    </div>
+                </main>
+            </div>
+
             <!-- Coordinator Dashboard Screen -->
             <div id="coordinator-dashboard-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
@@ -1407,6 +1428,7 @@
             farmSetup: document.getElementById('farm-setup-screen'),
             farmerDashboard: document.getElementById('farmer-dashboard-screen'),
             ewDashboard: document.getElementById('ew-dashboard-screen'),
+            ewFarmerList: document.getElementById('ew-farmer-list-screen'),
             coordinatorDashboard: document.getElementById('coordinator-dashboard-screen'),
             expertDashboard: document.getElementById('expert-dashboard-screen'),
             adminDashboard: document.getElementById('admin-dashboard-screen'),
@@ -2343,6 +2365,110 @@
             lucide.createIcons();
         }
 
+        async function loadEwFarmerList(context) {
+            const container = document.getElementById('ew-farmer-list-container');
+            container.innerHTML = `<div class="text-center text-gray-500 mt-20"><i data-lucide="loader" class="w-12 h-12 mx-auto text-gray-400 animate-spin"></i><p class="mt-4">Loading farmers...</p></div>`;
+            lucide.createIcons();
+
+            if (!currentUser) return;
+
+            try {
+                const usersCollection = collection(db, 'users');
+                const q = query(usersCollection, where("role", "==", "Farmer"));
+                const farmersSnapshot = await getDocs(q);
+
+                let farmers = [];
+                for (const doc of farmersSnapshot.docs) {
+                    farmers.push({ id: doc.id, ...doc.data() });
+                }
+
+                farmers.sort((a, b) => a.fullName.localeCompare(b.fullName));
+
+                for (let farmer of farmers) {
+                    const farmLotsCollection = collection(db, 'users', farmer.id, 'farmLots');
+                    const farmLotsSnapshot = await getDocs(farmLotsCollection);
+                    let latestReportDate = null;
+
+                    for (const farmDoc of farmLotsSnapshot.docs) {
+                        const submissionsCollection = collection(db, 'users', farmer.id, 'farmLots', farmDoc.id, 'submissions');
+                        const latestSubmissionQuery = query(submissionsCollection, orderBy("timestamp", "desc"), limit(1));
+                        const latestSubmissionSnapshot = await getDocs(latestSubmissionQuery);
+
+                        if (!latestSubmissionSnapshot.empty) {
+                            const reportTimestamp = latestSubmissionSnapshot.docs[0].data().timestamp;
+                            if (reportTimestamp) {
+                                const reportDate = reportTimestamp.toDate();
+                                if (!latestReportDate || reportDate > latestReportDate) {
+                                    latestReportDate = reportDate;
+                                }
+                            }
+                        }
+                    }
+                    farmer.lastReportDate = latestReportDate;
+                }
+
+                renderEwFarmerTable(farmers, container);
+
+            } catch (error) {
+                console.error("Error loading EW Farmer List:", error);
+                container.innerHTML = `<div class="text-center text-red-500 mt-20 p-4"><p>Could not load farmer list.</p><p class="text-xs">${error.message}</p></div>`;
+            }
+        }
+
+        function renderEwFarmerTable(farmers, container) {
+            if (!farmers || farmers.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500 mt-20">
+                        <i data-lucide="users" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="mt-4">No farmers are assigned to you.</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            const tableHtml = `
+                <div class="overflow-x-auto bg-white rounded-lg shadow">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Report Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="ew-farmer-table-body">
+                            ${farmers.map(farmer => `
+                                <tr class="hover:bg-gray-50 cursor-pointer" data-farmer-id="${farmer.id}" data-farmer-name="${farmer.fullName}">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">${farmer.fullName}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        ${farmer.barangay || ''}, ${farmer.municipality || ''}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        ${farmer.lastReportDate ? farmer.lastReportDate.toLocaleDateString() : 'No reports yet'}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.innerHTML = tableHtml;
+
+            document.getElementById('ew-farmer-table-body').addEventListener('click', (e) => {
+                const row = e.target.closest('tr');
+                if (row) {
+                    const farmerId = row.dataset.farmerId;
+                    const farmerName = row.dataset.farmerName;
+
+                    const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+                    const newContext = { ...lastContext, userId: farmerId, userName: farmerName, label: `${farmerName}'s Farms` };
+                    showScreen('farmList', newContext);
+                }
+            });
+        }
+
         async function loadPestAndDiseaseCards() {
             const container = document.getElementById('pest-cards-container');
             if (!container) return;
@@ -2775,6 +2901,9 @@
                     break;
                 case 'ewDashboard':
                     loadExtensionWorkerDashboard(currentContext);
+                    break;
+                case 'ewFarmerList':
+                    loadEwFarmerList(currentContext);
                     break;
                 case 'coordinatorDashboard':
                     loadCoordinatorDashboard(currentContext);
@@ -5454,8 +5583,8 @@
 
             // Action buttons navigation
             document.getElementById('ew-action-view-farmers').addEventListener('click', () => {
-                const newContext = { ...context, isFreshNavigation: true, label: 'All Farmers' };
-                showScreen('farmList', newContext);
+                const newContext = { ...context, isFreshNavigation: true, label: 'My Farmers' };
+                showScreen('ewFarmerList', newContext);
             });
             document.getElementById('ew-action-view-reports').addEventListener('click', () => {
                 showScreen('reports', { isFreshNavigation: true, label: 'All Reports' });
@@ -5591,48 +5720,6 @@
             lucide.createIcons();
         }
 
-        function renderFarmerTable(farmers, context) {
-            const container = document.getElementById('ew-dashboard-container');
-            if (!farmers || farmers.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center text-gray-500 mt-20">
-                        <i data-lucide="users" class="w-12 h-12 mx-auto text-gray-400"></i>
-                        <p class="mt-4">No farmers found or assigned.</p>
-                    </div>`;
-                lucide.createIcons();
-                return;
-            }
-
-            const tableHtml = `
-                <div class="overflow-x-auto bg-white rounded-lg shadow">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer Name</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Report Date</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200" id="farmer-table-body">
-                            ${farmers.map(farmer => `
-                                <tr class="hover:bg-gray-50 cursor-pointer" data-farmer-id="${farmer.id}" data-farmer-name="${farmer.fullName}">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">${farmer.fullName}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        ${farmer.barangay}, ${farmer.municipality}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        ${farmer.lastReportDate ? farmer.lastReportDate.toLocaleDateString() : 'No reports yet'}
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            container.innerHTML = tableHtml;
-        }
 
         async function loadCoordinatorDashboard(context) {
             if (!currentUser) return;
