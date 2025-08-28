@@ -323,6 +323,66 @@
                 </main>
             </div>
 
+            <!-- New Farmer Registration Screen -->
+            <div id="new-farmer-registration-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
+                <header class="bg-white p-4 shadow-md">
+                    <h2 class="text-2xl font-bold">Register New Farmer</h2>
+                </header>
+                <main class="flex-1 p-6 overflow-y-auto">
+                    <label for="new-farmer-fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
+                    <input type="text" id="new-farmer-fullName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+
+                    <label for="new-farmer-province" class="block text-sm font-medium text-gray-700 mt-4">Province</label>
+                    <div id="new-farmer-province-multiselect-container" class="relative"></div>
+
+                    <label for="new-farmer-municipality" class="block text-sm font-medium text-gray-700 mt-4">Municipality</label>
+                    <div id="new-farmer-municipality-multiselect-container" class="relative"></div>
+
+                    <label for="new-farmer-barangay" class="block text-sm font-medium text-gray-700 mt-4">Barangay</label>
+                     <div id="new-farmer-barangay-multiselect-container" class="relative"></div>
+
+                    <label for="new-farmer-birthdate" class="block text-sm font-medium text-gray-700 mt-4">Birthdate</label>
+                    <input type="date" id="new-farmer-birthdate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+
+                    <label for="new-farmer-civilStatus" class="block text-sm font-medium text-gray-700 mt-4">Civil Status</label>
+                    <select id="new-farmer-civilStatus" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                        <option>Single</option>
+                        <option>Married</option>
+                        <option>Widowed</option>
+                        <option>Divorced</option>
+                    </select>
+
+                    <label for="new-farmer-religion" class="block text-sm font-medium text-gray-700 mt-4">Religion</label>
+                    <input type="text" id="new-farmer-religion" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+
+                    <label for="new-farmer-yearsFarming" class="block text-sm font-medium text-gray-700 mt-4">Years in Tobacco Farming</label>
+                    <input type="number" id="new-farmer-yearsFarming" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+
+                    <label for="new-farmer-familyMembers" class="block text-sm font-medium text-gray-700 mt-4">Number of Family Members</label>
+                    <input type="number" id="new-farmer-familyMembers" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+
+                    <label for="new-farmer-education" class="block text-sm font-medium text-gray-700 mt-4">Highest Educational Attainment</label>
+                    <select id="new-farmer-education" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                        <option>No formal education</option>
+                        <option>Elementary</option>
+                        <option>High School</option>
+                        <option>Vocational</option>
+                        <option>College</option>
+                        <option>Post-graduate</option>
+                    </select>
+
+                    <div id="new-farmer-rsbsa-container" class="mt-4">
+                        <label for="new-farmer-rsbsaNumber" class="block text-sm font-medium text-gray-700">RSBSA Number (Optional)</label>
+                        <input type="text" id="new-farmer-rsbsaNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                    </div>
+
+                    <div class="mt-8 space-y-4">
+                        <button id="save-new-farmer-btn" class="w-full bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-3 px-4 rounded-lg shadow-md">Register Farmer</button>
+                        <button id="cancel-new-farmer-btn" class="w-full bg-gray-500 text-white font-bold py-3 px-4 rounded-lg shadow-md">Cancel</button>
+                    </div>
+                </main>
+            </div>
+
             <!-- Farmer Dashboard Screen -->
             <div id="farmer-dashboard-screen" class="screen flex-col h-full bg-[#fff2c9] text-[#384532]">
                 <header class="bg-white p-4 shadow-md">
@@ -402,8 +462,15 @@
                         </button>
                         <div class="breadcrumbs text-sm text-gray-500"></div>
                     </div>
-                    <h2 class="text-2xl font-bold">Extension Worker Dashboard</h2>
-                    <p id="ew-welcome-message" class="text-sm text-gray-600"></p>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold">Extension Worker Dashboard</h2>
+                            <p id="ew-welcome-message" class="text-sm text-gray-600"></p>
+                        </div>
+                        <button id="register-farmer-btn" class="bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-[#cc9244]">
+                            Register Farmer
+                        </button>
+                    </div>
                 </header>
                 <main id="ew-dashboard-container" class="flex-1 p-4 overflow-y-auto">
                     <!-- Farmer list table will be inserted here -->
@@ -1312,13 +1379,16 @@
         })();
 
         // Initialize IndexedDB
-        const dbPromise = openDB('agri-guard-db', 2, {
+        const dbPromise = openDB('agri-guard-db', 3, {
             upgrade(db, oldVersion, newVersion, transaction) {
                 if (oldVersion < 1) {
                     db.createObjectStore('outbox', { autoIncrement: true });
                 }
                 if (oldVersion < 2) {
                     db.createObjectStore('submission_outbox', { autoIncrement: true });
+                }
+                if (oldVersion < 3) {
+                    db.createObjectStore('new-farmers-outbox', { autoIncrement: true });
                 }
             },
         });
@@ -1364,7 +1434,8 @@
             coordinatorDashboard: document.getElementById('coordinator-dashboard-screen'),
             expertDashboard: document.getElementById('expert-dashboard-screen'),
             adminDashboard: document.getElementById('admin-dashboard-screen'),
-            advisory: document.getElementById('advisory-screen')
+            advisory: document.getElementById('advisory-screen'),
+            newFarmerRegistration: document.getElementById('new-farmer-registration-screen')
         };
 
         // --- Weather Settings Modal ---
@@ -3228,6 +3299,45 @@
         let profileProvince, profileMunicipality, profileBarangay;
         let filterProvince, filterMunicipality, filterBarangay;
         let expertFilterPestDisease, expertFilterProvince, expertFilterMunicipality, expertFilterBarangay;
+        let newFarmerProvince, newFarmerMunicipality, newFarmerBarangay;
+
+        function initializeNewFarmerAddressFilters() {
+            newFarmerProvince = createMultiSelect('new-farmer-province-multiselect-container', 'Select Province', false);
+            newFarmerMunicipality = createMultiSelect('new-farmer-municipality-multiselect-container', 'Select Municipality', false);
+            newFarmerBarangay = createMultiSelect('new-farmer-barangay-multiselect-container', 'Select Barangay', false);
+
+            newFarmerProvince.populate(window.philippineAddresses.provinces.map(p => ({ value: p.name, label: p.name })));
+            newFarmerMunicipality.disable();
+            newFarmerBarangay.disable();
+
+            newFarmerProvince.onChange(selectedProvinces => {
+                newFarmerMunicipality.clear();
+                newFarmerBarangay.clear();
+                if (selectedProvinces.length > 0) {
+                    const provinceData = window.philippineAddresses.provinces.find(p => p.name === selectedProvinces[0]);
+                    newFarmerMunicipality.populate(provinceData.municipalities.map(m => ({ value: m.name, label: m.name })));
+                    newFarmerMunicipality.enable();
+                } else {
+                    newFarmerMunicipality.disable();
+                    newFarmerBarangay.disable();
+                }
+            });
+
+            newFarmerMunicipality.onChange(selectedMunicipalities => {
+                newFarmerBarangay.clear();
+                if (selectedMunicipalities.length > 0) {
+                    const selectedProvinceName = newFarmerProvince.getSelectedValues()[0];
+                    const provinceData = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
+                    const municipalityData = provinceData.municipalities.find(m => m.name === selectedMunicipalities[0]);
+                    if (municipalityData && municipalityData.barangays) {
+                        newFarmerBarangay.populate(municipalityData.barangays.map(b => ({ value: b, label: b })));
+                        newFarmerBarangay.enable();
+                    }
+                } else {
+                    newFarmerBarangay.disable();
+                }
+            });
+        }
 
         function initializeAddressFilters() {
             // For Profile Screen
@@ -3408,6 +3518,7 @@
 
                 // Now that address data is loaded, populate the dropdowns
                 initializeAddressFilters();
+                initializeNewFarmerAddressFilters();
                 
                 try {
                     const userDocRef = doc(db, "users", user.uid);
@@ -5612,6 +5723,38 @@
             }
         }
 
+        async function syncNewFarmersOutbox() {
+            if (!navigator.onLine || !currentUser) return;
+
+            const idb = await dbPromise;
+            const allNewFarmers = await idb.getAll('new-farmers-outbox');
+            if (allNewFarmers.length === 0) {
+                console.log('No new farmers to sync.');
+                return;
+            }
+
+            console.log(`Found ${allNewFarmers.length} new farmer(s) to sync.`);
+            showToast(`Syncing ${allNewFarmers.length} new farmer(s)...`, 'info');
+
+            try {
+                const usersCollection = collection(db, 'users');
+                for (const farmerData of allNewFarmers) {
+                    console.log('Syncing farmer:', farmerData.fullName);
+                    const firestoreData = { ...farmerData };
+                    firestoreData.createdAt = serverTimestamp();
+                    await addDoc(usersCollection, firestoreData);
+                    console.log('Successfully synced farmer:', farmerData.fullName);
+                }
+
+                await idb.clear('new-farmers-outbox');
+                console.log('Cleared new-farmers-outbox.');
+                showToast('New farmers synced successfully!', 'success');
+            } catch (error) {
+                console.error('Error syncing new farmers outbox:', error);
+                showToast('Failed to sync new farmers.', 'error');
+            }
+        }
+
         document.getElementById('save-farm-offline-btn').addEventListener('click', async () => {
             const farmName = document.getElementById('farmName').value.trim();
             const tobaccoVariety = document.getElementById('tobaccoVariety').value.trim();
@@ -6916,6 +7059,84 @@
             }
         });
 
+        document.getElementById('register-farmer-btn').addEventListener('click', () => {
+            showScreen('newFarmerRegistration', { isFreshNavigation: true, label: 'Register Farmer' });
+        });
+
+        document.getElementById('cancel-new-farmer-btn').addEventListener('click', () => {
+            showScreen('ewDashboard');
+        });
+
+        document.getElementById('save-new-farmer-btn').addEventListener('click', async () => {
+            console.log('Save new farmer button clicked.');
+            const fullName = document.getElementById('new-farmer-fullName').value.trim();
+            const province = newFarmerProvince.getSelectedValues()[0] || '';
+            const municipality = newFarmerMunicipality.getSelectedValues()[0] || '';
+            const barangay = newFarmerBarangay.getSelectedValues()[0] || '';
+            const birthdate = document.getElementById('new-farmer-birthdate').value;
+            const civilStatus = document.getElementById('new-farmer-civilStatus').value;
+            const religion = document.getElementById('new-farmer-religion').value.trim();
+            const yearsFarming = document.getElementById('new-farmer-yearsFarming').value;
+            const familyMembers = document.getElementById('new-farmer-familyMembers').value;
+            const education = document.getElementById('new-farmer-education').value;
+            const rsbsaNumber = document.getElementById('new-farmer-rsbsaNumber').value.trim();
+
+            if (!fullName || !province || !municipality || !barangay || !birthdate || !civilStatus || !religion || !yearsFarming || !familyMembers || !education) {
+                showToast('Please fill out all fields.', 'error');
+                return;
+            }
+
+            const farmerData = {
+                fullName,
+                province,
+                municipality,
+                barangay,
+                birthdate,
+                civilStatus,
+                religion,
+                yearsFarming: parseInt(yearsFarming),
+                familyMembers: parseInt(familyMembers),
+                education,
+                rsbsaNumber,
+                role: 'Farmer',
+                createdAt: new Date()
+            };
+
+            // To simulate offline, change this to `if (true)`
+            if (!navigator.onLine) {
+                console.log('Simulating offline registration.');
+                showSavingOverlay('Saving farmer offline...');
+                try {
+                    const db = await dbPromise;
+                    await db.add('new-farmers-outbox', farmerData);
+                    console.log('Farmer data added to new-farmers-outbox:', farmerData);
+                    showToast('Farmer saved locally. It will sync when you are back online.', 'success');
+                    showScreen('ewDashboard');
+                } catch (error) {
+                    console.error('Error saving farmer offline:', error);
+                    showToast('Could not save farmer locally.', 'error');
+                } finally {
+                    hideSavingOverlay();
+                }
+                return;
+            }
+
+            console.log('Simulating online registration.');
+            showSavingOverlay('Registering farmer...');
+            try {
+                const newFarmerRef = doc(collection(db, 'users'));
+                await setDoc(newFarmerRef, { ...farmerData, createdAt: serverTimestamp() });
+                console.log('Farmer data saved to Firestore:', farmerData);
+                showToast('Farmer registered successfully!', 'success');
+                showScreen('ewDashboard');
+            } catch (error) {
+                console.error('Error registering farmer:', error);
+                showToast('Could not register farmer. Please try again.', 'error');
+            } finally {
+                hideSavingOverlay();
+            }
+        });
+
         // --- 8. CONNECTION STATUS UI ---
         const connectionStatusEl = document.getElementById('connection-status');
         async function runSync() {
@@ -6929,6 +7150,7 @@
             try {
                 const farmIdMap = await syncOutbox();
                 await syncSubmissionOutbox(farmIdMap);
+                await syncNewFarmersOutbox();
 
                 // After sync, refresh the view to show updated status
                 const activeScreen = document.querySelector('.screen.active');
