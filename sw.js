@@ -151,7 +151,12 @@ self.addEventListener('fetch', event => {
                 return networkResponse;
             }).catch(error => {
                 console.error('[Service Worker] Fetch failed:', error);
-                // Optionally, return a fallback page or image
+                // Return a network error response, which will be handled by the browser
+                // as if there was a network error.
+                return new Response(null, {
+                    status: 503,
+                    statusText: 'Service Unavailable'
+                });
             });
         })
     );
