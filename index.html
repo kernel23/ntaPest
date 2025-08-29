@@ -5938,8 +5938,8 @@
                 renderEwPriorityReports(priorityReports, priorityReportsContainer);
 
                 // 4. Load and render pending offline registrations
-                const db = await dbPromise;
-                const pendingRegistrations = await db.getAll('offline_registrations');
+                const idb = await dbPromise;
+                const pendingRegistrations = await idb.getAll('offline_registrations');
                 renderPendingRegistrations(pendingRegistrations);
 
             } catch (error) {
