@@ -2481,8 +2481,8 @@
                     }
                 }
 
-                const db = await dbPromise;
-                const offlineRegistrations = await db.getAll('offline_registrations');
+                const idb = await dbPromise;
+                const offlineRegistrations = await idb.getAll('offline_registrations');
                 const offlineFarmers = offlineRegistrations.map(reg => ({
                     id: `offline_${reg.email}`, // Temporary unique ID
                     ...reg,
