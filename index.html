@@ -2471,18 +2471,41 @@
             if (!currentUser) return;
 
             try {
-                const usersCollection = collection(db, 'users');
-                const q = query(usersCollection, where("role", "==", "Farmer"));
-                const farmersSnapshot = await getDocs(q);
-
-                let farmers = [];
-                for (const doc of farmersSnapshot.docs) {
-                    farmers.push({ id: doc.id, ...doc.data() });
+                let onlineFarmers = [];
+                if (navigator.onLine) {
+                    const usersCollection = collection(db, 'users');
+                    const q = query(usersCollection, where("role", "==", "Farmer"));
+                    const farmersSnapshot = await getDocs(q);
+                    for (const doc of farmersSnapshot.docs) {
+                        onlineFarmers.push({ id: doc.id, ...doc.data(), isOffline: false });
+                    }
                 }
 
+                const db = await dbPromise;
+                const offlineRegistrations = await db.getAll('offline_registrations');
+                const offlineFarmers = offlineRegistrations.map(reg => ({
+                    id: `offline_${reg.email}`, // Temporary unique ID
+                    ...reg,
+                    isOffline: true
+                }));
+
+                // Merge and de-duplicate
+                const farmerMap = new Map();
+                onlineFarmers.forEach(f => farmerMap.set(f.email, f));
+                offlineFarmers.forEach(f => {
+                    if (!farmerMap.has(f.email)) {
+                        farmerMap.set(f.email, f);
+                    }
+                });
+
+                let farmers = Array.from(farmerMap.values());
                 farmers.sort((a, b) => a.fullName.localeCompare(b.fullName));
 
                 for (let farmer of farmers) {
+                    if (farmer.isOffline) {
+                        farmer.lastReportDate = null; // Offline farmers won't have reports
+                        continue;
+                    }
                     const farmLotsCollection = collection(db, 'users', farmer.id, 'farmLots');
                     const farmLotsSnapshot = await getDocs(farmLotsCollection);
                     let latestReportDate = null;
@@ -2535,10 +2558,16 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200" id="ew-farmer-table-body">
-                            ${farmers.map(farmer => `
-                                <tr class="hover:bg-gray-50 cursor-pointer" data-farmer-id="${farmer.id}" data-farmer-name="${farmer.fullName}">
+                            ${farmers.map(farmer => {
+                                const isOffline = farmer.isOffline || false;
+                                const rowClass = isOffline ? 'bg-gray-100' : 'hover:bg-gray-50 cursor-pointer';
+                                const offlineBadge = isOffline ? '<span class="ml-2 text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-gray-600 bg-gray-200">Offline, pending sync</span>' : '';
+                                const clickHandler = isOffline ? '' : `data-farmer-id="${farmer.id}" data-farmer-name="${farmer.fullName}"`;
+
+                                return `
+                                <tr class="${rowClass}" ${clickHandler}>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">${farmer.fullName}</div>
+                                        <div class="text-sm font-medium text-gray-900">${farmer.fullName} ${offlineBadge}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         ${farmer.barangay || ''}, ${farmer.municipality || ''}
@@ -2547,7 +2576,8 @@
                                         ${farmer.lastReportDate ? farmer.lastReportDate.toLocaleDateString() : 'No reports yet'}
                                     </td>
                                 </tr>
-                            `).join('')}
+                                `
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
