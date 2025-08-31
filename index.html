@@ -4157,7 +4157,10 @@
                 document.getElementById('save-farm-map-btn').textContent = 'Save Farm Area';
             }
 
-            showScreen('farmSetup');
+            const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+            const newContext = { ...lastContext, label: 'Map Farm Plot' };
+            showScreen('farmSetup', newContext);
+
             // Invalidate map size and re-center, needed when map is in a hidden div
             setTimeout(() => {
                 initializeMap(); // General map init
