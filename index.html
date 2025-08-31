@@ -4430,7 +4430,13 @@
                 // Go back to the dashboard, which will be re-rendered
                 navigationHistory.pop(); // Remove the newSubmission screen
                 const lastState = navigationHistory[navigationHistory.length - 1];
-                showScreen(lastState.screenName, lastState.context, true);
+                if (lastState) {
+                    showScreen(lastState.screenName, lastState.context, true);
+                } else {
+                    // Fallback to the user's main dashboard if history is lost
+                    const mainDashboardScreen = userProfile.role === 'Farmer' ? 'farmerDashboard' : 'ewDashboard';
+                    showScreen(mainDashboardScreen, { isFreshNavigation: true, label: 'Dashboard' });
+                }
 
             } catch (error) {
                 console.error('Failed to save submission:', error);
@@ -5729,33 +5735,25 @@
             }
 
             try {
-                // 1. Fetch online farms from Firestore
-                let onlineFarms = [];
-                // Only fetch from Firestore if online and the target user is not an offline user
+                const farmMap = new Map();
+                const idb = await dbPromise;
+
+                // Step 1: Always fetch offline farms for the target user from IndexedDB
+                const allOfflineFarms = await idb.getAll('outbox');
+                const offlineFarmsForUser = allOfflineFarms.filter(farm => farm.targetUserId === targetUserId);
+                offlineFarmsForUser.forEach(farm => {
+                    farmMap.set(farm.farmName, farm);
+                });
+
+                // Step 2: If online and the user is not an offline-only user, fetch from Firestore
                 if (navigator.onLine && !targetUserId.startsWith('offline_')) {
                     const farmLotsCollection = collection(db, 'users', targetUserId, 'farmLots');
                     const querySnapshot = await getDocs(farmLotsCollection);
                     querySnapshot.forEach(doc => {
-                        onlineFarms.push({ id: doc.id, ...doc.data(), isOffline: false });
+                        // Firestore data overwrites offline data if names conflict
+                        farmMap.set(doc.data().farmName, { id: doc.id, ...doc.data(), isOffline: false });
                     });
                 }
-
-
-                // 2. Fetch offline farms from IndexedDB, filtered for the target user
-                const idb = await dbPromise;
-                const allOfflineFarms = await idb.getAll('outbox');
-                const offlineFarmsForUser = allOfflineFarms.filter(farm => farm.targetUserId === targetUserId);
-
-
-                // 3. Combine and de-duplicate, prioritizing online data
-                const farmMap = new Map();
-                onlineFarms.forEach(farm => farmMap.set(farm.farmName, farm));
-                // Add offline farms, but don't overwrite if an online one with the same name exists
-                offlineFarmsForUser.forEach(farm => {
-                    if (!farmMap.has(farm.farmName)) {
-                        farmMap.set(farm.farmName, farm);
-                    }
-                });
 
                 const uniqueFarms = Array.from(farmMap.values());
 
@@ -6323,18 +6321,15 @@
                 showToast('Farm saved for offline use.', 'success');
                 farmModal.style.display = 'none';
 
-                // If we saved a farm for an offline user, navigate to their farm list
+                // If we saved a farm for an offline user, refresh the farmer list and stay there.
                 if (currentOfflineFarmerContext) {
-                    const newContext = {
-                        userId: targetUserId,
-                        userName: farmerName,
-                        label: `${farmerName}'s Farms`,
-                        isOffline: true
-                    };
-                    showScreen('farmList', newContext);
-                    currentOfflineFarmerContext = null; // Clear context after use
+                    showToast('Offline farm created. Returning to farmer list.', 'success');
+                    currentOfflineFarmerContext = null; // Clear context
+                    const lastContext = navigationHistory[navigationHistory.length-1]?.context || {};
+                    // The active screen is ewFarmerList, so we reload it.
+                    loadEwFarmerList(lastContext);
                 } else {
-                    // Otherwise, just refresh the current screen (e.g., farmer's own dashboard)
+                    // Otherwise, just refresh the current screen for a user saving their own offline farm
                     const activeScreenId = document.querySelector('.screen.active').id.replace('-screen', '');
                     const lastContext = navigationHistory[navigationHistory.length-1]?.context || {};
                     if (activeScreenId === 'farmList') {
