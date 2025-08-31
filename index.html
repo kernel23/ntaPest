@@ -331,7 +331,13 @@
                             <h2 class="text-2xl font-bold">Farmer Dashboard</h2>
                             <p id="farmer-dashboard-welcome-message" class="text-sm text-gray-600"></p>
                         </div>
-                        <div id="farmer-dashboard-connection-status" class="text-center py-1 px-3 rounded-full text-sm font-semibold"></div>
+                        <div class="flex items-center space-x-4">
+                             <button id="manual-sync-btn-farmer" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-3 rounded-lg shadow-md flex items-center">
+                                <i data-lucide="refresh-cw" class="w-5 h-5 mr-2"></i>
+                                <span>Sync Data</span>
+                            </button>
+                            <div id="farmer-dashboard-connection-status" class="text-center py-1 px-3 rounded-full text-sm font-semibold"></div>
+                        </div>
                     </div>
                 </header>
                 <main class="flex-1 p-4 overflow-y-auto">
@@ -358,6 +364,14 @@
                             <div class="text-center text-gray-500 py-8">
                                 <p>Loading your farms...</p>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending Offline Registrations -->
+                    <div class="mt-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Pending Offline Registrations</h3>
+                        <div id="ew-pending-registrations" class="space-y-3">
+                            <!-- Pending registrations will be inserted here by JavaScript -->
                         </div>
                     </div>
                 </main>
@@ -407,7 +421,12 @@
                             <h2 class="text-2xl font-bold">Dashboard</h2>
                             <p id="ew-welcome-message" class="text-sm text-gray-200"></p>
                         </div>
-                        <div class="text-center">
+                        <div class="flex items-center space-x-4">
+                            <button id="manual-sync-btn" class="bg-white/20 hover:bg-white/30 text-white font-bold py-2 px-3 rounded-lg shadow-md flex items-center">
+                                <i data-lucide="refresh-cw" class="w-5 h-5 mr-2"></i>
+                                <span>Sync Data</span>
+                            </button>
+                            <div class="text-center">
                             <i data-lucide="user-cog" class="w-10 h-10"></i>
                             <p class="text-xs font-semibold">Ext. Worker</p>
                         </div>
@@ -469,8 +488,15 @@
                         </button>
                         <div class="breadcrumbs text-sm text-gray-500"></div>
                     </div>
-                    <h2 class="text-2xl font-bold">My Farmers</h2>
-                    <p class="text-sm text-gray-600">A list of all farmers you manage.</p>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold">My Farmers</h2>
+                            <p class="text-sm text-gray-600">A list of all farmers you manage.</p>
+                        </div>
+                        <button id="add-new-farmer-btn" class="bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-[#cc9244]">
+                            Register New Farmer
+                        </button>
+                    </div>
                 </header>
                 <main id="ew-farmer-list-container" class="flex-1 p-4 overflow-y-auto">
                     <!-- Farmer list table will be inserted here by JavaScript -->
@@ -1000,6 +1026,97 @@
         </div>
     </div>
 
+    <!-- Pending Sync Modal -->
+    <div id="pending-sync-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm m-4 p-6 text-center">
+            <h3 class="text-xl font-bold mb-4">Pending Registrations</h3>
+            <p id="pending-sync-message" class="text-gray-600 mb-6"></p>
+            <div class="flex justify-center space-x-4">
+                <button id="pending-sync-later-btn" class="w-full bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md">Later</button>
+                <button id="pending-sync-now-btn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">Sync Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registration Success Modal -->
+    <div id="registration-success-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-sm m-4 p-6 text-center">
+            <h3 class="text-xl font-bold mb-4">Registration Successful!</h3>
+            <p class="text-gray-600 mb-6">The new farmer has been registered. For security reasons, you will now be logged out. Please log in again to continue.</p>
+            <button id="registration-success-ok-btn" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">OK</button>
+        </div>
+    </div>
+
+    <!-- Registration Modal -->
+    <div id="registration-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Register New Farmer</h3>
+                <button id="close-registration-modal-btn" class="p-1"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 max-h-[80vh] overflow-y-auto">
+                <label for="reg-fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
+                <input type="text" id="reg-fullName" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+
+                <label for="reg-email" class="block text-sm font-medium text-gray-700 mt-4">Email Address</label>
+                <input type="email" id="reg-email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+
+                <label for="reg-password" class="block text-sm font-medium text-gray-700 mt-4">Temporary Password</label>
+                <input type="password" id="reg-password" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+
+                <label for="reg-province" class="block text-sm font-medium text-gray-700 mt-4">Province</label>
+                <div id="reg-province-multiselect-container" class="relative"></div>
+
+                <label for="reg-municipality" class="block text-sm font-medium text-gray-700 mt-4">Municipality</label>
+                <div id="reg-municipality-multiselect-container" class="relative"></div>
+
+                <label for="reg-barangay" class="block text-sm font-medium text-gray-700 mt-4">Barangay</label>
+                <div id="reg-barangay-multiselect-container" class="relative"></div>
+
+                <label for="reg-birthdate" class="block text-sm font-medium text-gray-700 mt-4">Birthdate</label>
+                <input type="date" id="reg-birthdate" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+
+                <label for="reg-civilStatus" class="block text-sm font-medium text-gray-700 mt-4">Civil Status</label>
+                <select id="reg-civilStatus" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                    <option>Single</option>
+                    <option>Married</option>
+                    <option>Widowed</option>
+                    <option>Divorced</option>
+                </select>
+                <label for="reg-religion" class="block text-sm font-medium text-gray-700 mt-4">Religion</label>
+                <input type="text" id="reg-religion" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                <label for="reg-yearsFarming" class="block text-sm font-medium text-gray-700 mt-4">Years in Tobacco Farming</label>
+                <input type="number" id="reg-yearsFarming" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                <label for="reg-familyMembers" class="block text-sm font-medium text-gray-700 mt-4">Number of Family Members</label>
+                <input type="number" id="reg-familyMembers" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                <label for="reg-education" class="block text-sm font-medium text-gray-700 mt-4">Highest Educational Attainment</label>
+                <select id="reg-education" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                    <option>No formal education</option>
+                    <option>Elementary</option>
+                    <option>High School</option>
+                    <option>Vocational</option>
+                    <option>College</option>
+                    <option>Post-graduate</option>
+                </select>
+                <div class="mt-4">
+                    <label for="reg-isFarmer" class="flex items-center">
+                        <input type="checkbox" id="reg-isFarmer" class="h-4 w-4 text-[#455b3c] border-gray-300 rounded focus:ring-[#455b3c]" checked disabled>
+                        <span class="ml-2 text-sm font-medium text-gray-700">This user is a farmer</span>
+                    </label>
+                </div>
+                <div id="reg-rsbsa-container" class="mt-4">
+                    <label for="reg-rsbsaNumber" class="block text-sm font-medium text-gray-700">RSBSA Number (Optional)</label>
+                    <input type="text" id="reg-rsbsaNumber" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#455b3c] focus:border-[#455b3c]">
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button id="register-farmer-offline-btn" class="w-full bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hidden">Save Offline</button>
+                    <button id="register-farmer-btn" class="w-full bg-gradient-to-r from-[#f1c232] to-[#cc9244] text-white font-bold py-3 px-4 rounded-lg shadow-md">Register Farmer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modals -->
     <!-- Pest Details Modal -->
     <div id="pest-details-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden z-50">
@@ -1295,7 +1412,8 @@
             GoogleAuthProvider, 
             signInWithPopup,
             signInAnonymously,
-            signOut
+            signOut,
+            createUserWithEmailAndPassword
         } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { 
             getFirestore,
@@ -1379,13 +1497,16 @@
         })();
 
         // Initialize IndexedDB
-        const dbPromise = openDB('agri-guard-db', 2, {
+        const dbPromise = openDB('agri-guard-db', 3, {
             upgrade(db, oldVersion, newVersion, transaction) {
                 if (oldVersion < 1) {
                     db.createObjectStore('outbox', { autoIncrement: true });
                 }
                 if (oldVersion < 2) {
                     db.createObjectStore('submission_outbox', { autoIncrement: true });
+                }
+                if (oldVersion < 3) {
+                    db.createObjectStore('offline_registrations', { autoIncrement: true });
                 }
             },
         });
@@ -2373,18 +2494,41 @@
             if (!currentUser) return;
 
             try {
-                const usersCollection = collection(db, 'users');
-                const q = query(usersCollection, where("role", "==", "Farmer"));
-                const farmersSnapshot = await getDocs(q);
-
-                let farmers = [];
-                for (const doc of farmersSnapshot.docs) {
-                    farmers.push({ id: doc.id, ...doc.data() });
+                let onlineFarmers = [];
+                if (navigator.onLine) {
+                    const usersCollection = collection(db, 'users');
+                    const q = query(usersCollection, where("role", "==", "Farmer"));
+                    const farmersSnapshot = await getDocs(q);
+                    for (const doc of farmersSnapshot.docs) {
+                        onlineFarmers.push({ id: doc.id, ...doc.data(), isOffline: false });
+                    }
                 }
 
+                const idb = await dbPromise;
+                const offlineRegistrations = await idb.getAll('offline_registrations');
+                const offlineFarmers = offlineRegistrations.map(reg => ({
+                    id: `offline_${reg.email}`, // Temporary unique ID
+                    ...reg,
+                    isOffline: true
+                }));
+
+                // Merge and de-duplicate
+                const farmerMap = new Map();
+                onlineFarmers.forEach(f => farmerMap.set(f.email, f));
+                offlineFarmers.forEach(f => {
+                    if (!farmerMap.has(f.email)) {
+                        farmerMap.set(f.email, f);
+                    }
+                });
+
+                let farmers = Array.from(farmerMap.values());
                 farmers.sort((a, b) => a.fullName.localeCompare(b.fullName));
 
                 for (let farmer of farmers) {
+                    if (farmer.isOffline) {
+                        farmer.lastReportDate = null; // Offline farmers won't have reports
+                        continue;
+                    }
                     const farmLotsCollection = collection(db, 'users', farmer.id, 'farmLots');
                     const farmLotsSnapshot = await getDocs(farmLotsCollection);
                     let latestReportDate = null;
@@ -2437,10 +2581,16 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200" id="ew-farmer-table-body">
-                            ${farmers.map(farmer => `
-                                <tr class="hover:bg-gray-50 cursor-pointer" data-farmer-id="${farmer.id}" data-farmer-name="${farmer.fullName}">
+                            ${farmers.map(farmer => {
+                                const isOffline = farmer.isOffline || false;
+                                const rowClass = 'hover:bg-gray-50 cursor-pointer'; // All rows are clickable now
+                                const offlineBadge = isOffline ? '<span class="ml-2 text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-gray-600 bg-gray-200">Offline, pending sync</span>' : '';
+                                const farmerDataAttr = `data-farmer='${JSON.stringify(farmer)}'`;
+
+                                return `
+                                <tr class="${rowClass}" ${farmerDataAttr}>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">${farmer.fullName}</div>
+                                        <div class="text-sm font-medium text-gray-900">${farmer.fullName} ${offlineBadge}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         ${farmer.barangay || ''}, ${farmer.municipality || ''}
@@ -2449,7 +2599,8 @@
                                         ${farmer.lastReportDate ? farmer.lastReportDate.toLocaleDateString() : 'No reports yet'}
                                     </td>
                                 </tr>
-                            `).join('')}
+                                `
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -2457,14 +2608,22 @@
             container.innerHTML = tableHtml;
 
             document.getElementById('ew-farmer-table-body').addEventListener('click', (e) => {
-                const row = e.target.closest('tr');
+                const row = e.target.closest('tr[data-farmer]');
                 if (row) {
-                    const farmerId = row.dataset.farmerId;
-                    const farmerName = row.dataset.farmerName;
+                    const farmerData = JSON.parse(row.dataset.farmer);
 
-                    const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
-                    const newContext = { ...lastContext, userId: farmerId, userName: farmerName, label: `${farmerName}'s Farms` };
-                    showScreen('farmList', newContext);
+                    if (farmerData.isOffline) {
+                        // For offline farmers, the only action is to add a farm offline
+                        currentOfflineFarmerContext = farmerData; // Store context for the save action
+                        openFarmModal();
+                        document.getElementById('next-farm-map-btn').disabled = true; // Disable online-only mapping
+                    } else {
+                        // For online farmers, proceed to their farm list
+                        currentOfflineFarmerContext = null;
+                        const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+                        const newContext = { ...lastContext, userId: farmerData.id, userName: farmerData.fullName, label: `${farmerData.fullName}'s Farms` };
+                        showScreen('farmList', newContext);
+                    }
                 }
             });
         }
@@ -2753,6 +2912,7 @@
         let currentUser = null;
         let userProfile = null;
         let selectedRole = 'Farmer';
+        let currentOfflineFarmerContext = null;
         let navigationHistory = [];
 
         function updateNavigationControls() {
@@ -2963,8 +3123,10 @@
 
             if (roles.isFarmer) {
                 nav.farmList.style.display = 'block';
+                nav.farmList.title = 'My Farms';
             } else if (roles.isWorker) {
                 nav.farmList.style.display = 'block';
+                nav.farmList.title = 'Dashboard';
                 nav.diagnosis.style.display = 'block';
             } else if (roles.isCoordinator) {
                 nav.farmList.style.display = 'block';
@@ -3403,8 +3565,47 @@
         let profileProvince, profileMunicipality, profileBarangay;
         let filterProvince, filterMunicipality, filterBarangay;
         let expertFilterPestDisease, expertFilterProvince, expertFilterMunicipality, expertFilterBarangay;
+        let regProvince, regMunicipality, regBarangay;
 
         function initializeAddressFilters() {
+            // For Registration Modal
+            regProvince = createMultiSelect('reg-province-multiselect-container', 'Select Province', false);
+            regMunicipality = createMultiSelect('reg-municipality-multiselect-container', 'Select Municipality', false);
+            regBarangay = createMultiSelect('reg-barangay-multiselect-container', 'Select Barangay', false);
+
+            regProvince.populate(window.philippineAddresses.provinces.map(p => ({ value: p.name, label: p.name })));
+            regMunicipality.disable();
+            regBarangay.disable();
+
+            regProvince.onChange(selectedProvinces => {
+                regMunicipality.clear();
+                regBarangay.clear();
+                if (selectedProvinces.length > 0) {
+                    const provinceData = window.philippineAddresses.provinces.find(p => p.name === selectedProvinces[0]);
+                    regMunicipality.populate(provinceData.municipalities.map(m => ({ value: m.name, label: m.name })));
+                    regMunicipality.enable();
+                } else {
+                    regMunicipality.disable();
+                    regBarangay.disable();
+                }
+            });
+
+            regMunicipality.onChange(selectedMunicipalities => {
+                regBarangay.clear();
+                if (selectedMunicipalities.length > 0) {
+                    const selectedProvinceName = regProvince.getSelectedValues()[0];
+                    const provinceData = window.philippineAddresses.provinces.find(p => p.name === selectedProvinceName);
+                    const municipalityData = provinceData.municipalities.find(m => m.name === selectedMunicipalities[0]);
+                    if (municipalityData && municipalityData.barangays) {
+                        regBarangay.populate(municipalityData.barangays.map(b => ({ value: b, label: b })));
+                        regBarangay.enable();
+                    }
+                } else {
+                    regBarangay.disable();
+                }
+            });
+
+
             // For Profile Screen
             profileProvince = createMultiSelect('province-multiselect-container', 'Select Province', false);
             profileMunicipality = createMultiSelect('municipality-multiselect-container', 'Select Municipality', false);
@@ -3967,7 +4168,10 @@
                 document.getElementById('save-farm-map-btn').textContent = 'Save Farm Area';
             }
 
-            showScreen('farmSetup');
+            const lastContext = navigationHistory[navigationHistory.length - 1]?.context || {};
+            const newContext = { ...lastContext, label: 'Map Farm Plot' };
+            showScreen('farmSetup', newContext);
+
             // Invalidate map size and re-center, needed when map is in a hidden div
             setTimeout(() => {
                 initializeMap(); // General map init
@@ -4027,17 +4231,19 @@
                 return;
             }
 
+            const targetUserId = (userProfile.role === 'Extension Worker' && navigationHistory[navigationHistory.length - 1]?.context?.userId) ? navigationHistory[navigationHistory.length - 1].context.userId : currentUser.uid;
+
             try {
                 if (isEditMode) {
                     // Update existing document
                     farmData.updatedAt = serverTimestamp();
-                    const farmDocRef = doc(db, 'users', currentUser.uid, 'farmLots', currentFarmId);
+                    const farmDocRef = doc(db, 'users', targetUserId, 'farmLots', currentFarmId);
                     await updateDoc(farmDocRef, farmData);
                     showToast('Update Successful: The farm plot details have been saved.', 'success');
                 } else {
                     // Create new document
                     farmData.createdAt = serverTimestamp();
-                    const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
+                    const farmLotsCollection = collection(db, 'users', targetUserId, 'farmLots');
                     await addDoc(farmLotsCollection, farmData);
                     showToast('Creation Successful: A new farm plot has been added.', 'success');
                 }
@@ -4051,7 +4257,11 @@
                 document.getElementById('tobaccoVariety').value = '';
                 document.getElementById('plantingDate').value = '';
 
-                showScreen('farmList'); // Go back to the farm list
+                // Go back to the previous screen in the history
+                navigationHistory.pop(); // Remove farmSetup screen
+                const lastState = navigationHistory[navigationHistory.length - 1];
+                showScreen(lastState.screenName, lastState.context, true);
+
             } catch (error) {
                 console.error("Error saving farm plot:", error);
                 showToast('Could not save farm plot. Please try again.', 'error');
@@ -4125,7 +4335,11 @@
                 return;
             }
 
-            if (!currentFarmId || !currentUser) {
+            const context = navigationHistory[navigationHistory.length - 1]?.context;
+            const targetUserId = (userProfile.role === 'Extension Worker' && context?.userId) ? context.userId : currentUser.uid;
+            const targetFarmId = context?.farmId || currentFarmId;
+
+            if (!targetFarmId || !targetUserId) {
                 showToast('Could not identify the current farm or user. Please go back to the farm list.', 'error');
                 return;
             }
@@ -4138,7 +4352,8 @@
             }
 
             const submissionData = {
-                farmId: currentFarmId, // Keep farmId for syncing
+                userId: targetUserId,
+                farmId: targetFarmId, // Keep farmId for syncing
                 imageDataUrls: imageDataUrls, // Keep as base64 for offline
                 symptoms,
                 distribution,
@@ -4158,8 +4373,14 @@
                     const db = await dbPromise;
                     await db.add('submission_outbox', submissionData);
                     showToast('Report saved locally. It will sync when you are back online.', 'success');
-                     const lastContext = navigationHistory[navigationHistory.length - 2] || { screenName: 'farmList', context: {} };
-                    showScreen(lastContext.screenName, lastContext.context);
+            navigationHistory.pop(); // Remove the newSubmission screen
+            const lastState = navigationHistory[navigationHistory.length - 1];
+            if (lastState) {
+                showScreen(lastState.screenName, lastState.context, true);
+            } else {
+                // Fallback, should not happen in normal flow
+                showScreen('farmList', {});
+            }
                 } catch (error) {
                     console.error('Error saving report offline:', error);
                     showToast('Could not save report locally.', 'error');
@@ -4173,12 +4394,12 @@
 
             try {
                 // Generate a new submission ID client-side to use in the storage path
-                const submissionDocRef = doc(collection(db, 'users', currentUser.uid, 'farmLots', currentFarmId, 'submissions'));
+                const submissionDocRef = doc(collection(db, 'users', targetUserId, 'farmLots', targetFarmId, 'submissions'));
                 const submissionId = submissionDocRef.id;
 
                 // Create a reference and upload task for each image
                 const uploadPromises = imageDataUrls.map((dataUrl, index) => {
-                    const storageRef = ref(storage, `submissions/${currentUser.uid}/${submissionId}/image_${index}.jpg`);
+                    const storageRef = ref(storage, `submissions/${targetUserId}/${submissionId}/image_${index}.jpg`);
                     // uploadString is efficient for data URLs
                     return uploadString(storageRef, dataUrl, 'data_url').then(snapshot => getDownloadURL(snapshot.ref));
                 });
@@ -4207,8 +4428,15 @@
 
 
                 // Go back to the dashboard, which will be re-rendered
-                const lastContext = navigationHistory[navigationHistory.length - 2] || { screenName: 'farmList', context: {} };
-                showScreen(lastContext.screenName, lastContext.context);
+                navigationHistory.pop(); // Remove the newSubmission screen
+                const lastState = navigationHistory[navigationHistory.length - 1];
+                if (lastState) {
+                    showScreen(lastState.screenName, lastState.context, true);
+                } else {
+                    // Fallback to the user's main dashboard if history is lost
+                    const mainDashboardScreen = userProfile.role === 'Farmer' ? 'farmerDashboard' : 'ewDashboard';
+                    showScreen(mainDashboardScreen, { isFreshNavigation: true, label: 'Dashboard' });
+                }
 
             } catch (error) {
                 console.error('Failed to save submission:', error);
@@ -5491,7 +5719,11 @@
             if (context.userId && context.userId !== currentUser.uid) {
                 welcomeMessage.textContent = `Viewing farms for ${context.userName}`;
                 farmListTitle.textContent = `${context.userName}'s Farm Plots`;
-                addFarmBtn.style.display = 'none';
+                if (userProfile.role === 'Extension Worker') {
+                    addFarmBtn.style.display = 'flex';
+                } else {
+                    addFarmBtn.style.display = 'none';
+                }
             } else {
                 welcomeMessage.textContent = `Welcome, ${userProfile.fullName}`;
                 farmListTitle.textContent = 'My Farm Plots';
@@ -5503,30 +5735,25 @@
             }
 
             try {
-                // 1. Fetch online farms from Firestore
-                let onlineFarms = [];
-                // Only fetch from Firestore if online
-                if (navigator.onLine) {
+                const farmMap = new Map();
+                const idb = await dbPromise;
+
+                // Step 1: Always fetch offline farms for the target user from IndexedDB
+                const allOfflineFarms = await idb.getAll('outbox');
+                const offlineFarmsForUser = allOfflineFarms.filter(farm => farm.targetUserId === targetUserId);
+                offlineFarmsForUser.forEach(farm => {
+                    farmMap.set(farm.farmName, farm);
+                });
+
+                // Step 2: If online and the user is not an offline-only user, fetch from Firestore
+                if (navigator.onLine && !targetUserId.startsWith('offline_')) {
                     const farmLotsCollection = collection(db, 'users', targetUserId, 'farmLots');
                     const querySnapshot = await getDocs(farmLotsCollection);
                     querySnapshot.forEach(doc => {
-                        onlineFarms.push({ id: doc.id, ...doc.data(), isOffline: false });
+                        // Firestore data overwrites offline data if names conflict
+                        farmMap.set(doc.data().farmName, { id: doc.id, ...doc.data(), isOffline: false });
                     });
                 }
-
-
-                // 2. Fetch offline farms from IndexedDB
-                const idb = await dbPromise;
-                const offlineFarms = await idb.getAll('outbox');
-
-                // 3. Combine and de-duplicate, prioritizing online data
-                const farmMap = new Map();
-                onlineFarms.forEach(farm => farmMap.set(farm.farmName, farm));
-                offlineFarms.forEach(farm => {
-                    if (!farmMap.has(farm.farmName)) {
-                        farmMap.set(farm.farmName, farm);
-                    }
-                });
 
                 const uniqueFarms = Array.from(farmMap.values());
 
@@ -5588,6 +5815,142 @@
             });
             document.getElementById('ew-action-view-reports').addEventListener('click', () => {
                 showScreen('reports', { isFreshNavigation: true, label: 'All Reports' });
+            });
+
+            document.getElementById('add-new-farmer-btn').addEventListener('click', () => {
+                document.getElementById('registration-modal').classList.remove('hidden');
+                document.getElementById('registration-modal').classList.add('flex');
+            });
+
+            document.getElementById('close-registration-modal-btn').addEventListener('click', () => {
+                document.getElementById('registration-modal').classList.add('hidden');
+                document.getElementById('registration-modal').classList.remove('flex');
+            });
+
+            document.getElementById('register-farmer-offline-btn').addEventListener('click', async () => {
+                const fullName = document.getElementById('reg-fullName').value;
+                const email = document.getElementById('reg-email').value;
+                const password = document.getElementById('reg-password').value;
+                const province = regProvince.getSelectedValues()[0] || '';
+                const municipality = regMunicipality.getSelectedValues()[0] || '';
+                const barangay = regBarangay.getSelectedValues()[0] || '';
+                const birthdate = document.getElementById('reg-birthdate').value;
+                const civilStatus = document.getElementById('reg-civilStatus').value;
+                const religion = document.getElementById('reg-religion').value;
+                const yearsFarming = document.getElementById('reg-yearsFarming').value;
+                const familyMembers = document.getElementById('reg-familyMembers').value;
+                const education = document.getElementById('reg-education').value;
+                const rsbsaNumber = document.getElementById('reg-rsbsaNumber').value;
+
+                if (!fullName.trim() || !email.trim() || !password.trim() || !province.trim() || !municipality.trim() || !barangay.trim() || !birthdate.trim() || !civilStatus.trim() || !religion.trim() || !yearsFarming.trim() || !familyMembers.trim() || !education.trim()) {
+                    showToast('Please fill out all fields.', 'error');
+                    return;
+                }
+
+                const offlineRegistrationData = {
+                    fullName, email, password, province, municipality, barangay, birthdate, civilStatus, religion, yearsFarming, familyMembers, education, rsbsaNumber,
+                    registeredBy: currentUser.uid
+                };
+
+                try {
+                    const db = await dbPromise;
+                    await db.add('offline_registrations', offlineRegistrationData);
+                    showToast('Farmer details saved offline. Please sync when you are back online.', 'success');
+                    document.getElementById('registration-modal').classList.add('hidden');
+                    // Optionally, refresh the EW dashboard to show the pending registration
+                    if (document.getElementById('ew-dashboard-screen').classList.contains('active')) {
+                        loadExtensionWorkerDashboard(navigationHistory[navigationHistory.length - 1]?.context || {});
+                    }
+                } catch (error) {
+                    console.error('Error saving registration offline:', error);
+                    showToast('Could not save registration locally.', 'error');
+                }
+            });
+
+            document.getElementById('registration-success-ok-btn').addEventListener('click', () => {
+                document.getElementById('registration-success-modal').classList.add('hidden');
+                signOut(auth);
+            });
+
+            document.getElementById('pending-sync-later-btn').addEventListener('click', () => {
+                document.getElementById('pending-sync-modal').classList.add('hidden');
+            });
+
+            document.getElementById('pending-sync-now-btn').addEventListener('click', async () => {
+                document.getElementById('pending-sync-modal').classList.add('hidden');
+                const idb = await dbPromise;
+                const pendingRegistrations = await idb.getAll('offline_registrations');
+                if (pendingRegistrations.length > 0) {
+                    // We only process the first one, as it will log the user out.
+                    // The user will be prompted again on next login if more exist.
+                    await completeOfflineRegistration(pendingRegistrations[0], 0);
+                }
+            });
+
+            document.getElementById('register-farmer-btn').addEventListener('click', async () => {
+                const fullName = document.getElementById('reg-fullName').value;
+                const email = document.getElementById('reg-email').value;
+                const password = document.getElementById('reg-password').value;
+                const province = regProvince.getSelectedValues()[0] || '';
+                const municipality = regMunicipality.getSelectedValues()[0] || '';
+                const barangay = regBarangay.getSelectedValues()[0] || '';
+                const birthdate = document.getElementById('reg-birthdate').value;
+                const civilStatus = document.getElementById('reg-civilStatus').value;
+                const religion = document.getElementById('reg-religion').value;
+                const yearsFarming = document.getElementById('reg-yearsFarming').value;
+                const familyMembers = document.getElementById('reg-familyMembers').value;
+                const education = document.getElementById('reg-education').value;
+                const rsbsaNumber = document.getElementById('reg-rsbsaNumber').value;
+
+                if (!fullName.trim() || !email.trim() || !password.trim() || !province.trim() || !municipality.trim() || !barangay.trim() || !birthdate.trim() || !civilStatus.trim() || !religion.trim() || !yearsFarming.trim() || !familyMembers.trim() || !education.trim()) {
+                    showToast('Please fill out all fields.', 'error');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    showToast('Password should be at least 6 characters.', 'error');
+                    return;
+                }
+
+                showSavingOverlay('Registering Farmer...');
+
+                try {
+                    // This is a workaround. In a real app, this should be a cloud function.
+                    const { user: newFarmer } = await createUserWithEmailAndPassword(auth, email, password);
+
+                    const profileData = {
+                        fullName: fullName.trim(),
+                        province: province,
+                        municipality: municipality,
+                        barangay: barangay,
+                        birthdate: birthdate,
+                        civilStatus: civilStatus,
+                        religion: religion.trim(),
+                        yearsFarming: parseInt(yearsFarming),
+                        familyMembers: parseInt(familyMembers),
+                        education: education,
+                        email: email,
+                        photoURL: '',
+                        rsbsaNumber: rsbsaNumber.trim(),
+                        role: 'Farmer',
+                        createdAt: serverTimestamp()
+                    };
+
+                    await setDoc(doc(db, "users", newFarmer.uid), profileData);
+
+                    showToast("Farmer registered successfully!", "success");
+
+                    // Show success modal and then sign out
+                    document.getElementById('registration-modal').classList.add('hidden');
+                    document.getElementById('registration-success-modal').classList.remove('hidden');
+                    document.getElementById('registration-success-modal').classList.add('flex');
+
+                } catch (error) {
+                    console.error("Error registering farmer:", error);
+                    showToast(`Could not register farmer. ${error.message}`, 'error');
+                } finally {
+                    hideSavingOverlay();
+                }
             });
 
             if (!currentUser) return;
@@ -5668,10 +6031,77 @@
 
                 renderEwPriorityReports(priorityReports, priorityReportsContainer);
 
+                // 4. Load and render pending offline registrations
+                const idb = await dbPromise;
+                const pendingRegistrations = await idb.getAll('offline_registrations');
+                renderPendingRegistrations(pendingRegistrations);
+
             } catch (error) {
                 console.error("Error loading Extension Worker dashboard:", error);
                 const mainContainer = document.querySelector('#ew-dashboard-container');
                 mainContainer.innerHTML = `<div class="text-center text-red-500 mt-20 p-4"><p>Could not load dashboard data.</p><p class="text-xs">${error.message}</p></div>`;
+            }
+        }
+
+        function renderPendingRegistrations(registrations) {
+            const container = document.getElementById('ew-pending-registrations');
+            container.innerHTML = '';
+            if (!registrations || registrations.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 py-4 bg-white rounded-lg shadow-sm"><p>No pending offline registrations.</p></div>`;
+                return;
+            }
+
+            registrations.forEach((reg, index) => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex justify-between items-center';
+                card.innerHTML = `
+                    <div>
+                        <p class="font-bold text-gray-800">${reg.fullName}</p>
+                        <p class="text-sm text-gray-600">${reg.email}</p>
+                    </div>
+                    <button class="complete-registration-btn bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md" data-index="${index}">Complete</button>
+                `;
+                container.appendChild(card);
+            });
+
+            container.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('complete-registration-btn')) {
+                    const index = e.target.dataset.index;
+                    const registrationData = registrations[index];
+                    await completeOfflineRegistration(registrationData, index);
+                }
+            });
+        }
+
+        async function completeOfflineRegistration(regData, dbKey) {
+             if (!navigator.onLine) {
+                showToast('You must be online to complete the registration.', 'error');
+                return;
+            }
+            showSavingOverlay('Completing Registration...');
+            try {
+                const { user: newFarmer } = await createUserWithEmailAndPassword(auth, regData.email, regData.password);
+                const profileData = { ...regData, role: 'Farmer', createdAt: serverTimestamp() };
+                delete profileData.password; // Do not save password in Firestore
+
+                await setDoc(doc(db, "users", newFarmer.uid), profileData);
+
+                // Remove from IndexedDB
+                const idb = await dbPromise;
+                const allKeys = await idb.getAllKeys('offline_registrations');
+                await idb.delete('offline_registrations', allKeys[dbKey]);
+
+                showToast('Farmer registered successfully!', 'success');
+
+                // Show success modal and then sign out
+                document.getElementById('registration-success-modal').classList.remove('hidden');
+                document.getElementById('registration-success-modal').classList.add('flex');
+
+            } catch (error) {
+                console.error("Error completing offline registration:", error);
+                showToast(`Registration failed: ${error.message}`, 'error');
+            } finally {
+                hideSavingOverlay();
             }
         }
 
@@ -5794,6 +6224,19 @@
             if (!navigator.onLine || !currentUser) return {}; // Return empty map if offline
 
             const idb = await dbPromise;
+
+            // Check for pending registrations BEFORE syncing farms.
+            const pendingRegistrations = await idb.count('offline_registrations');
+            if (pendingRegistrations > 0) {
+                showToast(`Please sync ${pendingRegistrations} pending farmer registration(s) first.`, 'info');
+                // Open the modal for the user to act on.
+                const modal = document.getElementById('pending-sync-modal');
+                document.getElementById('pending-sync-message').textContent = `You have ${pendingRegistrations} pending farmer registration(s) to sync. Syncing farms and reports depends on these registrations being completed first.`;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                return {}; // Abort sync, let user handle registrations
+            }
+
             const allFarms = await idb.getAll('outbox');
             if (allFarms.length === 0) return {};
 
@@ -5801,13 +6244,15 @@
             const idMap = new Map();
 
             try {
-                const farmLotsCollection = collection(db, 'users', currentUser.uid, 'farmLots');
                 for (const farmData of allFarms) {
                     const tempId = farmData.id; // The 'offline_...' ID
+                    const userIdForFarm = farmData.targetUserId || currentUser.uid;
+                    const farmLotsCollection = collection(db, 'users', userIdForFarm, 'farmLots');
 
                     // Remove temporary properties before saving to Firestore
                     const firestoreData = { ...farmData };
                     delete firestoreData.id;
+                    delete firestoreData.targetUserId;
                     delete firestoreData.isOffline;
                     delete firestoreData.status;
 
@@ -5837,43 +6282,65 @@
                 return;
             }
 
+            let targetUserId;
+            let farmerName;
+            // Determine the target user and their name
+            if (currentOfflineFarmerContext) {
+                targetUserId = currentOfflineFarmerContext.id; // temp ID of the offline farmer
+                farmerName = currentOfflineFarmerContext.fullName;
+            } else {
+                const context = navigationHistory[navigationHistory.length - 1]?.context;
+                targetUserId = (userProfile.role === 'Extension Worker' && context?.userId) ? context.userId : currentUser.uid;
+                farmerName = (userProfile.role === 'Extension Worker' && context?.userName) ? context.userName : userProfile.fullName;
+            }
+
             const farmData = {
-                id: `offline_${crypto.randomUUID()}`, // Assign a temporary client-side UUID
+                id: `offline_${crypto.randomUUID()}`,
+                targetUserId: targetUserId,
                 farmName,
                 tobaccoVariety,
                 plantingDate,
-                polygonCoordinates: [], // Empty coordinates for offline farms
-                status: 'pending-sync', // Flag for later use
+                polygonCoordinates: [],
+                status: 'pending-sync',
                 isOffline: true
             };
 
             try {
                 const db = await dbPromise;
                 const existingFarms = await db.getAll('outbox');
-                const isDuplicate = existingFarms.some(farm => farm.farmName.toLowerCase() === farmName.toLowerCase());
+                const isDuplicateForUser = existingFarms.some(farm =>
+                    farm.targetUserId === targetUserId && farm.farmName.toLowerCase() === farmName.toLowerCase()
+                );
 
-                if (isDuplicate) {
-                    showToast('A farm with this name is already saved offline.', 'error');
+                if (isDuplicateForUser) {
+                    showToast('A farm with this name already exists for this farmer.', 'error');
                     return;
                 }
 
                 await db.add('outbox', farmData);
+                showToast('Farm saved for offline use.', 'success');
+                farmModal.style.display = 'none';
 
-                showToast('Farm saved for offline use. It will sync when you are back online.', 'success');
-                farmModal.style.display = 'none'; // Hide the modal
-
-                // Manually trigger a refresh of the farm list to show the new offline farm
-                const activeScreenId = document.querySelector('.screen.active').id.replace('-screen', '');
-                const lastContext = navigationHistory[navigationHistory.length-1]?.context || {};
-                if (activeScreenId === 'farmList') {
-                    loadFarms(lastContext);
-                } else if (activeScreenId === 'farmerDashboard') {
-                    loadFarmerDashboard(lastContext);
+                // If we saved a farm for an offline user, refresh the farmer list and stay there.
+                if (currentOfflineFarmerContext) {
+                    showToast('Offline farm created. Returning to farmer list.', 'success');
+                    currentOfflineFarmerContext = null; // Clear context
+                    const lastContext = navigationHistory[navigationHistory.length-1]?.context || {};
+                    // The active screen is ewFarmerList, so we reload it.
+                    loadEwFarmerList(lastContext);
+                } else {
+                    // Otherwise, just refresh the current screen for a user saving their own offline farm
+                    const activeScreenId = document.querySelector('.screen.active').id.replace('-screen', '');
+                    const lastContext = navigationHistory[navigationHistory.length-1]?.context || {};
+                    if (activeScreenId === 'farmList') {
+                        loadFarms(lastContext);
+                    } else if (activeScreenId === 'farmerDashboard') {
+                        loadFarmerDashboard(lastContext);
+                    }
                 }
-
             } catch (error) {
                 console.error('Error saving farm offline:', error);
-                showToast('Could not save farm locally. Please try again.', 'error');
+                showToast('Could not save farm locally.', 'error');
             }
         });
 
@@ -5986,6 +6453,7 @@
                 try {
                     submissionData = await idb.get('submission_outbox', key);
                     let farmId = submissionData.farmId;
+                    const userIdForSubmission = submissionData.userId || currentUser.uid;
 
                     // Check if this farmId needs to be mapped to a new one
                     if (farmId.startsWith('offline_')) {
@@ -6001,12 +6469,12 @@
                     }
 
                     // 1. Generate a new submission ID for Firestore
-                    const submissionDocRef = doc(collection(db, 'users', currentUser.uid, 'farmLots', farmId, 'submissions'));
+                    const submissionDocRef = doc(collection(db, 'users', userIdForSubmission, 'farmLots', farmId, 'submissions'));
                     const submissionId = submissionDocRef.id;
 
                     // 2. Upload images to Firebase Storage
                     const uploadPromises = submissionData.imageDataUrls.map((dataUrl, index) => {
-                        const storageRef = ref(storage, `submissions/${currentUser.uid}/${submissionId}/image_${index}.jpg`);
+                        const storageRef = ref(storage, `submissions/${userIdForSubmission}/${submissionId}/image_${index}.jpg`);
                         return uploadString(storageRef, dataUrl, 'data_url').then(snapshot => getDownloadURL(snapshot.ref));
                     });
 
@@ -7133,15 +7601,36 @@
 
         // --- 8. CONNECTION STATUS UI ---
         const connectionStatusEl = document.getElementById('connection-status');
+        document.getElementById('manual-sync-btn').addEventListener('click', runSync);
+        document.getElementById('manual-sync-btn-farmer').addEventListener('click', runSync);
+
         async function runSync() {
             if (isSyncing) {
                 console.log("Sync already in progress. Skipping.");
+                showToast('Sync already in progress.', 'info');
                 return;
             }
             isSyncing = true;
-            showToast('Syncing offline data...', 'info');
+            const syncBtn = document.getElementById('manual-sync-btn');
+            const syncBtnFarmer = document.getElementById('manual-sync-btn-farmer');
+            if(syncBtn) syncBtn.disabled = true;
+            if(syncBtnFarmer) syncBtnFarmer.disabled = true;
 
             try {
+                // First, check for pending registrations
+                const idb = await dbPromise;
+                const pendingRegistrations = await idb.getAll('offline_registrations');
+
+                if (pendingRegistrations.length > 0) {
+                    const modal = document.getElementById('pending-sync-modal');
+                    document.getElementById('pending-sync-message').textContent = `You have ${pendingRegistrations.length} pending farmer registration(s) to sync. Syncing requires an internet connection and will log you out to complete the process.`;
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    isSyncing = false; // Allow sync to be re-triggered after modal is handled
+                    return; // Stop here and let the user decide
+                }
+
+                showToast('Syncing offline data...', 'info');
                 const farmIdMap = await syncOutbox();
                 await syncSubmissionOutbox(farmIdMap);
 
@@ -7167,6 +7656,10 @@
                 showToast("Sync failed. Will try again later.", "error");
             } finally {
                 isSyncing = false;
+                const syncBtn = document.getElementById('manual-sync-btn');
+                const syncBtnFarmer = document.getElementById('manual-sync-btn-farmer');
+                if(syncBtn) syncBtn.disabled = false;
+                if(syncBtnFarmer) syncBtnFarmer.disabled = false;
                 console.log("Sync finished.");
             }
         }
@@ -7179,8 +7672,13 @@
             const googleBtn = document.getElementById('google-signin-btn');
             const guestBtn = document.getElementById('guest-signin-btn');
             const nextFarmMapBtn = document.getElementById('next-farm-map-btn');
+            const registerFarmerBtn = document.getElementById('register-farmer-btn');
+            const registerFarmerOfflineBtn = document.getElementById('register-farmer-offline-btn');
 
             if (navigator.onLine) {
+                if (registerFarmerBtn) registerFarmerBtn.classList.remove('hidden');
+                if (registerFarmerOfflineBtn) registerFarmerOfflineBtn.classList.add('hidden');
+
                  if (connectionStatusEl) {
                     connectionStatusEl.textContent = 'Online';
                     connectionStatusEl.className = 'text-center py-1 px-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-800';
@@ -7230,6 +7728,8 @@
                     nextFarmMapBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
                     nextFarmMapBtn.classList.remove('bg-green-600');
                 }
+                if (registerFarmerBtn) registerFarmerBtn.classList.add('hidden');
+                if (registerFarmerOfflineBtn) registerFarmerOfflineBtn.classList.remove('hidden');
             }
         }
         window.addEventListener('online', updateOnlineStatus);
