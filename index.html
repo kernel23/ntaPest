@@ -1405,7 +1405,7 @@
         import { generateAdvisories, generateGeographicRisk, fetchWeatherForecast } from './src/predictive-modeling.js';
 
         // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { 
             getAuth, 
             onAuthStateChanged, 
@@ -5914,9 +5914,15 @@
 
                 showSavingOverlay('Registering Farmer...');
 
+                // --- WORKAROUND FOR AUTH STATE CHANGE ---
+                const tempAppName = `registration-app-${Date.now()}`;
+                const tempApp = initializeApp(firebaseConfig, tempAppName);
+                const tempAuth = getAuth(tempApp);
+                // --- END WORKAROUND ---
+
                 try {
-                    // This is a workaround. In a real app, this should be a cloud function.
-                    const { user: newFarmer } = await createUserWithEmailAndPassword(auth, email, password);
+                    // Use the temporary auth instance to create the user
+                    const { user: newFarmer } = await createUserWithEmailAndPassword(tempAuth, email, password);
 
                     const profileData = {
                         fullName: fullName.trim(),
@@ -5936,20 +5942,30 @@
                         createdAt: serverTimestamp()
                     };
 
+                    // Use the main 'db' instance to save the profile
                     await setDoc(doc(db, "users", newFarmer.uid), profileData);
 
                     showToast("Farmer registered successfully!", "success");
 
-                    // Show success modal and then sign out
+                    // Close the registration modal without logging out
                     document.getElementById('registration-modal').classList.add('hidden');
-                    document.getElementById('registration-success-modal').classList.remove('hidden');
-                    document.getElementById('registration-success-modal').classList.add('flex');
+
+                    // Refresh the farmer list to show the new farmer
+                    const activeScreenId = document.querySelector('.screen.active').id;
+                    if (activeScreenId === 'ew-farmer-list-screen') {
+                        loadEwFarmerList(navigationHistory[navigationHistory.length - 1]?.context || {});
+                    } else if (activeScreenId === 'ew-dashboard-screen') {
+                        loadExtensionWorkerDashboard(navigationHistory[navigationHistory.length - 1]?.context || {});
+                    }
+
 
                 } catch (error) {
                     console.error("Error registering farmer:", error);
                     showToast(`Could not register farmer. ${error.message}`, 'error');
                 } finally {
                     hideSavingOverlay();
+                    // Clean up the temporary app instance
+                    await deleteApp(tempApp);
                 }
             });
 
