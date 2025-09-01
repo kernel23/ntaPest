@@ -4260,7 +4260,13 @@
                 // Go back to the previous screen in the history
                 navigationHistory.pop(); // Remove farmSetup screen
                 const lastState = navigationHistory[navigationHistory.length - 1];
-                showScreen(lastState.screenName, lastState.context, true);
+                if (lastState) {
+                    showScreen(lastState.screenName, lastState.context, true);
+                } else {
+                    // Fallback to the user's main dashboard if history is lost
+                    const mainDashboardScreen = userProfile.role === 'Farmer' ? 'farmerDashboard' : 'ewDashboard';
+                    showScreen(mainDashboardScreen, { isFreshNavigation: true, label: 'Dashboard' });
+                }
 
             } catch (error) {
                 console.error("Error saving farm plot:", error);
