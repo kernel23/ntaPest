@@ -4260,7 +4260,13 @@
                 // Go back to the previous screen in the history
                 navigationHistory.pop(); // Remove farmSetup screen
                 const lastState = navigationHistory[navigationHistory.length - 1];
-                showScreen(lastState.screenName, lastState.context, true);
+                if (lastState) {
+                    showScreen(lastState.screenName, lastState.context, true);
+                } else {
+                    // Fallback to the user's main dashboard if history is lost
+                    const mainDashboardScreen = userProfile.role === 'Farmer' ? 'farmerDashboard' : 'ewDashboard';
+                    showScreen(mainDashboardScreen, { isFreshNavigation: true, label: 'Dashboard' });
+                }
 
             } catch (error) {
                 console.error("Error saving farm plot:", error);
@@ -6097,19 +6103,31 @@
             showSavingOverlay('Completing Registration...');
             try {
                 const { user: newFarmer } = await createUserWithEmailAndPassword(auth, regData.email, regData.password);
+
                 const profileData = { ...regData, role: 'Farmer', createdAt: serverTimestamp() };
-                delete profileData.password; // Do not save password in Firestore
+                delete profileData.password;
+                delete profileData.pendingFarms;
 
                 await setDoc(doc(db, "users", newFarmer.uid), profileData);
 
-                // Remove from IndexedDB
+                if (regData.pendingFarms && Array.isArray(regData.pendingFarms)) {
+                    showSavingOverlay(`Syncing ${regData.pendingFarms.length} pending farm(s)...`);
+                    const farmLotsCollection = collection(db, 'users', newFarmer.uid, 'farmLots');
+                    for (const farm of regData.pendingFarms) {
+                        const farmData = { ...farm, createdAt: serverTimestamp() };
+                        await addDoc(farmLotsCollection, farmData);
+                    }
+                }
+
                 const idb = await dbPromise;
                 const allKeys = await idb.getAllKeys('offline_registrations');
-                await idb.delete('offline_registrations', allKeys[dbKey]);
+                const primaryKey = allKeys[dbKey];
+                if (primaryKey !== undefined) {
+                    await idb.delete('offline_registrations', primaryKey);
+                }
 
-                showToast('Farmer registered successfully!', 'success');
+                showToast('Farmer and associated farms registered successfully!', 'success');
 
-                // Show success modal and then sign out
                 document.getElementById('registration-success-modal').classList.remove('hidden');
                 document.getElementById('registration-success-modal').classList.add('flex');
 
@@ -6298,54 +6316,79 @@
                 return;
             }
 
-            let targetUserId;
-            let farmerName;
-            // Determine the target user and their name
-            if (currentOfflineFarmerContext) {
-                targetUserId = currentOfflineFarmerContext.id; // temp ID of the offline farmer
-                farmerName = currentOfflineFarmerContext.fullName;
-            } else {
-                const context = navigationHistory[navigationHistory.length - 1]?.context;
-                targetUserId = (userProfile.role === 'Extension Worker' && context?.userId) ? context.userId : currentUser.uid;
-                farmerName = (userProfile.role === 'Extension Worker' && context?.userName) ? context.userName : userProfile.fullName;
-            }
-
-            const farmData = {
-                id: `offline_${crypto.randomUUID()}`,
-                targetUserId: targetUserId,
-                farmName,
-                tobaccoVariety,
-                plantingDate,
-                polygonCoordinates: [],
-                status: 'pending-sync',
-                isOffline: true
-            };
-
             try {
                 const db = await dbPromise;
-                const existingFarms = await db.getAll('outbox');
-                const isDuplicateForUser = existingFarms.some(farm =>
-                    farm.targetUserId === targetUserId && farm.farmName.toLowerCase() === farmName.toLowerCase()
-                );
 
-                if (isDuplicateForUser) {
-                    showToast('A farm with this name already exists for this farmer.', 'error');
-                    return;
+                if (currentOfflineFarmerContext) {
+                    // Logic for adding a farm to a farmer who was registered offline
+                    const farmData = {
+                        farmName,
+                        tobaccoVariety,
+                        plantingDate,
+                        polygonCoordinates: [],
+                        isOffline: true
+                    };
+
+                    const allRegistrations = await db.getAll('offline_registrations');
+                    const allKeys = await db.getAllKeys('offline_registrations');
+                    const farmerRegIndex = allRegistrations.findIndex(reg => reg.email === currentOfflineFarmerContext.email);
+
+                    if (farmerRegIndex === -1) {
+                        throw new Error("Could not find the offline farmer registration to attach the farm to.");
+                    }
+
+                    const farmerReg = allRegistrations[farmerRegIndex];
+                    const farmerRegKey = allKeys[farmerRegIndex];
+
+                    if (farmerReg.pendingFarms && farmerReg.pendingFarms.some(f => f.farmName.toLowerCase() === farmName.toLowerCase())) {
+                        showToast('A farm with this name already exists for this farmer.', 'error');
+                        return;
+                    }
+
+                    if (!farmerReg.pendingFarms) {
+                        farmerReg.pendingFarms = [];
+                    }
+                    farmerReg.pendingFarms.push(farmData);
+
+                    await db.put('offline_registrations', farmerReg, farmerRegKey);
+
+                } else {
+                    // Existing logic for adding a farm for an already-online user
+                    const context = navigationHistory[navigationHistory.length - 1]?.context;
+                    const targetUserId = (userProfile.role === 'Extension Worker' && context?.userId) ? context.userId : currentUser.uid;
+
+                    const farmData = {
+                        id: `offline_${crypto.randomUUID()}`,
+                        targetUserId: targetUserId,
+                        farmName,
+                        tobaccoVariety,
+                        plantingDate,
+                        polygonCoordinates: [],
+                        status: 'pending-sync',
+                        isOffline: true
+                    };
+
+                    const existingFarms = await db.getAll('outbox');
+                    const isDuplicateForUser = existingFarms.some(farm =>
+                        farm.targetUserId === targetUserId && farm.farmName.toLowerCase() === farmName.toLowerCase()
+                    );
+
+                    if (isDuplicateForUser) {
+                        showToast('A farm with this name already exists for this farmer.', 'error');
+                        return;
+                    }
+                    await db.add('outbox', farmData);
                 }
 
-                await db.add('outbox', farmData);
                 showToast('Farm saved for offline use.', 'success');
                 farmModal.style.display = 'none';
 
-                // If we saved a farm for an offline user, refresh the farmer list and stay there.
                 if (currentOfflineFarmerContext) {
                     showToast('Offline farm created. Returning to farmer list.', 'success');
                     currentOfflineFarmerContext = null; // Clear context
                     const lastContext = navigationHistory[navigationHistory.length-1]?.context || {};
-                    // The active screen is ewFarmerList, so we reload it.
                     loadEwFarmerList(lastContext);
                 } else {
-                    // Otherwise, just refresh the current screen for a user saving their own offline farm
                     const activeScreenId = document.querySelector('.screen.active').id.replace('-screen', '');
                     const lastContext = navigationHistory[navigationHistory.length-1]?.context || {};
                     if (activeScreenId === 'farmList') {
@@ -6354,6 +6397,7 @@
                         loadFarmerDashboard(lastContext);
                     }
                 }
+
             } catch (error) {
                 console.error('Error saving farm offline:', error);
                 showToast('Could not save farm locally.', 'error');
