@@ -1047,6 +1047,35 @@
         </div>
     </div>
 
+    <!-- Social Media Post Modal -->
+    <div id="social-post-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl m-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold">Generated Social Media Post</h3>
+                <button id="close-social-post-modal-btn" class="p-1"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 max-h-[80vh] overflow-y-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="social-post-textarea" class="block text-sm font-medium text-gray-700">Post Content</label>
+                        <textarea id="social-post-textarea" rows="12" class="mt-1 block w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md shadow-sm" readonly></textarea>
+                        <button id="copy-social-post-btn" class="mt-4 w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md flex items-center justify-center">
+                            <i data-lucide="copy" class="w-5 h-5 mr-2"></i>
+                            <span>Copy Text</span>
+                        </button>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Suggested Image</label>
+                        <div class="mt-1 w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+                             <img id="social-post-image" src="" alt="Suggested image for post" class="w-full h-full object-contain rounded-lg">
+                        </div>
+                         <p class="text-xs text-gray-500 mt-2">You can right-click or long-press the image to save it.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Registration Modal -->
     <div id="registration-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg m-4">
@@ -1919,16 +1948,56 @@
 
             if (!provinceSelect || !municipalitySelect || !advisoryList) return;
 
-            // Add the delegated event listener for pest/disease links
+            // Add the delegated event listener for pest/disease links and generate post buttons
             advisoryList.addEventListener('click', (e) => {
-                const link = e.target.closest('.pest-advisory-link');
-                if (link) {
+                const pestLink = e.target.closest('.pest-advisory-link');
+                const postButton = e.target.closest('.generate-post-btn');
+
+                if (pestLink) {
                     e.preventDefault();
-                    const pestName = link.dataset.pestName;
+                    const pestName = pestLink.dataset.pestName;
                     if (pestName) {
                         showPestDetailsByName(pestName);
                     }
+                    return;
                 }
+
+                if (postButton) {
+                    e.preventDefault();
+                    const pestName = postButton.dataset.pestName;
+                    const conditions = postButton.dataset.conditions.split(',');
+
+                    const advisoryData = { name: pestName, conditions: conditions };
+                    const postContent = generateSocialMediaPost(advisoryData);
+
+                    const modal = document.getElementById('social-post-modal');
+                    const textarea = document.getElementById('social-post-textarea');
+                    const image = document.getElementById('social-post-image');
+
+                    textarea.value = postContent.postText.replace(/<br\s*\/?>/gi, '\n').replace(/<b>|<\/b>|<strong>|<\/strong>/gi, '');
+                    image.src = postContent.imageUrl;
+
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    lucide.createIcons(); // Redraw icons in the modal if needed
+                }
+            });
+
+            // Add event listeners for the social post modal
+            document.getElementById('close-social-post-modal-btn').addEventListener('click', () => {
+                const modal = document.getElementById('social-post-modal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            });
+
+            document.getElementById('copy-social-post-btn').addEventListener('click', () => {
+                const textarea = document.getElementById('social-post-textarea');
+                navigator.clipboard.writeText(textarea.value).then(() => {
+                    showToast('Post text copied to clipboard!', 'success');
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    showToast('Could not copy text.', 'error');
+                });
             });
 
             // Populate province dropdown
@@ -2092,7 +2161,12 @@
                     const pestInfo = group.pests[pestName];
                     content += `
                         <div class="mt-3 pl-4 border-l-4 border-gray-200">
-                            <a href="#" class="font-semibold text-md text-gray-800 hover:underline pest-advisory-link" data-pest-name="${pestName}">${pestName}</a>
+                            <div class="flex justify-between items-center">
+                                <a href="#" class="font-semibold text-md text-gray-800 hover:underline pest-advisory-link" data-pest-name="${pestName}">${pestName}</a>
+                                <button class="generate-post-btn p-2 rounded-full hover:bg-gray-200" data-pest-name="${pestName}" data-conditions="${key}">
+                                    <i data-lucide="share-2" class="w-4 h-4 text-gray-600"></i>
+                                </button>
+                            </div>
                             <p class="text-sm text-gray-600 mt-1">${pestInfo.advice}</p>
                             <p class="text-sm font-semibold text-blue-600 mt-2">Favorable On: ${[...pestInfo.dates].join(', ')}</p>
                         </div>`;
@@ -2138,7 +2212,12 @@
                     const pestInfo = group.pests[pestName];
                     content += `
                         <div class="mt-3 pl-4 border-l-4 border-gray-200">
-                            <a href="#" class="font-semibold text-md text-gray-800 hover:underline pest-advisory-link" data-pest-name="${pestName}">${pestName}</a>
+                            <div class="flex justify-between items-center">
+                                <a href="#" class="font-semibold text-md text-gray-800 hover:underline pest-advisory-link" data-pest-name="${pestName}">${pestName}</a>
+                                <button class="generate-post-btn p-2 rounded-full hover:bg-gray-200" data-pest-name="${pestName}" data-conditions="${key}">
+                                    <i data-lucide="share-2" class="w-4 h-4 text-gray-600"></i>
+                                </button>
+                            </div>
                             <p class="text-sm text-gray-600 mt-1">${pestInfo.advice}</p>
                             <p class="text-sm font-semibold text-red-600 mt-2">Highest Risk Period: ${[...pestInfo.dates].join(', ')}</p>
                         </div>`;
@@ -2883,6 +2962,56 @@
                 console.error('Error fetching weather data:', error);
                 container.innerHTML = `<div class="text-center text-white p-6 bg-red-500/30 rounded-lg"><p>Could not load weather data.</p></div>`;
             }
+        }
+
+        function generateSocialMediaPost(advisoryData) {
+            const { name, conditions } = advisoryData;
+
+            const allItems = [
+                ...(pestAndDiseaseData.fungal_and_bacterial_diseases || []),
+                ...(pestAndDiseaseData.major_insect_pests || [])
+            ];
+            const item = allItems.find(i => (i['Disease Name'] || i['Pest Common Name']) === name);
+
+            const allImages = [
+                ...(pestImageData.pests || []),
+                ...(pestImageData.diseases || [])
+            ];
+            const imageEntry = allImages.find(img => img.name === name);
+            const imageUrl = imageEntry ? imageEntry.image_url : 'https://placehold.co/1200x630/e2e8f0/334155?text=Image+Not+Available';
+
+            if (!item) {
+                return {
+                    postText: `An advisory for ${name} has been issued, but detailed information is not yet available. Please monitor your crops closely.`,
+                    imageUrl: imageUrl
+                };
+            }
+
+            const symptoms = item['Primary Visual Symptoms'] || item['Characteristic Visual Damage'];
+            const prevention = item.management?.prevention || [];
+            const moreInfoUrl = item.url || '';
+
+            const conditionText = conditions ? `The current ${conditions.join(', ')} weather is increasing the risk.` : '';
+
+            let postText = `⚠️ ATTENTION TOBACCO FARMERS! ⚠️\n\n`;
+            postText += `An advisory has been issued for **${name}**. ${conditionText}\n\n`;
+            postText += `**🔎 WHAT TO LOOK FOR:**\n- ${symptoms.replace(/\. /g, '.\n- ')}\n\n`;
+
+            if (prevention.length > 0) {
+                postText += `**✅ HOW TO PROTECT YOUR FARM:**\n`;
+                prevention.slice(0, 3).forEach(p => { // Take top 3 prevention tips
+                    postText += `- ${p}\n`;
+                });
+                postText += `\n`;
+            }
+
+            if (moreInfoUrl) {
+                postText += `For a complete guide on managing ${name}, visit:\n${moreInfoUrl}\n\n`;
+            }
+
+            postText += `#AgriGuardPH #TobaccoAdvisory #${name.replace(/\s+/g, '')} #PhilippineFarming`;
+
+            return { postText, imageUrl };
         }
 
         function getWeatherInfo(code) {
