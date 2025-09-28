@@ -6352,7 +6352,7 @@
         // Removed old syncOutbox function as it's now obsolete with the new online-only farm setup flow.
 
         async function syncOutbox() {
-            if (!navigator.onLine || !currentUser) return {}; // Return empty map if offline
+            if (!navigator.onLine || !currentUser) return new Map(); // Return empty map if offline
 
             const idb = await dbPromise;
 
@@ -6365,11 +6365,11 @@
                 document.getElementById('pending-sync-message').textContent = `You have ${pendingRegistrations} pending farmer registration(s) to sync. Syncing farms and reports depends on these registrations being completed first.`;
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
-                return {}; // Abort sync, let user handle registrations
+                return new Map(); // Abort sync, let user handle registrations
             }
 
             const allFarms = await idb.getAll('outbox');
-            if (allFarms.length === 0) return {};
+            if (allFarms.length === 0) return new Map();
 
             showToast(`Syncing ${allFarms.length} offline farm(s)...`, 'info');
             const idMap = new Map();
@@ -6399,7 +6399,7 @@
             } catch (error) {
                 console.error('Error syncing farm outbox:', error);
                 showToast('Failed to sync offline farms.', 'error');
-                return {}; // Return empty map on failure
+                return new Map(); // Return empty map on failure
             }
         }
 
