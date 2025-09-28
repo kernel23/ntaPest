@@ -4386,10 +4386,17 @@
                 document.getElementById('tobaccoVariety').value = '';
                 document.getElementById('plantingDate').value = '';
 
-                // Go back to the previous screen in the history
+                // Go back to the previous screen in the history, with a fallback
                 navigationHistory.pop(); // Remove farmSetup screen
                 const lastState = navigationHistory[navigationHistory.length - 1];
-                showScreen(lastState.screenName, lastState.context, true);
+                if (lastState) {
+                    showScreen(lastState.screenName, lastState.context, true);
+                } else {
+                    // Fallback if history is empty, e.g., after initial profile setup
+                    const fallbackContext = { isFreshNavigation: true, userId: currentUser.uid, userName: userProfile.fullName, label: 'Dashboard' };
+                    const fallbackScreen = userProfile.role === 'Farmer' ? 'farmerDashboard' : 'farmList';
+                    showScreen(fallbackScreen, fallbackContext);
+                }
 
             } catch (error) {
                 console.error("Error saving farm plot:", error);
@@ -7808,6 +7815,69 @@
 
         document.getElementById('pending-sync-now-btn').addEventListener('click', async () => {
             document.getElementById('pending-sync-modal').classList.add('hidden');
+
+            if (!navigator.onLine) {
+                showToast('You must be online to sync registrations.', 'error');
+                isSyncing = false; // Reset sync state
+                const syncBtn = document.getElementById('manual-sync-btn');
+                const syncBtnFarmer = document.getElementById('manual-sync-btn-farmer');
+                if(syncBtn) syncBtn.disabled = false;
+                if(syncBtnFarmer) syncBtnFarmer.disabled = false;
+                return;
+            }
+
+            showSavingOverlay('Syncing offline registrations...');
+
+            const idb = await dbPromise;
+            // Use a transaction to get both keys and values to ensure they match
+            const tx = idb.transaction('offline_registrations', 'readonly');
+            const store = tx.objectStore('offline_registrations');
+            const allRegistrations = await store.getAll();
+            const allKeys = await store.getAllKeys();
+            await tx.done;
+
+            let allSucceeded = true;
+            for (let i = 0; i < allRegistrations.length; i++) {
+                const regData = allRegistrations[i];
+                const regKey = allKeys[i];
+
+                // Use a temporary Firebase app to create user without logging out the current one
+                const tempAppName = `registration-app-${Date.now()}`;
+                const tempApp = initializeApp(firebaseConfig, tempAppName);
+                const tempAuth = getAuth(tempApp);
+
+                try {
+                    showSavingOverlay(`Registering ${regData.fullName}...`);
+                    const { user: newFarmer } = await createUserWithEmailAndPassword(tempAuth, regData.email, regData.password);
+
+                    const profileData = { ...regData, role: 'Farmer', createdAt: serverTimestamp() };
+                    delete profileData.password;
+                    delete profileData.id; // remove any temp id if present
+
+                    await setDoc(doc(db, "users", newFarmer.uid), profileData);
+
+                    // If successful, remove from IndexedDB
+                    await idb.delete('offline_registrations', regKey);
+                    showToast(`Registered ${regData.fullName} successfully.`, 'success');
+                } catch (error) {
+                    allSucceeded = false;
+                    console.error(`Failed to register ${regData.fullName}:`, error);
+                    showToast(`Failed to register ${regData.fullName}. It will be retried later.`, 'error');
+                } finally {
+                    // Clean up the temporary app
+                    await deleteApp(tempApp);
+                }
+            }
+
+            if (allSucceeded && allRegistrations.length > 0) {
+                showToast('All pending registrations synced!', 'success');
+            } else if (!allSucceeded) {
+                showToast('Some registrations failed to sync. They will be retried later.', 'info');
+            }
+
+            hideSavingOverlay();
+
+            // After attempting registrations, proceed with the rest of the sync
             await performDataSync();
         });
 
