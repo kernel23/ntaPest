@@ -6001,20 +6001,6 @@
                 signOut(auth);
             });
 
-            document.getElementById('pending-sync-later-btn').addEventListener('click', () => {
-                document.getElementById('pending-sync-modal').classList.add('hidden');
-            });
-
-            document.getElementById('pending-sync-now-btn').addEventListener('click', async () => {
-                document.getElementById('pending-sync-modal').classList.add('hidden');
-                const idb = await dbPromise;
-                const pendingRegistrations = await idb.getAll('offline_registrations');
-                if (pendingRegistrations.length > 0) {
-                    // We only process the first one, as it will log the user out.
-                    // The user will be prompted again on next login if more exist.
-                    await completeOfflineRegistration(pendingRegistrations[0], 0);
-                }
-            });
 
             document.getElementById('register-farmer-btn').addEventListener('click', async () => {
                 const fullName = document.getElementById('reg-fullName').value;
@@ -7749,32 +7735,8 @@
         document.getElementById('manual-sync-btn').addEventListener('click', runSync);
         document.getElementById('manual-sync-btn-farmer').addEventListener('click', runSync);
 
-        async function runSync() {
-            if (isSyncing) {
-                console.log("Sync already in progress. Skipping.");
-                showToast('Sync already in progress.', 'info');
-                return;
-            }
-            isSyncing = true;
-            const syncBtn = document.getElementById('manual-sync-btn');
-            const syncBtnFarmer = document.getElementById('manual-sync-btn-farmer');
-            if(syncBtn) syncBtn.disabled = true;
-            if(syncBtnFarmer) syncBtnFarmer.disabled = true;
-
+        async function performDataSync() {
             try {
-                // First, check for pending registrations
-                const idb = await dbPromise;
-                const pendingRegistrations = await idb.getAll('offline_registrations');
-
-                if (pendingRegistrations.length > 0) {
-                    const modal = document.getElementById('pending-sync-modal');
-                    document.getElementById('pending-sync-message').textContent = `You have ${pendingRegistrations.length} pending farmer registration(s) to sync. Syncing requires an internet connection and will log you out to complete the process.`;
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex');
-                    isSyncing = false; // Allow sync to be re-triggered after modal is handled
-                    return; // Stop here and let the user decide
-                }
-
                 showToast('Syncing offline data...', 'info');
                 const farmIdMap = await syncOutbox();
                 await syncSubmissionOutbox(farmIdMap);
@@ -7797,17 +7759,57 @@
                     }
                 }
             } catch (error) {
-                console.error("An error occurred during sync:", error);
-                showToast("Sync failed. Will try again later.", "error");
+                console.error("An error occurred during data sync:", error);
+                showToast("Data sync failed. Will try again later.", "error");
             } finally {
                 isSyncing = false;
                 const syncBtn = document.getElementById('manual-sync-btn');
                 const syncBtnFarmer = document.getElementById('manual-sync-btn-farmer');
                 if(syncBtn) syncBtn.disabled = false;
                 if(syncBtnFarmer) syncBtnFarmer.disabled = false;
-                console.log("Sync finished.");
+                console.log("Data sync finished.");
             }
         }
+
+        async function runSync() {
+            if (isSyncing) {
+                console.log("Sync already in progress. Skipping.");
+                showToast('Sync already in progress.', 'info');
+                return;
+            }
+            isSyncing = true;
+            const syncBtn = document.getElementById('manual-sync-btn');
+            const syncBtnFarmer = document.getElementById('manual-sync-btn-farmer');
+            if(syncBtn) syncBtn.disabled = true;
+            if(syncBtnFarmer) syncBtnFarmer.disabled = true;
+
+            const idb = await dbPromise;
+            const pendingRegistrations = await idb.getAll('offline_registrations');
+
+            if (pendingRegistrations.length > 0) {
+                const modal = document.getElementById('pending-sync-modal');
+                document.getElementById('pending-sync-message').textContent = `You have ${pendingRegistrations.length} pending farmer registration(s) to sync. Syncing requires an internet connection and will log you out to complete the process.`;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                await performDataSync();
+            }
+        }
+
+        document.getElementById('pending-sync-later-btn').addEventListener('click', () => {
+            document.getElementById('pending-sync-modal').classList.add('hidden');
+            // Reset the sync state since the user chose not to sync now
+            isSyncing = false;
+            const syncBtn = document.getElementById('manual-sync-btn');
+            const syncBtnFarmer = document.getElementById('manual-sync-btn-farmer');
+            if(syncBtn) syncBtn.disabled = false;
+            if(syncBtnFarmer) syncBtnFarmer.disabled = false;
+        });
+
+        document.getElementById('pending-sync-now-btn').addEventListener('click', async () => {
+            document.getElementById('pending-sync-modal').classList.add('hidden');
+            await performDataSync();
+        });
 
         async function updateOnlineStatus() {
             const db = await dbPromise;
