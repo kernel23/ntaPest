@@ -1,107 +1,85 @@
 # Agri-Guard: Tobacco Pest Monitoring PWA
 
-Agri-Guard is a Progressive Web App (PWA) designed for monitoring tobacco pests and diseases in the Ilocos Region of the Philippines. It provides a seamless experience for farmers and extension workers to manage their farm plots and track agricultural data, even in offline scenarios.
+Agri-Guard is an advanced Progressive Web App (PWA) designed for monitoring tobacco pests and diseases in the Ilocos Region of the Philippines. It provides a seamless, offline-first experience for farmers and agricultural technicians to manage farm plots, track scouting reports, and receive predictive advisories to protect their crops.
 
 ## Key Features
 
-- **User Authentication**: Secure sign-in using Google, Facebook, or as a Guest, powered by Firebase Authentication.
-- **Profile Management**: Users can create and manage their profiles, specifying their role as either a "Farmer" or an "Extension Worker".
-- **Farm Plot Management**: Users can add and view their farm plots.
-- **Offline First**: The application is a fully-functional PWA with a service worker that caches app resources. This allows users to access the app and previously loaded data even without an internet connection.
-- **Real-time Data Sync**: Utilizes Firestore to ensure data is synchronized in real-time across devices.
-- **Responsive Design**: A clean, mobile-first interface built with Tailwind CSS.
+-   **Role-Based Access Control**: A multi-level system with five distinct user roles (Farmer, Extension Worker, Branch Coordinator, Expert, Administrator) to ensure a structured and secure workflow.
+-   **Comprehensive Farm Management**: Farmers can map their farm plots using Leaflet.js, manage crop details, and view a complete history of scouting reports for each plot.
+-   **Offline-First Functionality**: The application is a fully-functional PWA that leverages a robust service worker and IndexedDB to ensure core features are available without an internet connection. This includes:
+    -   **Offline Scouting Reports**: Farmers can create and save new pest/disease reports, including images, while offline.
+    -   **Offline Farmer Registration**: Extension Workers can register new farmers in the field without an internet connection.
+    -   All offline data automatically syncs with Firestore when the connection is restored.
+-   **Predictive Advisories**: A sophisticated module that uses weather forecast data to generate timely warnings about potential pest and disease outbreaks, helping farmers take proactive measures.
+-   **Advanced Weather Dashboard**: Integrates with the Open-Meteo API to provide detailed, location-specific weather forecasts, including charts for temperature, precipitation, and other key variables.
+-   **Real-time Notifications**: An in-app notification system alerts users to important events, such as new report assignments or role changes.
+-   **Comprehensive Admin Panel**: An administrator dashboard for managing users, viewing all reports, and approving role change requests.
+-   **Data Export**: Experts and administrators can export all report data to a CSV file for research, analysis, and record-keeping.
+-   **Secure Authentication**: Powered by Firebase Authentication, allowing users to sign in via Google or as a Guest.
 
-## User Roles and Workflow
+## Application Workflow
 
-Agri-Guard is built around a collaborative workflow involving four distinct user roles. Each role has specific permissions and functionalities tailored to their responsibilities in the pest and disease monitoring process.
+Agri-Guard facilitates a structured, multi-level workflow for identifying and managing agricultural issues:
 
-### User Roles
-
-1.  **Farmer**: The primary user of the app.
-    *   **Farm Management**: Can add and manage their farm plots, including mapping the geographical boundaries.
-    *   **Scouting Reports**: Submits reports of potential pest or disease outbreaks by uploading images, describing symptoms, and noting the severity and distribution of the issue.
-
-2.  **Extension Worker**: Acts as the first line of support and diagnosis.
-    *   **Farmer Oversight**: Views a list of assigned farmers and can access their farm plots and reports.
-    *   **Initial Diagnosis**: Accesses a queue of pending reports and provides an initial diagnosis by identifying the pest/disease and adding notes.
-
-3.  **Branch Coordinator**: Manages Extension Workers and handles more complex cases.
-    *   **Team Management**: Views a list of Extension Workers and can monitor their assigned farmers and activities.
-    *   **Final Diagnosis & Treatment**: Accesses reports that have an initial diagnosis and provides a final, confirmed diagnosis along with a detailed treatment plan (including prevention, monitoring, and control measures).
-    *   **Escalation**: Can escalate complex or unidentifiable cases to an Expert for advanced analysis.
-
-4.  **Expert**: A subject-matter expert who handles the most critical cases.
-    *   **Online Clinic**: Manages a queue of escalated cases that require expert-level diagnosis.
-    *   **Definitive Diagnosis**: Provides the final diagnosis and treatment plan for escalated reports.
-    *   **Data Analysis**: Accesses a high-level dashboard with an interactive map showing pest/disease distribution, key statistics, and the ability to export all data for research and analysis.
-
-### Application Workflow
-
-The application facilitates a structured, multi-level workflow for identifying and managing agricultural issues:
-
-1.  **Report Submission**: A **Farmer** notices a potential issue on their farm and submits a scouting report with images and details through the app.
-2.  **Initial Review**: The report enters a queue for **Extension Workers**. An available worker reviews the report and provides an initial diagnosis.
-3.  **Verification & Treatment Plan**: The diagnosed report is then sent to a queue for **Branch Coordinators**. The coordinator verifies the diagnosis, provides a final confirmation, and creates a comprehensive treatment plan.
-4.  **Expert Consultation**: If a Branch Coordinator cannot resolve the issue, they **escalate** the case. The report, along with additional notes, is sent to the **Expert's** "Online Clinic."
-5.  **Final Resolution**: The **Expert** reviews the escalated case, provides the definitive diagnosis and treatment plan, and communicates it back down the chain.
+1.  **Report Submission**: A **Farmer** notices a potential issue on their farm and submits a scouting report with images, observed symptoms, severity, and distribution details through the app.
+2.  **Initial Diagnosis**: The report is assigned to an **Extension Worker**, who reviews the submission, provides an initial diagnosis, and adds relevant notes.
+3.  **Final Diagnosis & Treatment**: The diagnosed report is sent to a **Branch Coordinator**, who verifies the diagnosis, provides a final confirmation, and creates a comprehensive treatment plan (including prevention, monitoring, and control measures).
+4.  **Expert Consultation**: If a Branch Coordinator cannot resolve the issue, they can **escalate** the case to an **Expert**, who manages a queue of critical cases in the "Online Clinic."
+5.  **Final Resolution**: The **Expert** provides a definitive diagnosis and treatment plan, which is then communicated back to the farmer.
 
 ## Tech Stack
 
-- **Frontend**:
-  - HTML5
-  - Vanilla JavaScript (ESM)
-  - Tailwind CSS
-  - [Lucide Icons](https://lucide.dev/)
-- **Backend & Hosting**:
-  - **Firebase**:
-    - Firebase Authentication
-    - Firestore Database
-    - Firebase Hosting
-- **PWA**:
-  - Web App Manifest
-  - Service Worker API
+-   **Frontend**:
+    -   Vanilla JavaScript (ESM)
+    -   Tailwind CSS
+    -   Leaflet.js (for mapping)
+    -   Chart.js (for weather charts)
+    -   Lucide Icons
+-   **Backend & Hosting**:
+    -   **Firebase**:
+        -   Firebase Authentication
+        -   Firestore Database
+        -   Firebase Storage
+        -   Firebase Hosting
+-   **PWA & Offline**:
+    -   Service Worker API
+    -   IndexedDB (via `idb` library)
+-   **APIs**:
+    -   Open-Meteo API (for weather data)
 
 ## Getting Started
 
-To run this project locally, you need a web server. You can use any simple HTTP server.
+To run this project locally, you need Node.js and npm installed.
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-username/your-repo-name.git
-   cd your-repo-name
-   ```
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/agri-guard.git
+    cd agri-guard
+    ```
 
-2. **Serve the `index.html` file.** A simple way is to use Python's built-in HTTP server:
-   ```bash
-   python -m http.server
-   ```
-   Or, if you have Node.js:
-   ```bash
-   npx serve
-   ```
+2.  **Install dependencies:** This project uses PostCSS and Tailwind CSS for styling.
+    ```bash
+    npm install
+    ```
 
-3. **Open your browser** and navigate to `http://localhost:8000` (or the port specified by your server).
+3.  **Build the CSS:**
+    ```bash
+    npm run build-css
+    ```
+
+4.  **Serve the application:** You can use any simple HTTP server. A common choice is `serve`.
+    ```bash
+    npx serve
+    ```
+
+5.  **Open your browser** and navigate to the local address provided by the server (e.g., `http://localhost:3000`).
 
 ## Firebase Configuration
 
-The application is configured to use a Firebase project. The configuration details are located in the `<script type="module">` tag within `index.html`.
+To connect this project to your own Firebase instance, you must replace the placeholder `firebaseConfig` object in `index.html` with your project's actual Firebase configuration keys.
 
-**IMPORTANT**: To connect this project to your own Firebase instance, you must replace the placeholder `firebaseConfig` object with your project's actual Firebase configuration.
-
-```javascript
-// IMPORTANT: Replace with your project's Firebase configuration
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID",
-    measurementId: "YOUR_MEASUREMENT_ID" // Optional
-};
-```
-
-You will also need to set up the following in your Firebase project:
-- **Authentication**: Enable Google, Facebook, and Anonymous sign-in providers.
-- **Firestore**: Create a Firestore database and set up the necessary security rules.
-- **Hosting**: Set up Firebase Hosting if you wish to deploy the application.
+You will also need to enable the following services in your Firebase project:
+-   **Authentication**: Enable Google and Anonymous sign-in providers.
+-   **Firestore**: Create a Firestore database.
+-   **Storage**: Create a Firebase Storage bucket.
+-   **Hosting**: Set up Firebase Hosting to deploy the application.
