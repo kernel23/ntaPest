@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agri-Guard</title>
     
-    <!-- PWA Manifest commit-->
-    <link rel="manifest" href="manifest.json">
-    
     <!-- Theme Color for PWA -->
     <meta name="theme-color" content="#22c55e">
     
@@ -1541,14 +1538,6 @@
         });
         console.log('IndexedDB setup initiated.');
 
-        // Register the service worker for offline capabilities
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
-                    .catch(err => console.log('ServiceWorker registration failed: ', err));
-            });
-        }
         
         // --- 3. UI & STATE MANAGEMENT ---
         let activeListeners = [];
