@@ -985,6 +985,12 @@
                         <!-- Geographical Risk Tab Panel -->
                         <div id="advisory-panel-geo" class="advisory-panel hidden h-full">
                             <div id="advisory-map-container" class="h-full relative">
+                                <div class="absolute top-2 left-2 bg-white bg-opacity-80 p-3 rounded-lg shadow-md z-[1000] w-60">
+                                    <label for="pest-disease-risk-select" class="block text-sm font-medium text-gray-700">Select Pest or Disease</label>
+                                    <select id="pest-disease-risk-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                        <option value="">All Pests and Diseases</option>
+                                    </select>
+                                </div>
                                 <div id="advisory-map" class="w-full h-full rounded-lg shadow-inner"></div>
                                 <div id="farm-risk-stats" class="absolute top-2 right-2 bg-white bg-opacity-80 p-3 rounded-lg shadow-md z-[1000]">
                                     <h4 class="font-bold text-sm mb-2 text-gray-800">Farm Risk Analysis</h4>
@@ -1934,8 +1940,13 @@
             const provinceSelect = document.getElementById('province-select');
             const municipalitySelect = document.getElementById('municipality-select');
             const advisoryList = document.getElementById('advisory-list');
+            const pestDiseaseRiskSelect = document.getElementById('pest-disease-risk-select');
 
             if (!provinceSelect || !municipalitySelect || !advisoryList) return;
+
+            pestDiseaseRiskSelect.addEventListener('change', () => {
+                showGeographicRisk();
+            });
 
             // Add the delegated event listener for pest/disease links and generate post buttons
             advisoryList.addEventListener('click', (e) => {
@@ -2078,7 +2089,23 @@
                     // Continue without farm data if it fails
                 }
 
-                const riskData = await generateGeographicRisk(farmLots);
+                // Populate dropdown
+                const selectElement = document.getElementById('pest-disease-risk-select');
+                if (selectElement.options.length === 1) { // Only populate if it's empty
+                    const allPestsAndDiseases = [
+                        ...pestAndDiseaseData.fungal_and_bacterial_diseases.map(d => d['Disease Name']),
+                        ...pestAndDiseaseData.major_insect_pests.map(p => p['Pest Common Name'])
+                    ].sort();
+                    allPestsAndDiseases.forEach(name => {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = name;
+                        selectElement.appendChild(option);
+                    });
+                }
+
+                const selectedPest = selectElement.value || null;
+                const riskData = await generateGeographicRisk(farmLots, selectedPest);
                 renderRiskMap(riskData.riskSummary, riskData.farmRiskCounts);
 
                 loadingIndicator.classList.add('hidden');

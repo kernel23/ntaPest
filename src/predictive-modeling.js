@@ -159,9 +159,10 @@ function getPolygonCenter(polygon) {
 /**
  * Generates a summary of geographic risk areas and counts farms in each risk category.
  * @param {Array<Object>} farmLots - An array of farm lot objects from Firestore.
+ * @param {string|null} pestOrDisease - The specific pest or disease to filter by, or null for all.
  * @returns {Promise<object>} - An object with risk scores and farm counts.
  */
-export async function generateGeographicRisk(farmLots = []) {
+export async function generateGeographicRisk(farmLots = [], pestOrDisease = null) {
     const riskSummary = {};
     const promises = [];
 
@@ -173,7 +174,15 @@ export async function generateGeographicRisk(farmLots = []) {
                     let riskScore = 0;
                     if (!advisories.error) {
                         Object.values(advisories).forEach(dailyAdvisories => {
-                            riskScore += dailyAdvisories.length;
+                            if (pestOrDisease) {
+                                dailyAdvisories.forEach(advisory => {
+                                    if (advisory.name === pestOrDisease) {
+                                        riskScore++;
+                                    }
+                                });
+                            } else {
+                                riskScore += dailyAdvisories.length;
+                            }
                         });
                     } else {
                         riskScore = -1; // Indicate an error
